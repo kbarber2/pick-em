@@ -31,7 +31,7 @@
       <tfoot>
 	<tr>
 	  <td colspan="4" style="text-align: right">Total bet</td>
-	  <td>100</td>
+	  <td>{{pointsAllocated}}</td>
 	</tr>
       </tfoot>
       <tbody>
@@ -39,22 +39,13 @@
 	<tr>
 	  <td>{{awayTeam}}</td>
 	  <td>{{homeTeam}}</td>
-	  <td>{{line}}</td>
+	  <td>{{#if homeIsFavored}} {{line}} {{else}} +{{line}} {{/if}}</td>
 	  <td>
 	    {{view Ember.Select content=teams prompt="Choose a winner"}}
 	  </td>
-	  <td><input/></td>
+	  <td>{{input value=points}}</td>
 	</tr>
 	{{/each}}
-	<!--<tr>
-	  <td>Illinois</td>
-	  <td>Purdue</td>
-	  <td>+6.5</td>
-	  <td>
-	    <select><option>(Choose)</option><option>Illinois</option><option>Purdue</option></select>
-	  </td>
-	  <td><input/></td>
-	</tr>-->
       </tbody>
     </table>
   </script>

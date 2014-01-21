@@ -8,20 +8,33 @@ Bsc.Router.map(function() {
 
 Bsc.BscRoute = Ember.Route.extend({
     model: function() {
-	var records = this.store.find('matchup');
-	console.log(records);
-	return records;
+	return this.store.find('matchup');
     }
+});
+
+Bsc.BscController = Ember.ArrayController.extend({
+    pointsAllocated: function() {
+	return this.reduce(function(prev, current) {
+	    if (prev == undefined) { prev = 0; }
+	    var val = parseInt(current.get("points")) || 0;
+	    return prev + val;
+	});
+    }.property('@each.points')
 });
 
 Bsc.Matchup = DS.Model.extend({
     awayTeam: DS.attr('string'),
     homeTeam: DS.attr('string'),
     line: DS.attr('number'),
+    points: DS.attr('number', { defaultValue: 0 }),
 
     teams: function() {
 	return [this.get('awayTeam'), this.get('homeTeam')];
-    }.property('awayTeam', 'homeTeam')
+    }.property('awayTeam', 'homeTeam'),
+
+    homeIsFavored: function() {
+	return this.get('line') < 0;
+    }.property('line'),
 });
 
 Bsc.Matchup.FIXTURES = [
