@@ -1,12 +1,46 @@
 //App = Ember.Application.create();
-App = Ember.Application.createWithMixins(Bootstrap.Register);
+window.Bsc = Ember.Application.createWithMixins(Bootstrap.Register);
+Bsc.ApplicationAdapter = DS.FixtureAdapter.extend();
 
-App.Router.map(function() {
-  // put your routes here
+Bsc.Router.map(function() {
+    this.resource('bsc', { path: '/' });
 });
 
-App.IndexRoute = Ember.Route.extend({
-  model: function() {
-    return ['red', 'yellow', 'blue'];
-  }
+Bsc.BscRoute = Ember.Route.extend({
+    model: function() {
+	var records = this.store.find('matchup');
+	console.log(records);
+	return records;
+    }
 });
+
+Bsc.Matchup = DS.Model.extend({
+    awayTeam: DS.attr('string'),
+    homeTeam: DS.attr('string'),
+    line: DS.attr('number'),
+
+    teams: function() {
+	return [this.get('awayTeam'), this.get('homeTeam')];
+    }.property('awayTeam', 'homeTeam')
+});
+
+Bsc.Matchup.FIXTURES = [
+    {
+	id: 1,
+	awayTeam: 'MSU',
+	homeTeam: 'NW',
+	line: 7.5
+    },
+    {
+	id: 2,
+	awayTeam: 'Illinois',
+	homeTeam: 'Purdue',
+	line: 6.5
+    },
+    {
+	id: 3,
+	awayTeam: 'Michigan',
+	homeTeam: 'Iowa',
+	line: -6.5
+    },
+];
