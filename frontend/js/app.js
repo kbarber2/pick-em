@@ -1,4 +1,5 @@
-App = Ember.Application.create();
+//App = Ember.Application.create();
+App = Ember.Application.createWithMixins(Bootstrap.Register);
 
 App.Router.map(function() {
   // put your routes here
