@@ -2,7 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Ember Starter Kit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BSC 2013</title>
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
@@ -14,17 +15,48 @@
 </head>
 <body>
   <script type="text/x-handlebars">
-    <h2>Welcome to Ember.js</h2>
+    <h2>BSC Week 13</h2>
 
-    {{outlet}}
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Away</th>
+	  <th>Home</th>
+	  <th>Line</th>
+	  <th>Winner</th>
+	  <th>Bet</th>
+	</tr>
+      </thead>
+      <tfoot>
+	<tr>
+	  <td colspan="4" style="text-align: right">Total bet</td>
+	  <td>100</td>
+	</tr>
+      </tfoot>
+      <tbody>
+	<tr>
+	  <td>MSU</td>
+	  <td>NW</td>
+	  <td>+7.5</td>
+	  <td>
+	    <select><option>(Choose)</option><option>MSU</option><option>NW</option></select>
+	  </td>
+	  <td><input/></td>
+	</tr>
+	<tr>
+	  <td>Illinois</td>
+	  <td>Purdue</td>
+	  <td>+6.5</td>
+	  <td>
+	    <select><option>(Choose)</option><option>Illinois</option><option>Purdue</option></select>
+	  </td>
+	  <td><input/></td>
+	</tr>
+      </tbody>
+    </table>
   </script>
 
   <script type="text/x-handlebars" id="index">
-    <ul>
-    {{#each item in model}}
-      <li>{{item}}</li>
-    {{/each}}
-    </ul>
   </script>
 
   <script src="js/app.js"></script>
