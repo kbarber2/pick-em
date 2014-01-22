@@ -26,7 +26,7 @@ Bsc.BscController = Ember.ArrayController.extend({
 
 Bsc.MatchupController = Ember.ObjectController.extend({
     
-    htmlColors: function() {
+    winnerColors: function() {
 	var winner = this.get('winner');
 	if (winner == null) return "";
 
@@ -46,10 +46,6 @@ Bsc.School = DS.Model.extend({
     mascot: DS.attr('string'),
     color1: DS.attr('string'),
     color2: DS.attr('string'),
-
-    htmlColors: function() {
-	return 'color:' + this.get('color1') + ';background-color:' + this.get('color2');
-    }.property('color1', 'color2'),
 });
 
 Bsc.Matchup = DS.Model.extend({
@@ -67,19 +63,6 @@ Bsc.Matchup = DS.Model.extend({
     homeIsFavored: function() {
 	return this.get('line') < 0;
     }.property('line'),
-/*
-    htmlColors: function() {
-	var winner = this.get('winner');
-	if (winner == null) return "";
-
-	var c = Bsc.School.FIXTURES.filter(function(school) {
-	    return school.id == winner.id;
-	});
-	winner = c[0];
-	
-	return 'color:' + winner.color1 + ';background-color:' + winner.color2;
-    }.property('winner'),
-    */
 });
 
 Bsc.Matchup.FIXTURES = [
