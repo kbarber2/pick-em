@@ -36,12 +36,13 @@
       </tfoot>
       <tbody>
 	{{#each}}
-	<tr>
-	  <td>{{awayTeam}}</td>
-	  <td>{{homeTeam}}</td>
+	<tr {{bind-attr style=htmlColors}}>
+	  <td>{{awayTeam.name}}</td>
+	  <td>{{homeTeam.name}}</td>
 	  <td>{{#if homeIsFavored}} {{line}} {{else}} +{{line}} {{/if}}</td>
 	  <td>
-	    {{view Ember.Select content=teams prompt="Choose a winner"}}
+	    {{view Ember.Select content=teams selection=winner prompt="Choose a winner"
+	      optionValuePath="content.id" optionLabelPath="content.name" }}
 	  </td>
 	  <td>{{input value=points}}</td>
 	</tr>
