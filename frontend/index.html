@@ -18,7 +18,7 @@
   <h2>BSC Week 13</h2>
 
   <script type="text/x-handlebars" data-template-name="bsc">
-    <table class="table">
+    <table class="table table-condensed">
       <thead>
 	<tr>
 	  <th>Away</th>
@@ -31,20 +31,20 @@
       <tfoot>
 	<tr>
 	  <td colspan="4" style="text-align: right">Total bet</td>
-	  <td>{{pointsAllocated}}</td>
+	  <td {{bind-attr style=allocatedColor}}>{{pointsAllocated}}</td>
 	</tr>
       </tfoot>
       <tbody>
-	{{#each}}
+	{{#each itemController="matchup"}}
 	<tr {{bind-attr style=winnerColors}}>
 	  <td>{{awayTeam.name}}</td>
 	  <td>{{homeTeam.name}}</td>
 	  <td>{{#if homeIsFavored}} {{line}} {{else}} +{{line}} {{/if}}</td>
 	  <td>
 	    {{view Ember.Select content=teams selection=winner prompt="Choose a winner"
-	      optionValuePath="content.id" optionLabelPath="content.name" }}
+	      optionValuePath="content.id" optionLabelPath="content.name"}}
 	  </td>
-	  <td>{{input value=points}}</td>
+	  <td><div>{{input value=points}}</div></td>
 	</tr>
 	{{/each}}
       </tbody>

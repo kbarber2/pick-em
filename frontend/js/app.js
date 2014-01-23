@@ -13,15 +13,43 @@ Bsc.BscRoute = Ember.Route.extend({
 });
 
 Bsc.BscController = Ember.ArrayController.extend({
-    itemController: 'matchup',
-    
     pointsAllocated: function() {
-	return this.reduce(function(prev, current) {
-	    if (prev == undefined) { prev = 0; }
-	    var val = parseInt(current.get("points")) || 0;
+	var total = this.calculateTotal();
+	return total.value;
+    }.property('@each.points'),
+
+    // TODO: implement a version of this at the matchup controller level too
+    allocatedColor: function() {
+	var total = this.calculateTotal();
+	return "background-color:" + (total.isValid ? "white" : "red");
+    }.property('@each.points'),
+
+    pointsValid: function() {
+	var total = this.calculateTotal();
+	return total.isValid;
+    }.property('@each.points'),
+    
+    calculateTotal: function() {
+	var valid = true;
+	var total = this.reduce(function(prev, current) {
+	    if (!current.pointsValid()) {
+		valid = false;
+		return prev;
+	    }
+
+	    var val = parseInt(current.get('points'), 10);
+	    if (val < 0) {
+		val = 0;
+		valid = false;
+	    }
 	    return prev + val;
-	});
-    }.property('@each.points')
+	}, 0);
+
+	if (total > 100 || total < 0)
+	    valid = false;
+
+	return { isValid: valid, value: total };
+    }
 });
 
 Bsc.MatchupController = Ember.ObjectController.extend({
@@ -63,6 +91,16 @@ Bsc.Matchup = DS.Model.extend({
     homeIsFavored: function() {
 	return this.get('line') < 0;
     }.property('line'),
+
+    // TODO: need to put a check in the controller if the points exceed
+    // (100 - matchups.length)
+    pointsValid: function() {
+	var raw = this.get('points');
+	if (isNaN(raw)) return false;
+	if (raw == null || raw.length == 0) return false;
+	if (parseInt(raw, 10) <= 0) return false;
+	return true;
+    },
 });
 
 Bsc.Matchup.FIXTURES = [
