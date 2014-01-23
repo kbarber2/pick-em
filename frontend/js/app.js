@@ -25,7 +25,6 @@ Bsc.BscController = Ember.ArrayController.extend({
 });
 
 Bsc.MatchupController = Ember.ObjectController.extend({
-    
     winnerColors: function() {
 	var winner = this.get('winner');
 	if (winner == null) return "";
@@ -49,6 +48,8 @@ Bsc.School = DS.Model.extend({
 });
 
 Bsc.Matchup = DS.Model.extend({
+    week: DS.attr('number'),
+    date: DS.attr('date'),
     awayTeam: DS.belongsTo('school'),
     homeTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
@@ -56,7 +57,6 @@ Bsc.Matchup = DS.Model.extend({
     winner: DS.belongsTo('school'),
 
     teams: function() {
-	var test = this.get('awayTeam').get('name');
 	return [this.get('awayTeam'), this.get('homeTeam')];
     }.property('awayTeam', 'homeTeam'),
 
@@ -67,24 +67,34 @@ Bsc.Matchup = DS.Model.extend({
 
 Bsc.Matchup.FIXTURES = [
     {
-	id: 1,
+	id: '1',
+	week: 13,
+	date: new Date('2013-11-23'),
 	awayTeam: 'Michigan State University',
 	homeTeam: 'Northwestern University',
 	line: 7.5,
 	winner: 'Michigan State University',
+	points: '40',
     },
     {
-	id: 2,
+	id: '2',
+	week: 13,
+	date: new Date('2013-11-23'),
 	awayTeam: 'University of Illinois',
 	homeTeam: 'Purdue University',
 	line: 6.5,
+	winner: null,
+	points: null,
     },
     {
-	id: 3,
+	id: '3',
+	week: 13,
+	date: new Date('2013-11-23'),
 	awayTeam: 'University of Michigan',
 	homeTeam: 'University of Iowa',
 	line: -6.5,
-	winner: 'University of Michigan'
+	winner: 'University of Michigan',
+	points: null,
     },
 ];
 
