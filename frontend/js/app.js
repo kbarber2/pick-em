@@ -3,7 +3,8 @@ window.Bsc = Ember.Application.createWithMixins(Bootstrap.Register);
 Bsc.ApplicationAdapter = DS.FixtureAdapter.extend();
 
 Bsc.Router.map(function() {
-    this.resource('bsc', { path: '/' });
+    this.resource('bsc', { path: '/' }, function() {
+    });
 });
 
 Bsc.BscRoute = Ember.Route.extend({
@@ -12,7 +13,13 @@ Bsc.BscRoute = Ember.Route.extend({
     }
 });
 
-Bsc.BscController = Ember.ArrayController.extend({
+Bsc.BscIndexRoute = Ember.Route.extend({
+    model: function() {
+	return this.modelFor('bsc');
+    }
+});
+
+Bsc.BscIndexController = Ember.ArrayController.extend({
     pointsAllocated: function() {
 	var total = this.calculateTotal();
 	return total.value;
@@ -21,6 +28,9 @@ Bsc.BscController = Ember.ArrayController.extend({
     // TODO: implement a version of this at the matchup controller level too
     allocatedColor: function() {
 	var total = this.calculateTotal();
+	if (total.isValid && total.value == 100) return "background-color:rgba(0,255,0,0.2)";
+	else if (!total.isValid) return "background-color:red";
+	else return "background-color:white";
 	return "background-color:" + (total.isValid ? "white" : "red");
     }.property('@each.points'),
 
@@ -58,9 +68,7 @@ Bsc.MatchupController = Ember.ObjectController.extend({
 	if (winner == null) return "";
 
 	// gross hack for now, I really hope this works when we use RESTAdapter...
-	var c = Bsc.School.FIXTURES.filter(function(school) {
-	    return school.id == winner.id;
-	});
+	var c = Bsc.School.FIXTURES.filterBy('id', winner.id);
 	winner = c[0];
 	
 	return 'color:' + winner.color1 + ';background-color:' + winner.color2;
