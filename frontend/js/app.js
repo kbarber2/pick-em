@@ -4,6 +4,7 @@ Bsc.ApplicationAdapter = DS.FixtureAdapter.extend();
 
 Bsc.Router.map(function() {
     this.resource('bsc', { path: '/' }, function() {
+	this.resource('week', { path: ':week_id' });
     });
 });
 
@@ -111,6 +112,12 @@ Bsc.Matchup = DS.Model.extend({
     },
 });
 
+Bsc.Week = DS.Model.extend({
+    number: DS.attr('number'),
+    year: DS.attr('year'),
+    matchups: DS.hasMany('matchup'),
+});
+
 Bsc.Matchup.FIXTURES = [
     {
 	id: '1',
@@ -142,6 +149,41 @@ Bsc.Matchup.FIXTURES = [
 	winner: 'University of Michigan',
 	points: null,
     },
+    {
+	id: '4',
+	week: 12,
+	date: new Date('2013-11-16'),
+	awayTeam: 'Indiana University',
+	homeTeam: 'University of Wisconsin',
+	line: -20.5,
+	winner: null,
+	points: 25,
+    },
+    {
+	id: '5',
+	week: 12,
+	date: new Date('2013-11-16'),
+	awayTeam: 'Ohio State University',
+	homeTeam: 'University of Illinois',
+	line: 32.5,
+	winner: 'Ohio State University',
+	points: null,
+    },
+];
+
+Bsc.Week.FIXTURES = [
+    {
+	id: '1',
+	number: 13,
+	year: 2013,
+	matchups: ['1', '2', '3']
+    },
+    {
+	id: '2',
+	number: 12,
+	year: 2013,
+	matchups: ['4', '5']
+    }
 ];
 
 Bsc.School.FIXTURES = [
@@ -158,8 +200,8 @@ Bsc.School.FIXTURES = [
 	name: 'Indiana',
 	abbrev: 'IU',
 	mascot: 'Hoosiers',
-	color1: '#7D110C',
-	color2: '#E1D8B7',
+	color2: '#7D110C',
+	color1: '#E1D8B7',
     },
     {
 	id: 'University of Iowa',
@@ -215,7 +257,7 @@ Bsc.School.FIXTURES = [
 	abbrev: 'OSU',
 	mascot: 'Buckeyes',
 	color1: '#BB0000',
-	color2: '#666666',
+	color2: 'rgba(102,102,102, 0.5)'
     },
     {
 	id: 'Pennsylvania State University',
@@ -238,7 +280,7 @@ Bsc.School.FIXTURES = [
 	name: 'Wisconsin',
 	abbrev: 'WI',
 	mascot: 'Badgers',
-	color1: '#C41E3A',
-	color2: '#FFFFFF',
+	color2: '#C41E3A',
+	color1: '#FFFFFF',
     },
 ];
