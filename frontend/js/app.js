@@ -1,5 +1,5 @@
 //App = Ember.Application.create();
-window.Bsc = Ember.Application.createWithMixins(Bootstrap.Register);
+window.Bsc = Ember.Application.create();
 Bsc.ApplicationAdapter = DS.FixtureAdapter.extend();
 
 Bsc.Router.map(function() {
