@@ -75,8 +75,17 @@ Bsc.WeekController = Ember.ObjectController.extend({
     },
 
     canEdit: function() {
-	return Date.now() < this.get('first_game_time');
-    }.property('first_game_time'),
+	var now = Date.now();
+	var cutoff = false;
+
+	this.get('matchups').forEach(function(matchup) {
+	    if (now >= matchup.get('kickoff')) {
+		cutoff = true;
+	    }
+	});
+
+	return !cutoff;
+    }.property('matchups.@each.kickoff'),
 });
 
 Bsc.MatchupController = Ember.ObjectController.extend({
@@ -104,7 +113,7 @@ Bsc.School = DS.Model.extend({
 
 Bsc.Matchup = DS.Model.extend({
     week: DS.attr('number'),
-    date: DS.attr('date'),
+    kickoff: DS.attr('date'),
     awayTeam: DS.belongsTo('school'),
     homeTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
@@ -134,14 +143,13 @@ Bsc.Week = DS.Model.extend({
     number: DS.attr('number'),
     year: DS.attr('year'),
     matchups: DS.hasMany('matchup'),
-    first_game_time: DS.attr('date'),
 });
 
 Bsc.Matchup.FIXTURES = [
     {
 	id: '1',
 	week: 13,
-	date: new Date('2013-11-23'),
+	kickoff: new Date(2013, 11, 23, 15, 30, 0),
 	awayTeam: 'Michigan State University',
 	homeTeam: 'Northwestern University',
 	line: 7.5,
@@ -151,7 +159,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '2',
 	week: 13,
-	date: new Date('2013-11-23'),
+	kickoff: new Date(2013, 11, 23, 12, 0, 0),
 	awayTeam: 'University of Illinois',
 	homeTeam: 'Purdue University',
 	line: 6.5,
@@ -161,7 +169,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '3',
 	week: 13,
-	date: new Date('2013-11-23'),
+	kickoff: new Date(2013, 11, 23, 20, 0, 0),
 	awayTeam: 'University of Michigan',
 	homeTeam: 'University of Iowa',
 	line: -6.5,
@@ -171,7 +179,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '4',
 	week: 12,
-	date: new Date('2013-11-16'),
+	kickoff: new Date(2013, 11, 16, 12, 0, 0),
 	awayTeam: 'Indiana University',
 	homeTeam: 'University of Wisconsin',
 	line: -20.5,
@@ -181,7 +189,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '5',
 	week: 12,
-	date: new Date('2013-11-16'),
+	kickoff: new Date(2013, 11, 16, 15, 30, 0),
 	awayTeam: 'Ohio State University',
 	homeTeam: 'University of Illinois',
 	line: 32.5,
@@ -196,14 +204,12 @@ Bsc.Week.FIXTURES = [
 	number: 13,
 	year: 2013,
 	matchups: ['1', '2', '3'],
-	first_game_time: new Date(2014, 1, 25, 12, 0, 0),
     },
     {
 	id: '2',
 	number: 12,
 	year: 2013,
 	matchups: ['4', '5'],
-	first_game_time: new Date(2013, 11, 16, 12, 0, 0),
     }
 ];
 
