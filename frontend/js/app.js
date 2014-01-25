@@ -72,10 +72,16 @@ Bsc.WeekController = Ember.ObjectController.extend({
 	    valid = false;
 
 	return { isValid: valid, value: total };
-    }
+    },
+
+    canEdit: function() {
+	return Date.now() < this.get('first_game_time');
+    }.property('first_game_time'),
 });
 
 Bsc.MatchupController = Ember.ObjectController.extend({
+    needs: "week",
+    
     winnerColors: function() {
 	var winner = this.get('winner');
 	if (winner == null) return "";
@@ -128,6 +134,7 @@ Bsc.Week = DS.Model.extend({
     number: DS.attr('number'),
     year: DS.attr('year'),
     matchups: DS.hasMany('matchup'),
+    first_game_time: DS.attr('date'),
 });
 
 Bsc.Matchup.FIXTURES = [
@@ -188,13 +195,15 @@ Bsc.Week.FIXTURES = [
 	id: '1',
 	number: 13,
 	year: 2013,
-	matchups: ['1', '2', '3']
+	matchups: ['1', '2', '3'],
+	first_game_time: new Date(2014, 1, 25, 12, 0, 0),
     },
     {
 	id: '2',
 	number: 12,
 	year: 2013,
-	matchups: ['4', '5']
+	matchups: ['4', '5'],
+	first_game_time: new Date(2013, 11, 16, 12, 0, 0),
     }
 ];
 
