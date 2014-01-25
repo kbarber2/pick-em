@@ -1,30 +1,41 @@
-//App = Ember.Application.create();
 window.Bsc = Ember.Application.create();
 Bsc.ApplicationAdapter = DS.FixtureAdapter.extend();
 
 Bsc.Router.map(function() {
     this.resource('bsc', { path: '/' }, function() {
-	this.resource('week', { path: ':week_id' });
+	this.resource('week', { path: '/week/:week_id' });
     });
 });
 
 Bsc.BscRoute = Ember.Route.extend({
     model: function() {
-	return this.store.find('matchup');
+	// need to do this to force the fixture to load for some reason
+	this.store.find('matchup');
+	return this.store.find('week');
     }
 });
 
 Bsc.BscIndexRoute = Ember.Route.extend({
     model: function() {
-	return this.modelFor('bsc');
+	return Bsc.Week.FIXTURES[0];
     }
 });
 
-Bsc.BscIndexController = Ember.ArrayController.extend({
+Bsc.WeekRoute = Ember.Route.extend({
+    model: function(params) {
+	//return this.store.find('matchup', { week: params.week_id });
+	var weeks = Bsc.Week.FIXTURES.filter(function(week) {
+	    return week.id == parseInt(params.week_id);
+	});
+	return weeks.length > 0 ? weeks[0] : null;
+    },
+});
+
+Bsc.WeekController = Ember.ObjectController.extend({
     pointsAllocated: function() {
 	var total = this.calculateTotal();
 	return total.value;
-    }.property('@each.points'),
+    }.property('matchups.@each.points'),
 
     // TODO: implement a version of this at the matchup controller level too
     allocatedColor: function() {
@@ -33,16 +44,17 @@ Bsc.BscIndexController = Ember.ArrayController.extend({
 	else if (!total.isValid) return "background-color:red";
 	else return "background-color:white";
 	return "background-color:" + (total.isValid ? "white" : "red");
-    }.property('@each.points'),
+    }.property('matchups.@each.points'),
 
     pointsValid: function() {
 	var total = this.calculateTotal();
 	return total.isValid;
-    }.property('@each.points'),
+    }.property('matchups.@each.points'),
     
     calculateTotal: function() {
 	var valid = true;
-	var total = this.reduce(function(prev, current) {
+	var matchups = this.get('matchups');
+	var total = matchups.reduce(function(prev, current) {
 	    if (!current.pointsValid()) {
 		valid = false;
 		return prev;
