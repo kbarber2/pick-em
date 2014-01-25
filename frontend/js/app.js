@@ -149,7 +149,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '1',
 	week: 13,
-	kickoff: new Date(2013, 11, 23, 15, 30, 0),
+	kickoff: new Date(2014, 11, 23, 15, 30, 0),
 	awayTeam: 'Michigan State University',
 	homeTeam: 'Northwestern University',
 	line: 7.5,
@@ -159,7 +159,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '2',
 	week: 13,
-	kickoff: new Date(2013, 11, 23, 12, 0, 0),
+	kickoff: new Date(2014, 11, 23, 12, 0, 0),
 	awayTeam: 'University of Illinois',
 	homeTeam: 'Purdue University',
 	line: 6.5,
@@ -169,7 +169,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '3',
 	week: 13,
-	kickoff: new Date(2013, 11, 23, 20, 0, 0),
+	kickoff: new Date(2014, 11, 23, 20, 0, 0),
 	awayTeam: 'University of Michigan',
 	homeTeam: 'University of Iowa',
 	line: -6.5,
