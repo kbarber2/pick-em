@@ -11,6 +11,8 @@ Bsc.BscRoute = Ember.Route.extend({
     model: function() {
 	// need to do this to force the fixture to load for some reason
 	this.store.find('matchup');
+	this.store.find('bet');
+	
 	return this.store.find('week');
     }
 });
@@ -35,7 +37,7 @@ Bsc.WeekController = Ember.ObjectController.extend({
     pointsAllocated: function() {
 	var total = this.calculateTotal();
 	return total.value;
-    }.property('matchups.@each.points'),
+    }.property('matchups.@each.bet.points'),
 
     // TODO: implement a version of this at the matchup controller level too
     allocatedColor: function() {
@@ -44,12 +46,12 @@ Bsc.WeekController = Ember.ObjectController.extend({
 	else if (!total.isValid) return "background-color:red";
 	else return "background-color:white";
 	return "background-color:" + (total.isValid ? "white" : "red");
-    }.property('matchups.@each.points'),
+    }.property('matchups.@each.bet.points'),
 
     pointsValid: function() {
 	var total = this.calculateTotal();
 	return total.isValid;
-    }.property('matchups.@each.points'),
+    }.property('matchups.@each.bet.points'),
     
     calculateTotal: function() {
 	var valid = true;
@@ -60,10 +62,16 @@ Bsc.WeekController = Ember.ObjectController.extend({
 		return prev;
 	    }
 
-	    var val = parseInt(current.get('points'), 10);
-	    if (val < 0) {
-		val = 0;
+	    var val = 0;
+	    var bet = current.get('bet');
+	    
+	    if (!bet) {
 		valid = false;
+	    } else {
+		val = parseInt(bet.get('points'), 10);
+		if (val < 0) {
+		    valid = false;
+		}
 	    }
 	    return prev + val;
 	}, 0);
@@ -92,15 +100,17 @@ Bsc.MatchupController = Ember.ObjectController.extend({
     needs: "week",
     
     winnerColors: function() {
-	var winner = this.get('winner');
-	if (winner == null) return "";
+	var bet = this.get('bet');
+	if (!bet) return "";
+	var winner = bet.get('winner');
+	if (!winner) return "";
 
 	// gross hack for now, I really hope this works when we use RESTAdapter...
 	var c = Bsc.School.FIXTURES.filterBy('id', winner.id);
 	winner = c[0];
 	
 	return 'color:' + winner.color1 + ';background-color:' + winner.color2;
-    }.property('winner'),
+    }.property('bet.winner'),
 });
 
 Bsc.School = DS.Model.extend({
@@ -111,14 +121,18 @@ Bsc.School = DS.Model.extend({
     color2: DS.attr('string'),
 });
 
+Bsc.Bet = DS.Model.extend({
+    winner: DS.belongsTo('school'),
+    points: DS.attr('number'),
+});
+
 Bsc.Matchup = DS.Model.extend({
     week: DS.attr('number'),
     kickoff: DS.attr('date'),
     awayTeam: DS.belongsTo('school'),
     homeTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
-    points: DS.attr('number', { defaultValue: 0 }),
-    winner: DS.belongsTo('school'),
+    bet: DS.belongsTo('bet'),
 
     teams: function() {
 	return [this.get('awayTeam'), this.get('homeTeam')];
@@ -131,7 +145,9 @@ Bsc.Matchup = DS.Model.extend({
     // TODO: need to put a check in the controller if the points exceed
     // (100 - matchups.length)
     pointsValid: function() {
-	var raw = this.get('points');
+	var bet = this.get('bet');
+	if (!bet) return false;
+	var raw = bet.get('points');
 	if (isNaN(raw)) return false;
 	if (raw == null || raw.length == 0) return false;
 	if (parseInt(raw, 10) <= 0) return false;
@@ -145,6 +161,34 @@ Bsc.Week = DS.Model.extend({
     matchups: DS.hasMany('matchup'),
 });
 
+Bsc.Bet.FIXTURES = [
+    {
+	id: '1',
+	winner: 'Michigan State University',
+	points: '40',
+    },
+    {
+	id: '2',
+	winner: null,
+	points: null,
+    },
+    {
+	id: '3',
+	winner: 'University of Michigan',
+	points: null,
+    },
+    {
+	id: '4',
+	winner: null,
+	points: 25,
+    },
+    {
+	id: '5',
+	winner: 'Ohio State University',
+	points: null,
+    },
+];
+
 Bsc.Matchup.FIXTURES = [
     {
 	id: '1',
@@ -153,8 +197,7 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'Michigan State University',
 	homeTeam: 'Northwestern University',
 	line: 7.5,
-	winner: 'Michigan State University',
-	points: '40',
+	bet: 1,
     },
     {
 	id: '2',
@@ -163,8 +206,7 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'University of Illinois',
 	homeTeam: 'Purdue University',
 	line: 6.5,
-	winner: null,
-	points: null,
+	bet: 2,
     },
     {
 	id: '3',
@@ -173,8 +215,7 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'University of Michigan',
 	homeTeam: 'University of Iowa',
 	line: -6.5,
-	winner: 'University of Michigan',
-	points: null,
+	bet: 3,
     },
     {
 	id: '4',
@@ -183,8 +224,7 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'Indiana University',
 	homeTeam: 'University of Wisconsin',
 	line: -20.5,
-	winner: null,
-	points: 25,
+	bet: 4,
     },
     {
 	id: '5',
@@ -193,8 +233,7 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'Ohio State University',
 	homeTeam: 'University of Illinois',
 	line: 32.5,
-	winner: 'Ohio State University',
-	points: null,
+	bet: 5,
     },
 ];
 

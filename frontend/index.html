@@ -102,13 +102,13 @@
 	  <td>{{#if homeIsFavored}} {{line}} {{else}} +{{line}} {{/if}}</td>
 	  <td>
 	    {{#if controllers.week.canEdit}}
-	    {{view Ember.Select content=teams selection=winner prompt="Choose a winner"
+	    {{view Ember.Select content=teams selection=bet.winner prompt="Choose a winner"
 	      optionValuePath="content.id" optionLabelPath="content.name"}}
 	    {{else}}
-	    {{winner.name}}
+	    {{bet.winner.name}}
 	    {{/if}}
 	  </td>
-	  <td><div>{{#if controllers.week.canEdit}} {{input value=points}} {{else}} {{points}} {{/if}}</div></td>
+	  <td><div>{{#if controllers.week.canEdit}} {{input value=bet.points}} {{else}} {{bet.points}} {{/if}}</div></td>
 	</tr>
 	{{/each}}
       </tbody>
