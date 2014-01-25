@@ -10,6 +10,7 @@ Bsc.Router.map(function() {
 Bsc.BscRoute = Ember.Route.extend({
     model: function() {
 	// need to do this to force the fixture to load for some reason
+	this.store.find('school');
 	this.store.find('matchup');
 	this.store.find('bet');
 	
@@ -34,54 +35,24 @@ Bsc.WeekRoute = Ember.Route.extend({
 });
 
 Bsc.WeekController = Ember.ObjectController.extend({
-    pointsAllocated: function() {
-	var total = this.calculateTotal();
-	return total.value;
-    }.property('matchups.@each.bet.points'),
+    // TODO this is incorrect for multiple users
+    pointTotals: function() {
+	var totals = { valid: true, total: 0 }
 
-    // TODO: implement a version of this at the matchup controller level too
-    allocatedColor: function() {
-	var total = this.calculateTotal();
-	if (total.isValid && total.value == 100) return "background-color:rgba(0,255,0,0.2)";
-	else if (!total.isValid) return "background-color:red";
-	else return "background-color:white";
-	return "background-color:" + (total.isValid ? "white" : "red");
-    }.property('matchups.@each.bet.points'),
+	this.get('bets').forEach(function(bet) {
+	    var value = bet.value();
+	    if (isNaN(value))
+		totals.valid = false;
+	    else
+		totals.total += value;
+	});
 
-    pointsValid: function() {
-	var total = this.calculateTotal();
-	return total.isValid;
-    }.property('matchups.@each.bet.points'),
+	if (totals.total < 0 || totals.total > 100)
+	    totals.valid = false;
+	
+	return [totals];
+    }.property('bets.@each.points'),
     
-    calculateTotal: function() {
-	var valid = true;
-	var matchups = this.get('matchups');
-	var total = matchups.reduce(function(prev, current) {
-	    if (!current.pointsValid()) {
-		valid = false;
-		return prev;
-	    }
-
-	    var val = 0;
-	    var bet = current.get('bet');
-	    
-	    if (!bet) {
-		valid = false;
-	    } else {
-		val = parseInt(bet.get('points'), 10);
-		if (val < 0) {
-		    valid = false;
-		}
-	    }
-	    return prev + val;
-	}, 0);
-
-	if (total > 100 || total < 0)
-	    valid = false;
-
-	return { isValid: valid, value: total };
-    },
-
     canEdit: function() {
 	var now = Date.now();
 	var cutoff = false;
@@ -99,18 +70,34 @@ Bsc.WeekController = Ember.ObjectController.extend({
 Bsc.MatchupController = Ember.ObjectController.extend({
     needs: "week",
     
+    orderedBets: function() {
+	var parent = this.parentController;
+	var allBets = parent.get('bets');
+	var bets = [];
+	var myId = this.get('id');
+
+	allBets.forEach(function(bet) {
+	    var matchup = bet.get('matchup');
+	    if (matchup.get('id') == myId)
+		bets.push(bet);
+	});
+	
+	return bets;
+    }.property('parent.bets'),
+});
+
+Bsc.BetController = Ember.ObjectController.extend({
+    needs: "week",
+
     winnerColors: function() {
-	var bet = this.get('bet');
-	if (!bet) return "";
-	var winner = bet.get('winner');
+	var winner = this.get('winner');
 	if (!winner) return "";
 
-	// gross hack for now, I really hope this works when we use RESTAdapter...
-	var c = Bsc.School.FIXTURES.filterBy('id', winner.id);
-	winner = c[0];
+	var c1 = winner.get('color1');
+	var c2 = winner.get('color2');
 	
-	return 'color:' + winner.color1 + ';background-color:' + winner.color2;
-    }.property('bet.winner'),
+	return 'color:' + c1 + ';background-color:' + c2;
+    }.property('winner'),
 });
 
 Bsc.School = DS.Model.extend({
@@ -122,8 +109,19 @@ Bsc.School = DS.Model.extend({
 });
 
 Bsc.Bet = DS.Model.extend({
+    matchup: DS.belongsTo('matchup'),
     winner: DS.belongsTo('school'),
     points: DS.attr('number'),
+
+    value: function() {
+	var raw = this.get('points');
+	if (isNaN(raw)) return NaN;
+	if (raw == null || raw.length == 0) return NaN;
+	var asInt = parseInt(raw, 10);
+	// < 1 because each game must have at least one point
+	if (asInt < 1) return NaN;
+	return asInt;
+    },
 });
 
 Bsc.Matchup = DS.Model.extend({
@@ -132,7 +130,6 @@ Bsc.Matchup = DS.Model.extend({
     awayTeam: DS.belongsTo('school'),
     homeTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
-    bet: DS.belongsTo('bet'),
 
     teams: function() {
 	return [this.get('awayTeam'), this.get('homeTeam')];
@@ -142,48 +139,43 @@ Bsc.Matchup = DS.Model.extend({
 	return this.get('line') < 0;
     }.property('line'),
 
-    // TODO: need to put a check in the controller if the points exceed
-    // (100 - matchups.length)
-    pointsValid: function() {
-	var bet = this.get('bet');
-	if (!bet) return false;
-	var raw = bet.get('points');
-	if (isNaN(raw)) return false;
-	if (raw == null || raw.length == 0) return false;
-	if (parseInt(raw, 10) <= 0) return false;
-	return true;
-    },
 });
 
 Bsc.Week = DS.Model.extend({
     number: DS.attr('number'),
     year: DS.attr('year'),
     matchups: DS.hasMany('matchup'),
+    bets: DS.hasMany('bet'),
 });
 
 Bsc.Bet.FIXTURES = [
     {
 	id: '1',
+	matchup: 1,
 	winner: 'Michigan State University',
 	points: '40',
     },
     {
 	id: '2',
+	matchup: 2,
 	winner: null,
 	points: null,
     },
     {
 	id: '3',
+	matchup: 3,
 	winner: 'University of Michigan',
 	points: null,
     },
     {
 	id: '4',
+	matchup: 4,
 	winner: null,
 	points: 25,
     },
     {
 	id: '5',
+	matchup: 5,
 	winner: 'Ohio State University',
 	points: null,
     },
@@ -197,7 +189,6 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'Michigan State University',
 	homeTeam: 'Northwestern University',
 	line: 7.5,
-	bet: 1,
     },
     {
 	id: '2',
@@ -206,7 +197,6 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'University of Illinois',
 	homeTeam: 'Purdue University',
 	line: 6.5,
-	bet: 2,
     },
     {
 	id: '3',
@@ -215,7 +205,6 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'University of Michigan',
 	homeTeam: 'University of Iowa',
 	line: -6.5,
-	bet: 3,
     },
     {
 	id: '4',
@@ -224,7 +213,6 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'Indiana University',
 	homeTeam: 'University of Wisconsin',
 	line: -20.5,
-	bet: 4,
     },
     {
 	id: '5',
@@ -233,7 +221,6 @@ Bsc.Matchup.FIXTURES = [
 	awayTeam: 'Ohio State University',
 	homeTeam: 'University of Illinois',
 	line: 32.5,
-	bet: 5,
     },
 ];
 
@@ -243,12 +230,14 @@ Bsc.Week.FIXTURES = [
 	number: 13,
 	year: 2013,
 	matchups: ['1', '2', '3'],
+	bets: [1, 2, 3],
     },
     {
 	id: '2',
 	number: 12,
 	year: 2013,
 	matchups: ['4', '5'],
+	bets: [4, 5],
     }
 ];
 

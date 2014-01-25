@@ -91,24 +91,35 @@
       <tfoot>
 	<tr>
 	  <td colspan="4" style="text-align: right">Total bet</td>
-	  <td {{bind-attr style=allocatedColor}}>{{pointsAllocated}}</td>
+	  {{#each pointTotals}}
+	  {{#if valid}}
+	  <td>{{total}}</td>
+	  {{else}}
+	  <td class="danger">{{total}}</td>
+	  {{/if}}
+	  {{/each}}
 	</tr>
       </tfoot>
       <tbody>
 	{{#each matchup in matchups itemController="matchup"}}
-	<tr {{bind-attr style=winnerColors}}>
+	<tr>
 	  <td>{{awayTeam.name}}</td>
 	  <td>{{homeTeam.name}}</td>
 	  <td>{{#if homeIsFavored}} {{line}} {{else}} +{{line}} {{/if}}</td>
-	  <td>
+
+	  {{#each orderedBets itemController="bet"}}
+	  <td {{bind-attr style=winnerColors}}>
 	    {{#if controllers.week.canEdit}}
-	    {{view Ember.Select content=teams selection=bet.winner prompt="Choose a winner"
+	    {{view Ember.Select content=matchup.teams selection=winner prompt="Choose a winner"
 	      optionValuePath="content.id" optionLabelPath="content.name"}}
 	    {{else}}
-	    {{bet.winner.name}}
+	    {{winner.name}}
 	    {{/if}}
 	  </td>
-	  <td><div>{{#if controllers.week.canEdit}} {{input value=bet.points}} {{else}} {{bet.points}} {{/if}}</div></td>
+	  <td {{bind-attr style=winnerColors}}>
+	    {{#if controllers.week.canEdit}} {{input value=points}} {{else}} {{points}} {{/if}}
+	  </td>
+	  {{/each}}
 	</tr>
 	{{/each}}
       </tbody>
