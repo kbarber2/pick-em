@@ -21,7 +21,13 @@ Bsc.BscRoute = Ember.Route.extend({
 Bsc.BscIndexRoute = Ember.Route.extend({
     model: function() {
 	return Bsc.Week.FIXTURES[0];
-    }
+    },
+
+    renderTemplate: function(controller) {
+	var c = this.controllerFor('week');
+	c.set('model', controller.get('model'));
+	this.render('week', { controller: c });
+    },
 });
 
 Bsc.WeekRoute = Ember.Route.extend({
