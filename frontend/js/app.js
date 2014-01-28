@@ -40,6 +40,13 @@ Bsc.WeekRoute = Ember.Route.extend({
     },
 });
 
+Bsc.BscController = Ember.ArrayController.extend({
+    // TODO: need to figure out how to get the currently selected week
+    currentWeek: function() {
+	return '';
+    }.property('weeks'),
+});
+
 Bsc.WeekController = Ember.ObjectController.extend({
     // TODO this is incorrect for multiple users
     pointTotals: function() {

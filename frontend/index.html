@@ -34,10 +34,11 @@
 	  <li><a href="#">Link</a></li>
 	  -->
 	  <li class="dropdown">
-	    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Week <b class="caret"></b></a>
+	    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Week {{currentWeek}} <b class="caret"></b></a>
+	    <!-- TODO: need to fix the active selection, this doesn't really work -->
 	    <ul class="dropdown-menu">
 	      {{#each}}
-	      <li>{{#link-to 'week' this}}{{number}}{{/link-to}}</li>
+	      <li>{{#link-to 'week' this tagName="li" href=false}}<a {{bind-attr href="view.href"}}>{{number}}</a>{{/link-to}}</li>
 	      {{/each}}
 	    </ul>
 	  </li>
