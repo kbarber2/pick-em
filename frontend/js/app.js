@@ -13,7 +13,8 @@ Bsc.BscRoute = Ember.Route.extend({
 	this.store.find('school');
 	this.store.find('matchup');
 	this.store.find('bet');
-	
+	this.store.find('user');
+
 	return this.store.find('week');
     }
 });
@@ -32,11 +33,12 @@ Bsc.BscIndexRoute = Ember.Route.extend({
 
 Bsc.WeekRoute = Ember.Route.extend({
     model: function(params) {
-	//return this.store.find('matchup', { week: params.week_id });
 	var weeks = Bsc.Week.FIXTURES.filter(function(week) {
 	    return week.id == parseInt(params.week_id);
 	});
-	return weeks.length > 0 ? weeks[0] : null;
+
+	var week = weeks.length > 0 ? weeks[0] : null;
+	return week;
     },
 });
 
@@ -48,22 +50,32 @@ Bsc.BscController = Ember.ArrayController.extend({
 });
 
 Bsc.WeekController = Ember.ObjectController.extend({
-    // TODO this is incorrect for multiple users
     pointTotals: function() {
-	var totals = { valid: true, total: 0 }
+	var totals = [];
+	var users = this.get('orderedUsers');
+	var matchups = this.get('matchups');
+	var controller = this;
 
-	this.get('bets').forEach(function(bet) {
-	    var value = bet.value();
-	    if (isNaN(value))
-		totals.valid = false;
-	    else
-		totals.total += value;
+	// TODO: it'd be much nicer if this could be per bet, rather than
+	// recalculating the whole thing every time
+	users.forEach(function(user) {
+	    var total = { valid: true, total: 0 };
+	    
+	    matchups.forEach(function(matchup) {
+		var bet = controller.findBetFor(user, matchup);
+		if (bet == undefined || isNaN(bet.value()))
+		    total.valid = false;
+		else
+		    total.total += bet.value();
+	    });
+
+	    if (total.total < 0 || total.total > 100)
+		total.valid = false;
+	    
+	    totals.push(total);
 	});
 
-	if (totals.total < 0 || totals.total > 100)
-	    totals.valid = false;
-	
-	return [totals];
+	return totals;
     }.property('bets.@each.points'),
     
     canEdit: function() {
@@ -78,25 +90,37 @@ Bsc.WeekController = Ember.ObjectController.extend({
 
 	return !cutoff;
     }.property('matchups.@each.kickoff'),
+
+    orderedUsers: function() {
+	return this.get('users').sortBy('order');
+    }.property('users'),
+
+    findBetFor: function(user, matchup) {
+	return this.get('bets').find(function(bet) {
+	    return bet.get('matchup').get('id') == matchup.get('id') &&
+		bet.get('user').get('id') == user.get('id')
+	});
+    },
 });
 
 Bsc.MatchupController = Ember.ObjectController.extend({
     needs: "week",
-    
-    orderedBets: function() {
-	var parent = this.parentController;
-	var allBets = parent.get('bets');
-	var bets = [];
-	var myId = this.get('id');
 
-	allBets.forEach(function(bet) {
-	    var matchup = bet.get('matchup');
-	    if (matchup.get('id') == myId)
-		bets.push(bet);
-	});
-	
-	return bets;
-    }.property('parent.bets'),
+    orderedBets: function() {
+	var parent = this.get('controllers.week');
+	var users = parent.get('orderedUsers');
+
+	var bets = users.map(function(user) {
+	    var bet = parent.findBetFor(user, this);
+
+	    if (bet == undefined)
+		bet = { user: user, matchup: this, winner: null, points: 0 };
+	    
+	    return bet;
+	}, this.get('model'));
+
+	return bets;	    
+    }.property(),
 });
 
 Bsc.BetController = Ember.ObjectController.extend({
@@ -113,6 +137,11 @@ Bsc.BetController = Ember.ObjectController.extend({
     }.property('winner'),
 });
 
+Bsc.User = DS.Model.extend({
+    name: DS.attr('string'),
+    order: DS.attr('number'),
+});
+
 Bsc.School = DS.Model.extend({
     name: DS.attr('string'),
     abbrev: DS.attr('string'),
@@ -122,6 +151,7 @@ Bsc.School = DS.Model.extend({
 });
 
 Bsc.Bet = DS.Model.extend({
+    user: DS.belongsTo('user'),
     matchup: DS.belongsTo('matchup'),
     winner: DS.belongsTo('school'),
     points: DS.attr('number'),
@@ -159,46 +189,93 @@ Bsc.Week = DS.Model.extend({
     year: DS.attr('year'),
     matchups: DS.hasMany('matchup'),
     bets: DS.hasMany('bet'),
+    users: DS.hasMany('user'),
 });
+
+Bsc.User.FIXTURES = [
+    {
+	id: '1',
+	name: 'Keith',
+	order: 1
+    },
+    {
+	id: '2',
+	name: 'Aaron',
+	order: 3,
+    },
+    {
+	id: '3',
+	name: 'Frank',
+	order: 2
+    }
+];
 
 Bsc.Bet.FIXTURES = [
     {
 	id: '1',
+	user: 1,
 	matchup: 1,
 	winner: 'Michigan State University',
 	points: '40',
     },
     {
 	id: '2',
+	user: 1,
 	matchup: 2,
 	winner: null,
 	points: null,
     },
     {
 	id: '3',
+	user: 1,
 	matchup: 3,
 	winner: 'University of Michigan',
 	points: null,
     },
     {
 	id: '4',
+	user: 1,
 	matchup: 4,
 	winner: null,
 	points: 25,
     },
     {
 	id: '5',
+	user: 1,
 	matchup: 5,
 	winner: 'Ohio State University',
 	points: null,
     },
+    {
+	id: '6',
+	user: 2,
+	matchup: 1,
+	winner: 'Michigan State University',
+	points: '50',
+    },
+    {
+	id: '7',
+	user: 2,
+	matchup: 2,
+	winner: 'Purdue University',
+	points: null,
+    },
+    {
+	id: '8',
+	user: 2,
+	matchup: 3,
+	winner: 'University of Michigan',
+	points: null,
+    },
 ];
+
+WEEK_13_YEAR = 2014;
 
 Bsc.Matchup.FIXTURES = [
     {
 	id: '1',
 	week: 13,
-	kickoff: new Date(2014, 11, 23, 15, 30, 0),
+	kickoff: new Date(WEEK_13_YEAR, 11, 23, 15, 30, 0),
 	awayTeam: 'Michigan State University',
 	homeTeam: 'Northwestern University',
 	line: 7.5,
@@ -206,7 +283,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '2',
 	week: 13,
-	kickoff: new Date(2014, 11, 23, 12, 0, 0),
+	kickoff: new Date(WEEK_13_YEAR, 11, 23, 12, 0, 0),
 	awayTeam: 'University of Illinois',
 	homeTeam: 'Purdue University',
 	line: 6.5,
@@ -214,7 +291,7 @@ Bsc.Matchup.FIXTURES = [
     {
 	id: '3',
 	week: 13,
-	kickoff: new Date(2014, 11, 23, 20, 0, 0),
+	kickoff: new Date(WEEK_13_YEAR, 11, 23, 20, 0, 0),
 	awayTeam: 'University of Michigan',
 	homeTeam: 'University of Iowa',
 	line: -6.5,
@@ -243,7 +320,8 @@ Bsc.Week.FIXTURES = [
 	number: 13,
 	year: 2013,
 	matchups: ['1', '2', '3'],
-	bets: [1, 2, 3],
+	bets: [1, 2, 3, 6, 7, 8],
+	users: [1, 2, 3],
     },
     {
 	id: '2',
@@ -251,6 +329,7 @@ Bsc.Week.FIXTURES = [
 	year: 2013,
 	matchups: ['4', '5'],
 	bets: [4, 5],
+	users: [1, 2, 3],
     }
 ];
 
@@ -258,7 +337,7 @@ Bsc.School.FIXTURES = [
     {
 	id: 'University of Illinois',
 	name: 'Illinois',
-	abbrev: 'UI',
+	abbrev: 'Illinois',
 	mascot: 'Illini',
 	color1: '#003C7D',
 	color2: '#F47F24',
