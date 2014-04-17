@@ -8,6 +8,20 @@ Bsc.Router.map(function() {
     });
 });
 
+Bsc.AuthenticatedRoute = Ember.Route.extend({
+    beforeModel: function(transition) {
+	if (!this.controllerFor('login').get('auth_token')) {
+	    this.redirectToLogin(transition);
+	}
+    },
+
+    redirectToLogin: function(transition) {
+	var loginController = this.controllerFor('login');
+	loginController.set('nextTransition', transition);
+	this.transitionTo('login');
+    },
+});
+
 Bsc.BscRoute = Ember.Route.extend({
     model: function() {
 	// need to do this to force the fixture to load for some reason
@@ -20,7 +34,7 @@ Bsc.BscRoute = Ember.Route.extend({
     }
 });
 
-Bsc.BscIndexRoute = Ember.Route.extend({
+Bsc.BscIndexRoute = Bsc.AuthenticatedRoute.extend({
     model: function() {
 	return Bsc.Week.FIXTURES[0];
     },
@@ -32,7 +46,7 @@ Bsc.BscIndexRoute = Ember.Route.extend({
     },
 });
 
-Bsc.WeekRoute = Ember.Route.extend({
+Bsc.WeekRoute = Bsc.AuthenticatedRoute.extend({
     model: function(params) {
 	var weeks = Bsc.Week.FIXTURES.filter(function(week) {
 	    return week.id == parseInt(params.week_id);
@@ -208,7 +222,13 @@ Bsc.LoginController = Ember.Controller.extend({
     },
     
     login: function() {
-	alert('testing');
+	this.set('auth_token', 'abcd');
+
+	var nextTransition = this.get('nextTransition');
+	if (nextTransition) {
+	    nextTransition.retry();
+	    this.set('nextTransition', null);
+	}
     },
 });
 
