@@ -92,19 +92,6 @@ Bsc.WeekController = Ember.ObjectController.extend({
 
 	return totals;
     }.property('bets.@each.points'),
-    
-    canEdit: function() {
-	var now = Date.now();
-	var cutoff = false;
-
-	this.get('matchups').forEach(function(matchup) {
-	    if (now >= matchup.get('kickoff')) {
-		cutoff = true;
-	    }
-	});
-
-	return !cutoff;
-    }.property('matchups.@each.kickoff'),
 
     orderedUsers: function() {
 	return this.get('users').sortBy('order');
@@ -150,6 +137,17 @@ Bsc.BetController = Ember.ObjectController.extend({
 	
 	return 'color:' + c1 + ';background-color:' + c2;
     }.property('winner'),
+
+    canEdit: function() {
+	var matchup = this.get('matchup');
+
+	var now = Date.now();
+
+	if (now >= matchup.get('kickoff')) {
+	    return false;
+	}
+	return true;
+    }.property(),
 });
 
 Bsc.User = DS.Model.extend({
@@ -223,6 +221,7 @@ Bsc.LoginController = Ember.Controller.extend({
     
     login: function() {
 	this.set('auth_token', 'abcd');
+	this.set('user_id', 1);
 
 	var nextTransition = this.get('nextTransition');
 	if (nextTransition) {
