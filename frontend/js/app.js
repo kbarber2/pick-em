@@ -139,8 +139,12 @@ Bsc.BetController = Ember.ObjectController.extend({
     }.property('winner'),
 
     canEdit: function() {
-	var matchup = this.get('matchup');
+	var userid = this.controllerFor('login').get('user_id');
+	var betuser = this.get('user');
 
+	if (userid != betuser.get('id')) return false;
+	
+	var matchup = this.get('matchup');
 	var now = Date.now();
 
 	if (now >= matchup.get('kickoff')) {
