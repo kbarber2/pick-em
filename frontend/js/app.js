@@ -4,6 +4,7 @@ Bsc.ApplicationAdapter = DS.FixtureAdapter.extend();
 Bsc.Router.map(function() {
     this.resource('bsc', { path: '/' }, function() {
 	this.resource('week', { path: '/week/:week_id' });
+	this.resource('login');
     });
 });
 
@@ -190,6 +191,25 @@ Bsc.Week = DS.Model.extend({
     matchups: DS.hasMany('matchup'),
     bets: DS.hasMany('bet'),
     users: DS.hasMany('user'),
+});
+
+Bsc.LoginRoute = Ember.Route.extend({
+    setupController: function(controller, context) {
+	controller.reset();
+    },
+});
+
+Bsc.LoginController = Ember.Controller.extend({
+    reset: function() {
+	this.setProperties({
+	    username: "",
+	    password: ""
+	});
+    },
+    
+    login: function() {
+	alert('testing');
+    },
 });
 
 Bsc.User.FIXTURES = [
