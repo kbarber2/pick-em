@@ -3,6 +3,7 @@ package com.kb2msu.bsc.entity;
 import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Index;
 
 @Entity
 public class Bet {
@@ -47,7 +48,7 @@ public class Bet {
 
 	@Id private Long id;
 	public Ref<User> user;
-	public Ref<Matchup> matchup;
+	@Index public Ref<Matchup> matchup;
 	public Ref<School> winner;
 	public int points;
 }

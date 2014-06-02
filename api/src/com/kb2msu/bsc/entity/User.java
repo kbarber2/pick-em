@@ -9,6 +9,10 @@ public class User {
 
 	}
 
+	public String getID() {
+		return username;
+	}
+	
 	@Id public String username;
 	public String name;
 	public int order;

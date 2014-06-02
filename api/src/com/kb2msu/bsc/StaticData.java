@@ -138,7 +138,6 @@ public class StaticData {
 		m.awayTeam = Ref.create(schools.get(away));
 		m.homeTeam = Ref.create(schools.get(home));
 		m.line = line;
-		m.setId();
 		return m;
 	}
 
