@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -66,12 +67,11 @@ public class StaticData {
 		ofy.save().entities(matchups).now();
 	}
 
-	@SuppressWarnings({ "unchecked", "deprecation" })
+	@SuppressWarnings({ "deprecation" })
 	private static void loadWeeks(Objectify ofy) {
 		Week w = new Week();
 		w.season = 2013;
 		w.number = 12;
-		w.setID();
 
 		List<Matchup> matchups = ofy.load().type(Matchup.class).list();
 		Date date = new Date(2013 - 1900, 11, 17);
@@ -82,9 +82,9 @@ public class StaticData {
 				matches.add(m);
 		}
 
-		w.matchups = new Ref[matches.size()];
+		w.matchups = new ArrayList<Ref<Matchup>>(matches.size());
 		for (int i = 0; i < matches.size(); i++) {
-			w.matchups[i] = Ref.create(matches.get(i));
+			w.matchups.add(Ref.create(matches.get(i)));
 		}
 
 		ofy.save().entities(w).now();
@@ -93,11 +93,11 @@ public class StaticData {
 		w = new Week();
 		w.season = 2013;
 		w.number = 13;
-		w.setID();
 
-		w.matchups = new Ref[matchups.size()];
-		for (int i = 0; i < matchups.size(); i++)
-			w.matchups[i] = Ref.create(matchups.get(i));
+		w.matchups = new ArrayList<Ref<Matchup>>(matches.size());
+		for (int i = 0; i < matches.size(); i++) {
+			w.matchups.add(Ref.create(matches.get(i)));
+		}
 
 		ofy.save().entities(w).now();
 	}

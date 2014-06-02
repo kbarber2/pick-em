@@ -10,6 +10,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
@@ -46,12 +47,18 @@ public class WeekResource {
 		@Override
 		public JsonElement serialize(Week src, Type typeOfSrc,
 				JsonSerializationContext context) {
+			JsonObject result = new JsonObject();
+
 			JsonObject obj = new JsonObject();
 			obj.addProperty("number", src.number);
 			obj.addProperty("year", src.season);
-			return obj;
-		}
 
+			JsonArray array = new JsonArray();
+			//for (U)
+
+			result.add("week", obj);
+			return result;
+		}
 	}
 
 	private final Objectify mData;

@@ -12,4 +12,5 @@ public class User {
 	@Id public String username;
 	public String name;
 	public int order;
+	public boolean active = true;
 }
