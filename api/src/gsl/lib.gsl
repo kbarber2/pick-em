@@ -1,0 +1,18 @@
+function pluralize(name)
+   my.namelen = string.length(my.name)
+   if string.substr(my.name, my.namelen - 1, my.namelen) = "y"
+      return string.substr(my.name, 0, my.namelen - 2) + "ies"
+   elsif string.substr(my.name, my.namelen - 1, my.namelen) = "s"
+      return my.name
+   else
+      return my.name + "s"
+   endif
+endfunction
+
+function emberize(name)
+   return "$(string.substr(my.name, 0, 0) :lower)" + string.substr(my.name, 1)
+endfunction
+
+function isBaseType(type)
+   return type = "string" | type = "int"
+endfunction

@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<bsc script="bsc.gsl" package="com.kb2msu.bsc">
+	<objects>
+		<object name="User">
+			<properties>
+				<property name="ID" type="string" id="true"/>
+				<property name="Name" type="string"/>
+				<property name="Order" type="int"/>
+			</properties>
+		</object>
+		<object name="School">
+			<properties>
+				<property name="Name" type="string"/>
+				<property name="Abbreviation" type="string"/>
+				<property name="Mascot" type="string"/>
+				<property name="ForegroundColor" type="string"/>
+				<property name="BackgroundColor" type="string"/>
+			</properties>
+		</object>
+		<object name="Matchup">
+			<properties>
+				<property name="Kickoff" type="date"/>
+				<property name="AwayTeam" type="School"/>
+				<property name="HomeTeam" type="School"/>
+				<property name="Line" type="int"/>
+			</properties>
+		</object>
+		<object name="Bet">
+			<properties>
+				<property name="User" type="User"/>
+				<property name="Matchup" type="Matchup"/>
+				<property name="Winner" type="School"/>
+				<property name="Points" type="int"/>
+			</properties>
+		</object>
+	</objects>
+	<base-types>
+		<type name="int">
+			<mapped-type target="java" name="Integer"/>
+		</type>
+		<type name="string">
+			<mapped-type target="java" name="String"/>
+		</type>
+		<type name="date">
+			<mapped-type target="java" name="java.util.Date"/>
+		</type>
+	</base-types>
+</bsc>

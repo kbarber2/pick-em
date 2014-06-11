@@ -1,0 +1,35 @@
+.template 1
+.directory.create("entity")
+.output "entity/$(Name).java"
+package $(.package).entity;
+
+import com.googlecode.objectify.Ref;
+import com.googlecode.objectify.annotation.Entity;
+import com.googlecode.objectify.annotation.Id;
+
+@Entity
+public class $(Name) {
+.for property where typetype="complex"
+	public $(Type) get$(Name)() {
+		return $(Name).get();
+	}
+
+	public void set$(Name)($(Type) obj) {
+		$(Name) = Ref.create(obj);
+	}
+
+.endfor
+.for property
+.   if id ? "false" = "true"
+	@Id
+.   endif
+.   new
+.   if property.typetype = "base"
+	public $(Type) $(Name);
+.   else
+	public Ref<$(Type)> $(Name);
+.   endif
+.   endnew
+.endfor
+}
+.endtemplate

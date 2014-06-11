@@ -1,0 +1,93 @@
+.template 1
+.directory.create("endpoint")
+.output "endpoint/$(Name).java"
+package $(.package).endpoint;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.Response;
+import javax.ws.rs.core.MediaType;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Objectify;
+
+import $(.package).*;
+
+@Path("$(.emberName :no)")
+public class $(Name)Resource {
+	public $(Name)Resource {
+		mData = EntityService.ofy();
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAll() {
+		JsonArray out = new JsonArray();
+		List<$(Name)> objects = mData.load().type($(Name).class).list().now();
+		for ($(Name) object : objects) {
+			out.append(serialize(object));
+		}
+
+		return wrap(out);
+	}
+
+	@GET @Path("{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get(@PathParam id) {
+		$(Name) object = mData.load().type($(Name).class).first().now();
+		if (object == null)
+			return Response.status(Response.Status.NOT_FOUND).build();
+		return wrap(serialize(data));
+	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response create(String jdata) {
+		JsonObject data = unwrap(jdata);
+		$(Name) object = new $(Name)();
+
+.for property
+.   if defined(id)
+
+.   endif
+.   if isBaseType(type)
+		out.add("$(emberize(Name))", BaseTypes.serialize(object.get$(Name)()));
+.   else
+		out.add("$(emberize(Name))", null);
+.   endif
+.endfor
+	}
+
+	protected JsonObject serialize($(Name) object) {
+		JsonObject out = new JsonObject();
+.for property
+.   if isBaseType(type)
+		out.add("$(emberize(Name))", BaseTypes.serialize(object.get$(Name)()));
+.   else
+		out.add("$(emberize(Name))", null);
+.   endif
+.endfor
+		return out;
+	}
+
+	private static Response wrap(JsonElement data) {
+		JsonObject wrapper = new JsonObject();
+		wrapper.add("$(emberName :no)", out);
+		return Response.ok().entity(mGson.toJson(wrapper)).build();
+
+
+	private static JsonObject unwrap(String data) {
+		JsonElement e = new JsonParser().parse(data);
+		return e.getAsJsonObject().getAsJsonObject("$(emberName :no)");
+	}
+
+	private Gson mGson = new Gson();
+}
+.endtemplate

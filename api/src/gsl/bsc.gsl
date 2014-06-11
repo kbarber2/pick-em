@@ -1,0 +1,23 @@
+.template 0
+include("lib.gsl")
+
+for objects
+   for object
+      .emberName = "$(emberize(pluralize(Name)))"
+
+      for properties
+         for property
+            .typetype = defined(objects->object(name=.type)) ?? "complex" ? "base"
+            .type = bsc->base\-types->type(name=.type)->mapped\-type(target="java").name ? .type
+            copy to object
+         endfor
+         delete properties
+      endfor
+
+      gsl from "endpoints.gsl"
+      gsl from "entities.gsl"
+   endfor
+endfor
+
+save root
+.endtemplate
