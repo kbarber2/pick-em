@@ -1,7 +1,6 @@
 .template 1
-.directory.create("../../generated-src/entity")
-.output "../../generated-src/entity/$(Name).java"
-package $(.package).entity;
+.createJavaClass("../../generated-src", "$(package).entity", Name)
+package $(package).entity;
 
 import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.annotation.Entity;

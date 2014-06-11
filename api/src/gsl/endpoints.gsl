@@ -1,7 +1,6 @@
 .template 1
-.directory.create("../../generated-src/endpoint")
-.output "../../generated-src/endpoint/$(Name).java"
-package $(.package).endpoint;
+.createJavaClass("../../generated-src", "$(package).endpoint", Name)
+package $(package).endpoint;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

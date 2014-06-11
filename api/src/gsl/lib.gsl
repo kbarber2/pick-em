@@ -16,3 +16,9 @@ endfunction
 function isBaseType(type)
    return type = "string" | type = "int"
 endfunction
+
+function createJavaClass(path, package, name)
+   my.path = my.path + "/" + string.replace(my.package, ".|/")
+   directory.create(my.path)
+   output "$(my.path :no)/$(my.name :no).java"
+endfunction
