@@ -1,6 +1,6 @@
 .template 1
-.directory.create("entity")
-.output "entity/$(Name).java"
+.directory.create("../../generated-src/entity")
+.output "../../generated-src/entity/$(Name).java"
 package $(.package).entity;
 
 import com.googlecode.objectify.Ref;

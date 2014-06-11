@@ -1,6 +1,6 @@
 .template 1
-.directory.create("endpoint")
-.output "endpoint/$(Name).java"
+.directory.create("../../generated-src/endpoint")
+.output "../../generated-src/endpoint/$(Name).java"
 package $(.package).endpoint;
 
 import javax.ws.rs.GET;
