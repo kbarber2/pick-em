@@ -8,13 +8,23 @@ import com.googlecode.objectify.annotation.Id;
 
 @Entity
 public class $(Name) {
-.for property where typetype="complex"
+.for property where typetype <> "complex"
 	public $(Type) get$(Name)() {
-		return $(Name).get();
+		return m$(Name);
+	}
+
+	public void set$(Name)($(Type) value) {
+		m$(Name) = value;
+	}
+
+.endfor
+.for property where typetype = "complex"
+	public $(Type) get$(Name)() {
+		return m$(Name).get();
 	}
 
 	public void set$(Name)($(Type) obj) {
-		$(Name) = Ref.create(obj);
+		m$(Name) = Ref.create(obj);
 	}
 
 .endfor
@@ -24,9 +34,9 @@ public class $(Name) {
 .   endif
 .   new
 .   if property.typetype = "base"
-	public $(Type) $(Name);
+	private $(Type) m$(Name);
 .   else
-	public Ref<$(Type)> $(Name);
+	private Ref<$(Type)> m$(Name);
 .   endif
 .   endnew
 .endfor
