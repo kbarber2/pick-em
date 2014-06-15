@@ -3,7 +3,7 @@ include("lib.gsl")
 
 for objects
    for object
-      .emberName = "$(emberize(pluralize(Name)))"
+      .emberName = "$(emberize(pluralize(name)))"
 
       for properties
          for property
@@ -14,7 +14,6 @@ for objects
          delete properties
       endfor
 
-      gsl from "endpoints.gsl"
       gsl from "entities.gsl"
    endfor
 endfor

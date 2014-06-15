@@ -1,5 +1,6 @@
 .template 1
-.createJavaClass("../../generated-src", "$(package).entity", Name)
+.createJavaClass("../../generated-src", "$(package).entity", name)
+.ignorecase = 0
 package $(package).entity;
 
 import com.googlecode.objectify.Ref;
@@ -7,24 +8,24 @@ import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 
 @Entity
-public class $(Name) {
+public class $(name) {
 .for property where typetype <> "complex"
-	public $(Type) get$(Name)() {
-		return m$(Name);
+	public $(type) get$(name)() {
+		return m$(name);
 	}
 
-	public void set$(Name)($(Type) value) {
-		m$(Name) = value;
+	public void set$(name)($(type) value) {
+		m$(name) = value;
 	}
 
 .endfor
 .for property where typetype = "complex"
-	public $(Type) get$(Name)() {
-		return m$(Name).get();
+	public $(type) get$(name)() {
+		return m$(name).get();
 	}
 
-	public void set$(Name)($(Type) obj) {
-		m$(Name) = Ref.create(obj);
+	public void set$(name)($(type) obj) {
+		m$(name) = Ref.create(obj);
 	}
 
 .endfor
@@ -34,9 +35,9 @@ public class $(Name) {
 .   endif
 .   new
 .   if property.typetype = "base"
-	private $(Type) m$(Name);
+	private $(type) m$(name);
 .   else
-	private Ref<$(Type)> m$(Name);
+	private Ref<$(type)> m$(name);
 .   endif
 .   endnew
 .endfor
