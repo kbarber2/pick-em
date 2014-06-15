@@ -99,7 +99,7 @@
 	  <thead>
 	    <tr>
 	      <th>Name</th>
-	      {{#each fieldNames}}
+	      {{#each printNames}}
 	      <th>{{this}}</th>
 	      {{/each}}
 	    <tr>
@@ -108,7 +108,7 @@
 	  <tbody>
 	    {{#each thingsWithFields}}
 	    <tr>
-	      <td>Keith</td>
+	      <td>{{name}}</td>
 		{{view App.DynamicInputView}}
 	    </tr>
 	    {{/each}}
