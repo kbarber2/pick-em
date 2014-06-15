@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -16,7 +15,6 @@ import javax.servlet.ServletContext;
 import com.google.gson.Gson;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Objectify;
-import com.googlecode.objectify.Ref;
 import com.kb2msu.bsc.entity.Bet;
 import com.kb2msu.bsc.entity.Matchup;
 import com.kb2msu.bsc.entity.School;
@@ -27,8 +25,8 @@ public class StaticData {
 	public static boolean load(Objectify ofy, ServletContext ctx) {
 		try {
 			loadSchools(ofy, ctx);
-			loadMatchups(ofy);
 			loadWeeks(ofy);
+			loadMatchups(ofy);
 			loadUsers(ofy);
 			loadBets(ofy);
 			return true;
@@ -47,7 +45,7 @@ public class StaticData {
 		for (School s : schoolList) {
 			if (s == null) continue;
 			ofy.save().entities(s).now();
-			schools.put(s.abbreviation, s);
+			schools.put(s.getAbbreviation(), s);
 		}
 		reader.close();
 	}
@@ -56,12 +54,18 @@ public class StaticData {
 	private static void loadMatchups(Objectify ofy) {
 		int year = 2013;
 
+		Week w1 = null, w2 = null;
+		for (Week w : ofy.load().type(Week.class).list()) {
+			if (w.getNumber() == 12) w1 = w;
+			else if (w.getNumber() == 13) w2 = w;
+		}
+
 		Matchup[] matchups = new Matchup[] {
-				matchup(new Date(year - 1900, 11, 23, 15, 30, 0), "MSU", "NW", 75),
-				matchup(new Date(year - 1900, 11, 23, 12, 0, 0), "Illinois", "Purdue", 65),
-				matchup(new Date(year - 1900, 11, 23, 20, 0, 0), "UMich", "Iowa", -65),
-				matchup(new Date(year - 1900, 11, 16, 12, 0, 0), "IU", "WI", -205),
-				matchup(new Date(year - 1900, 11, 16, 15, 30, 0), "OSU", "Illinois", 325),
+				matchup(w2, new Date(year - 1900, 11, 23, 15, 30, 0), "MSU", "NW", 75),
+				matchup(w2, new Date(year - 1900, 11, 23, 12, 0, 0), "Illinois", "Purdue", 65),
+				matchup(w2, new Date(year - 1900, 11, 23, 20, 0, 0), "UMich", "Iowa", -65),
+				matchup(w1, new Date(year - 1900, 11, 16, 12, 0, 0), "IU", "WI", -205),
+				matchup(w1, new Date(year - 1900, 11, 16, 15, 30, 0), "OSU", "Illinois", 325),
 		};
 
 		ofy.save().entities(matchups).now();
@@ -70,74 +74,67 @@ public class StaticData {
 	@SuppressWarnings({ "deprecation" })
 	private static void loadWeeks(Objectify ofy) {
 		Week w = new Week();
-		w.season = 2013;
-		w.number = 12;
+		w.setSeason(2013);
+		w.setNumber(12);
 
 		List<Matchup> matchups = ofy.load().type(Matchup.class).list();
 		Date date = new Date(2013 - 1900, 11, 17);
 		List<Matchup> matches = new LinkedList<>();
 
 		for (Matchup m : matchups) {
-			if (m.kickoffTime.before(date))
+			if (m.getKickoff().before(date))
 				matches.add(m);
-		}
-
-		w.matchups = new ArrayList<Ref<Matchup>>(matches.size());
-		for (int i = 0; i < matches.size(); i++) {
-			w.matchups.add(Ref.create(matches.get(i)));
 		}
 
 		ofy.save().entities(w).now();
 		matchups.removeAll(matches);
 
 		w = new Week();
-		w.season = 2013;
-		w.number = 13;
-
-		w.matchups = new ArrayList<Ref<Matchup>>(matches.size());
-		for (int i = 0; i < matches.size(); i++) {
-			w.matchups.add(Ref.create(matches.get(i)));
-		}
+		w.setSeason(2013);
+		w.setNumber(13);
 
 		ofy.save().entities(w).now();
 	}
 
 	private static void loadUsers(Objectify ofy) {
 		User u1 = new User();
-		u1.username = "kbarber2";
-		u1.name = "Keith";
-		u1.order = 1;
+		u1.setUserName("kbarber2");
+		u1.setName("Keith");
+		u1.setOrder(1);
 
 		User u2 = new User();
-		u2.username = "frank";
-		u2.name = "Frank";
-		u2.order = 3;
+		u2.setUserName("frank");
+		u2.setName("Frank");
+		u2.setOrder(3);
 
 		User u3 = new User();
-		u3.username = "aaron";
-		u3.name = "Aaron";
-		u3.order = 2;
+		u3.setUserName("aaron");
+		u3.setName("Aaron");
+		u3.setOrder(2);
 
 		ofy.save().entities(u1, u2, u3).now();
 	}
 
 	private static void loadBets(Objectify ofy) {
 		Bet b = new Bet();
-		b.points = 40;
-		b.matchup = Ref.create(ofy.load().type(Matchup.class).first().now());
-		b.user = Ref.create(ofy.load().type(User.class).filterKey(
+		b.setPoints(40);
+		b.setMatchup(ofy.load().type(Matchup.class).first().now());
+		b.setUser(ofy.load().type(User.class).filterKey(
 				Key.create(User.class, "kbarber2")).first().now());
-		b.winner = Ref.create(schools.get("MSU"));
+		b.setWinner(schools.get("MSU"));
 
 		ofy.save().entities(b).now();
 	}
 
-	private static Matchup matchup(Date kickoff, String away, String home, int line) {
+	private static Matchup matchup(Week week, Date kickoff, String away,
+		String home, int line) {
 		Matchup m = new Matchup();
-		m.kickoffTime = kickoff;
-		m.awayTeam = Ref.create(schools.get(away));
-		m.homeTeam = Ref.create(schools.get(home));
-		m.line = line;
+
+		m.setWeek(week);
+		m.setKickoff(kickoff);
+		m.setAwayTeam(schools.get(away));
+		m.setHomeTeam(schools.get(home));
+		m.setLine(line);
 		return m;
 	}
 
