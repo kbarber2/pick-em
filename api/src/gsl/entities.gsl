@@ -18,6 +18,8 @@ public class $(name) {
 	public void set$(name)($(type) value) {
 		m$(name) = value;
 	}
+
+.   else
 .   endif
 .endfor
 .for property where typetype = "complex"
@@ -36,9 +38,9 @@ public class $(name) {
 .   endif
 .   new
 .   if property.typetype = "base"
-	private $(type) m$(name) = null;
+	private $(type) m$(name);
 .   else
-	private Ref<$(type)> m$(name) = null;
+	private Ref<$(type)> m$(name);
 .   endif
 .   endnew
 .endfor
