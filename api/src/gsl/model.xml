@@ -3,13 +3,15 @@
 	<objects>
 		<object name="User">
 			<properties>
-				<property name="ID" type="string" id="true"/>
+				<property name="ID" type="int" id="true"/>
+				<property name="UserName" type="string"/>
 				<property name="Name" type="string"/>
 				<property name="Order" type="int"/>
 			</properties>
 		</object>
 		<object name="School">
 			<properties>
+				<property name="ID" type="int" id="true"/>
 				<property name="Name" type="string"/>
 				<property name="Abbreviation" type="string"/>
 				<property name="Mascot" type="string"/>
@@ -19,6 +21,7 @@
 		</object>
 		<object name="Matchup">
 			<properties>
+				<property name="ID" type="int" id="true"/>
 				<property name="Kickoff" type="date"/>
 				<property name="AwayTeam" type="School"/>
 				<property name="HomeTeam" type="School"/>
@@ -27,6 +30,7 @@
 		</object>
 		<object name="Bet">
 			<properties>
+				<property name="ID" type="int" id="true"/>
 				<property name="User" type="User"/>
 				<property name="Matchup" type="Matchup"/>
 				<property name="Winner" type="School"/>
