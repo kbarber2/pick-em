@@ -7,6 +7,7 @@
 				<property name="UserName" type="string"/>
 				<property name="Name" type="string"/>
 				<property name="Order" type="int"/>
+				<property name="Active" type="boolean"/>
 			</properties>
 		</object>
 		<object name="School">
@@ -26,6 +27,7 @@
 				<property name="AwayTeam" type="School"/>
 				<property name="HomeTeam" type="School"/>
 				<property name="Line" type="int"/>
+				<property name="Week" type="Week"/>
 			</properties>
 		</object>
 		<object name="Bet">
@@ -35,6 +37,13 @@
 				<property name="Matchup" type="Matchup"/>
 				<property name="Winner" type="School"/>
 				<property name="Points" type="int"/>
+			</properties>
+		</object>
+		<object name="Week">
+			<properties>
+				<property name="ID" type="int" id="true"/>
+				<property name="Season" type="int"/>
+				<property name="Number" type="int"/>
 			</properties>
 		</object>
 	</objects>
