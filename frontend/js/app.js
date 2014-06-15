@@ -14,35 +14,35 @@ App.BscController = Em.Controller.extend({
 	Em.Object.create({ id: 'game3', name: 'Mich vs. Iowa'}),
     ],
 
-  printNames: function() {
-      return this.matchups.map(function(t) {
-	  return t.name;
-      });
-  }.property(),
+    printNames: function() {
+	return this.matchups.map(function(t) {
+	    return t.name;
+	});
+    }.property(),
 
     fieldNames: function() {
 	return ['game1', 'game2', 'game3'];
     }.property(),
 
-  thingsWithFields: function() {
-      var fieldNames = this.get('fieldNames');
+    thingsWithFields: function() {
+	var fieldNames = this.get('fieldNames');
 
-    var thingWithFieldsProxy = Em.ObjectProxy.extend({
-      fields: function() {
-        var thing = this;
+	var thingWithFieldsProxy = Em.ObjectProxy.extend({
+	    fields: function() {
+		var thing = this;
 
-        return names.map(function(fn) {
-          // FIX: this returns a raw value which is not bindable in a template
-          return thing.get(fn);
-        });
-      }.property()
-    });
+		return names.map(function(fn) {
+		    // FIX: this returns a raw value which is not bindable in a template
+		    return thing.get(fn);
+		});
+	    }.property()
+	});
 
-    return this.get('things').map(function(t) {
-      var thingWithFieldProxy =  thingWithFieldsProxy.create({ content: t });
-        return thingWithFieldProxy;
-    });
-  }.property('things.[]', 'fields.[]')
+	return this.get('things').map(function(t) {
+	    var thingWithFieldProxy =  thingWithFieldsProxy.create({ content: t });
+            return thingWithFieldProxy;
+	});
+    }.property('things.[]', 'fields.[]')
 });
 
 App.DynamicInputView = Em.View.extend({
@@ -61,5 +61,5 @@ App.DynamicInputView = Em.View.extend({
 });
 
 App.TabularForm  = Em.View.extend({
-  templateName: "keith",
+    templateName: "keith",
 });
