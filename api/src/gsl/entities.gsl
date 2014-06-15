@@ -34,12 +34,9 @@ public class $(name) {
 
 .endfor
 .for property
-.   if id ? "false" = "true"
-	@Id
-.   endif
 .   new
 .   if property.typetype = "base"
-	private $(type) m$(name);
+	$((defined(id) & id = "true") ?? "@Id " ? "")private $(type) m$(name);
 .   else
 	@Index private Ref<$(type)> m$(name);
 .   endif
