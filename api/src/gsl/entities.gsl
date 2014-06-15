@@ -5,6 +5,7 @@ package $(package).entity;
 
 import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.annotation.Entity;
+import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.Id;
 
 @Entity
@@ -40,7 +41,7 @@ public class $(name) {
 .   if property.typetype = "base"
 	private $(type) m$(name);
 .   else
-	private Ref<$(type)> m$(name);
+	@Index private Ref<$(type)> m$(name);
 .   endif
 .   endnew
 .endfor
