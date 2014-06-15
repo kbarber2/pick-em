@@ -14,10 +14,11 @@ public class $(name) {
 		return m$(name);
 	}
 
+.   if id ? "false" <> "true"
 	public void set$(name)($(type) value) {
 		m$(name) = value;
 	}
-
+.   endif
 .endfor
 .for property where typetype = "complex"
 	public $(type) get$(name)() {
@@ -35,9 +36,9 @@ public class $(name) {
 .   endif
 .   new
 .   if property.typetype = "base"
-	private $(type) m$(name);
+	private $(type) m$(name) = null;
 .   else
-	private Ref<$(type)> m$(name);
+	private Ref<$(type)> m$(name) = null;
 .   endif
 .   endnew
 .endfor
