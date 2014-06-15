@@ -14,7 +14,7 @@ function emberize(name)
 endfunction
 
 function isBaseType(type)
-   return type = "string" | type = "int"
+   return type = "string" | type = "int" | type = "boolean"
 endfunction
 
 function createJavaClass(path, package, name)
