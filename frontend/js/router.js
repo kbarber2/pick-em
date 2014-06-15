@@ -1,3 +1,3 @@
-Bsc.Router.map(function() {
+App.Router.map(function() {
     this.resource('bsc', { path: '/'} );
 });
