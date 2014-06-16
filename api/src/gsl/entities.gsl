@@ -34,13 +34,11 @@ public class $(name) {
 
 .endfor
 .for property
-.   new
 .   if property.typetype = "base"
 	$((defined(id) & id = "true") ?? "@Id " ? "")private $(type) m$(name);
 .   else
 	@Index private Ref<$(type)> m$(name);
 .   endif
-.   endnew
 .endfor
 }
 .endtemplate

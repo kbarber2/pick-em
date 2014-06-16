@@ -13,10 +13,6 @@ function emberize(name)
    return "$(string.substr(my.name, 0, 0) :lower)" + string.substr(my.name, 1)
 endfunction
 
-function isBaseType(type)
-   return type = "string" | type = "int" | type = "boolean"
-endfunction
-
 function createJavaClass(path, package, name)
    my.path = my.path + "/" + string.replace(my.package, ".|/")
    directory.create(my.path)

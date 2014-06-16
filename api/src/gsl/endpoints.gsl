@@ -60,7 +60,7 @@ public class $(Name)Resource {
 .   if defined(id)
 
 .   endif
-.   if isBaseType(type)
+.   if typetype = "base"
 		data.add("$(emberize(Name))", BaseTypes.serialize(object.get$(Name)()));
 .   else
 		data.add("$(emberize(Name))", null);
@@ -71,7 +71,7 @@ public class $(Name)Resource {
 	protected JsonObject serialize($(Name) object) {
 		JsonObject out = new JsonObject();
 .for property
-.   if isBaseType(type)
+.   if typetype = "base"
 		out.add("$(emberize(Name))", BaseTypes.serialize(object.get$(Name)()));
 .   else
 		out.add("$(emberize(Name))", null);
