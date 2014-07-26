@@ -16,19 +16,19 @@ App.PlayerBet = Em.Object.extend({
 App.BscController = Ember.ArrayController.extend({
     things: [
 	App.PlayerBet.create({ name: 'Keith',
-			       bets: [{ name: 'game1', score: 10, winner: 'MSU' },
-				       { name: 'game2', score: 20, winner: 'PU' },
-				       { name: 'game3', score: 30, winner: 'Mich' }]
+			       bets: [{ game: 'game1', score: 10, winner: 'MSU' },
+				      { game: 'game2', score: 20, winner: 'PU' },
+				      { game: 'game3', score: 30, winner: 'Mich' }]
 			      }), 
 	App.PlayerBet.create({ name: 'Aaron',
-			       bets: [{ name: 'game1', score: 30, winner: 'MSU' },
-				       { name: 'game2', score: 20, winner: 'UI' },
-				       { name: 'game3', score: 10, winner: 'Iowa' }]
+			       bets: [{ game: 'game1', score: 30, winner: 'MSU' },
+				      { game: 'game2', score: 20, winner: 'UI' },
+				      { game: 'game3', score: 10, winner: 'Iowa' }]
 			     }),
 	App.PlayerBet.create({ name: 'Frank',
-			       bets: [{ name: 'game1', score: 5, winner: 'NU' },
-				       { name: 'game2', score: 15, winner: 'PU' },
-				       { name: 'game3', score: 25, winner: 'Iowa' }]
+			       bets: [{ game: 'game1', score: 5, winner: 'NU' },
+				      { game: 'game2', score: 15, winner: 'PU' },
+				      { game: 'game3', score: 25, winner: 'Iowa' }]
 			     }),
     ],
 
@@ -82,7 +82,7 @@ App.DynamicInputView = Em.View.extend({
         fieldNames.forEach(function(fieldName){
 	    var idx = 0;
 	    for (i = 0; i < context.content.bets.length; i++) {
-		if (context.content.bets[i].name == fieldName) {
+		if (context.content.bets[i].game == fieldName) {
 		    idx = i;
 		    break;
 		}
