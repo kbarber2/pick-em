@@ -14,6 +14,10 @@ App.PlayerBet = Em.Object.extend({
 });
 
 App.BscController = Ember.ArrayController.extend({
+    init: function() {
+	this.set('schools', this.schools_data);
+    },
+
     things: [
 	App.PlayerBet.create({ name: 'Keith',
 			       bets: [{ game: 'game1', score: 10, winner: 'MSU' },
@@ -48,10 +52,8 @@ App.BscController = Ember.ArrayController.extend({
 	return ['game1', 'game2', 'game3'];
     }.property(),
 
-    schools: function() {
-	return [ 'MSU', 'Mich', 'PU', 'UI', 'Iowa', 'NU' ];
-    }.property(),
-
+    schools_data: [ 'MSU', 'Mich', 'PU', 'UI', 'Iowa', 'NU' ],
+    
     thingsWithFields: function() {
 	var fieldNames = this.get('fieldNames');
 
@@ -79,7 +81,8 @@ App.DynamicInputView = Em.View.extend({
         var fieldNames = controller.get("fieldNames");
 
         var source="";
-        fieldNames.forEach(function(fieldName){
+        controller.get('matchups').forEach(function(matchup){
+	    var fieldName = matchup.id;
 	    var idx = 0;
 	    for (i = 0; i < context.content.bets.length; i++) {
 		if (context.content.bets[i].game == fieldName) {
