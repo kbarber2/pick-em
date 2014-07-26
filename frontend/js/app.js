@@ -15,23 +15,26 @@ App.PlayerBet = Em.Object.extend({
 
 App.BscController = Ember.ArrayController.extend({
     init: function() {
-	this.set('schools', this.schools_data);
+	var mapped = staticSchools.map(function(school) {
+	    return school.abbreviation;
+	});
+	this.set('schools', mapped);
     },
 
     things: [
 	App.PlayerBet.create({ name: 'Keith',
 			       bets: [{ game: 'game1', score: 10, winner: 'MSU' },
-				      { game: 'game2', score: 20, winner: 'PU' },
-				      { game: 'game3', score: 30, winner: 'Mich' }]
+				      { game: 'game2', score: 20, winner: 'PSU' },
+				      { game: 'game3', score: 30, winner: 'UMich' }]
 			      }), 
 	App.PlayerBet.create({ name: 'Aaron',
 			       bets: [{ game: 'game1', score: 30, winner: 'MSU' },
-				      { game: 'game2', score: 20, winner: 'UI' },
+				      { game: 'game2', score: 20, winner: 'Illinois' },
 				      { game: 'game3', score: 10, winner: 'Iowa' }]
 			     }),
 	App.PlayerBet.create({ name: 'Frank',
-			       bets: [{ game: 'game1', score: 5, winner: 'NU' },
-				      { game: 'game2', score: 15, winner: 'PU' },
+			       bets: [{ game: 'game1', score: 5, winner: 'NW' },
+				      { game: 'game2', score: 15, winner: 'PSU' },
 				      { game: 'game3', score: 25, winner: 'Iowa' }]
 			     }),
     ],
@@ -51,8 +54,6 @@ App.BscController = Ember.ArrayController.extend({
     fieldNames: function() {
 	return ['game1', 'game2', 'game3'];
     }.property(),
-
-    schools_data: [ 'MSU', 'Mich', 'PU', 'UI', 'Iowa', 'NU' ],
     
     thingsWithFields: function() {
 	var fieldNames = this.get('fieldNames');
