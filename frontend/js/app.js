@@ -21,7 +21,7 @@ App.BscController = Ember.ArrayController.extend({
 	this.set('schools', mapped);
     },
 
-    things: [
+    bets: [
 	App.PlayerBet.create({ name: 'Keith',
 			       bets: [{ game: 'game1', score: 10, winner: 'MSU' },
 				      { game: 'game2', score: 20, winner: 'PSU' },
@@ -51,35 +51,16 @@ App.BscController = Ember.ArrayController.extend({
 	});
     }.property(),
 
-    fieldNames: function() {
-	return ['game1', 'game2', 'game3'];
-    }.property(),
-    
-    thingsWithFields: function() {
-	var fieldNames = this.get('fieldNames');
-
-	var thingWithFieldsProxy = Em.ObjectProxy.extend({
-	    fields: function() {
-		var thing = this;
-
-		return fieldNames.map(function(fn) {
-		    // FIX: this returns a raw value which is not bindable in a template
-		    return thing.get(fn);
-		});
-	    }.property()
+    userBets: function() {
+	return this.get('bets').map(function(t) {
+	    return Em.ObjectProxy.create({ content: t });
 	});
-
-	return this.get('things').map(function(t) {
-	    var thingWithFieldProxy =  thingWithFieldsProxy.create({ content: t });
-            return thingWithFieldProxy;
-	});
-    }.property('things.[]', 'fields.[]')
+    }.property('bets.[]', 'fields.[]')
 });
 
-App.DynamicInputView = Em.View.extend({
-    template:function(context,data){
+App.DynamicInputView = Em.View.extend( {
+    template: function(context, data) {
         var controller = data.data.keywords.controller;
-        var fieldNames = controller.get("fieldNames");
 
         var source="";
         controller.get('matchups').forEach(function(matchup){
