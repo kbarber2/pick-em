@@ -2,31 +2,31 @@ window.App = Ember.Application.create();
 var attr = DS.attr;
 
 App.PlayerBet = Em.Object.extend({
-    games: null,
+    bets: null,
 
     total: function() {
 	var sum = 0;
-	this.games.forEach(function(elem) {
+	this.bets.forEach(function(elem) {
 	    sum += elem.score;
 	});
 	return sum;
-    }.property('games.@each.score'),
+    }.property('bets.@each.score'),
 });
 
 App.BscController = Ember.ArrayController.extend({
     things: [
 	App.PlayerBet.create({ name: 'Keith',
-			       games: [{ name: 'game1', score: 10, winner: 'MSU' },
+			       bets: [{ name: 'game1', score: 10, winner: 'MSU' },
 				       { name: 'game2', score: 20, winner: 'PU' },
 				       { name: 'game3', score: 30, winner: 'Mich' }]
 			      }), 
 	App.PlayerBet.create({ name: 'Aaron',
-			       games: [{ name: 'game1', score: 30, winner: 'MSU' },
+			       bets: [{ name: 'game1', score: 30, winner: 'MSU' },
 				       { name: 'game2', score: 20, winner: 'UI' },
 				       { name: 'game3', score: 10, winner: 'Iowa' }]
 			     }),
 	App.PlayerBet.create({ name: 'Frank',
-			       games: [{ name: 'game1', score: 5, winner: 'NU' },
+			       bets: [{ name: 'game1', score: 5, winner: 'NU' },
 				       { name: 'game2', score: 15, winner: 'PU' },
 				       { name: 'game3', score: 25, winner: 'Iowa' }]
 			     }),
@@ -81,19 +81,19 @@ App.DynamicInputView = Em.View.extend({
         var source="";
         fieldNames.forEach(function(fieldName){
 	    var idx = 0;
-	    for (i = 0; i < context.content.games.length; i++) {
-		if (context.content.games[i].name == fieldName) {
+	    for (i = 0; i < context.content.bets.length; i++) {
+		if (context.content.bets[i].name == fieldName) {
 		    idx = i;
 		    break;
 		}
 	    }
 
-            source+='<td>{{view Ember.Select content=controller.schools value=content.games.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.games.'+idx+'.score"}}</td>';
+            source+='<td>{{view Ember.Select content=controller.schools value=content.bets.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.bets.'+idx+'.score"}}</td>';
 	    i++;
         });
 
 	source += '<td>{{content.total}}</td>';
-	source += '<td>{{content.games.0.winner}}</td>';
+	source += '<td>{{content.bets.0.winner}}</td>';
         var template = Em.Handlebars.compile(source);
         return template.call(this,context,data);
     }
