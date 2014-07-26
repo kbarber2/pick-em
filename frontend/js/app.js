@@ -1,12 +1,11 @@
 window.App = Ember.Application.create();
+var attr = DS.attr;
 
-App.ApplicationAdapter = DS.RESTAdapter.extend();
-
-App.TestObject = Em.Object.extend({
+App.PlayerBet = Em.Object.extend({
     games: null,
 
     total: function() {
-	var sum = '';
+	var sum = 0;
 	this.games.forEach(function(elem) {
 	    sum += elem.score;
 	});
@@ -14,29 +13,29 @@ App.TestObject = Em.Object.extend({
     }.property('games.@each.score'),
 });
 
-App.BscController = Em.Controller.extend({
+App.BscController = Ember.ArrayController.extend({
     things: [
-	App.TestObject.create({ name: 'Keith',
-				games: [{ name: 'game1', score: 'a', winner: 'MSU' },
-					{ name: 'game2', score: 'b', winner: 'PU' },
-					{ name: 'game3', score: 'c', winner: 'Mich' }]
+	App.PlayerBet.create({ name: 'Keith',
+			       games: [{ name: 'game1', score: 10, winner: 'MSU' },
+				       { name: 'game2', score: 20, winner: 'PU' },
+				       { name: 'game3', score: 30, winner: 'Mich' }]
 			      }), 
-	App.TestObject.create({ name: 'Aaron',
-				games: [{ name: 'game1', score: 1, winner: 'MSU' },
-					{ name: 'game2', score: 2, winner: 'UI' },
-					{ name: 'game3', score: 3, winner: 'Iowa' }]
-			      }),
-	App.TestObject.create({ name: 'Frank',
-				games: [{ name: 'game1', score: 'a1', winner: 'NU' },
-					{ name: 'game2', score: 'b2', winner: 'PU' },
-					{ name: 'game3', score: 'c3', winner: 'Iowa' }]
-			      }),
+	App.PlayerBet.create({ name: 'Aaron',
+			       games: [{ name: 'game1', score: 30, winner: 'MSU' },
+				       { name: 'game2', score: 20, winner: 'UI' },
+				       { name: 'game3', score: 10, winner: 'Iowa' }]
+			     }),
+	App.PlayerBet.create({ name: 'Frank',
+			       games: [{ name: 'game1', score: 5, winner: 'NU' },
+				       { name: 'game2', score: 15, winner: 'PU' },
+				       { name: 'game3', score: 25, winner: 'Iowa' }]
+			     }),
     ],
 
     matchups: [
-	Em.Object.create({ id: 'game1', name: 'MSU vs. NU' }),
-	Em.Object.create({ id: 'game2', name: 'UI vs. PU'}),
-	Em.Object.create({ id: 'game3', name: 'Mich vs. Iowa'}),
+	Em.Object.create({ id: 'game1', name: 'MSU vs. NU', line: 7.5 }),
+	Em.Object.create({ id: 'game2', name: 'UI vs. PU', line: 3.5}),
+	Em.Object.create({ id: 'game3', name: 'Mich vs. Iowa', line: -4.5}),
     ],
 
     printNames: function() {
