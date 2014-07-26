@@ -7,7 +7,7 @@ App.PlayerBet = Em.Object.extend({
     total: function() {
 	var sum = 0;
 	this.bets.forEach(function(elem) {
-	    sum += elem.score;
+	    sum += Number(elem.score);
 	});
 	return sum;
     }.property('bets.@each.score'),
