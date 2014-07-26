@@ -40,9 +40,9 @@ App.BscController = Ember.ArrayController.extend({
     ],
 
     matchups: [
-	Em.Object.create({ id: 'game1', name: 'MSU vs. NU', line: 7.5 }),
-	Em.Object.create({ id: 'game2', name: 'UI vs. PU', line: 3.5}),
-	Em.Object.create({ id: 'game3', name: 'Mich vs. Iowa', line: -4.5}),
+	Em.Object.create({ id: 'game1', line: 7.5, home_team: 'NW', away_team: 'MSU'}),
+	Em.Object.create({ id: 'game2', line: 3.5, home_team: 'PSU', away_team: 'Illinois'}),
+	Em.Object.create({ id: 'game3', line: -4.5, home_team: 'Iowa', away_team: 'UMich'}),
     ],
 
     printNames: function() {
@@ -92,7 +92,11 @@ App.DynamicInputView = Em.View.extend({
 		}
 	    }
 
-            source+='<td>{{view Ember.Select content=controller.schools value=content.bets.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.bets.'+idx+'.score"}}</td>';
+	    var matchupSchools = matchup.id + 'Schools';
+	    var schools = [matchup.away_team, matchup.home_team];
+	    controller.set(matchupSchools, schools);
+
+            source+='<td>{{view Ember.Select content=controller.' + matchupSchools + ' value=content.bets.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.bets.'+idx+'.score"}}</td>';
 	    i++;
         });
 
