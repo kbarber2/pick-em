@@ -18,7 +18,7 @@ App.BscController = Ember.ArrayController.extend({
 	var mapped = staticSchools.map(function(school) {
 	    return school.abbreviation;
 	});
-	this.set('schools', mapped);
+	this.set('schools', staticSchools);
     },
 
     bets: [
@@ -55,7 +55,17 @@ App.BscController = Ember.ArrayController.extend({
 	return this.get('bets').map(function(t) {
 	    return Em.ObjectProxy.create({ content: t });
 	});
-    }.property('bets.[]', 'fields.[]')
+    }.property('bets.[]', 'fields.[]'),
+
+    getSchool: function(id) {
+	var foundSchool = null;
+	this.get('schools').forEach(function(school) {
+	    if (school.abbreviation == id) {
+		foundSchool = school;
+	    }
+	});
+	return foundSchool;
+    }
 });
 
 App.DynamicInputView = Em.View.extend( {
@@ -74,10 +84,11 @@ App.DynamicInputView = Em.View.extend( {
 	    }
 
 	    var matchupSchools = matchup.id + 'Schools';
-	    var schools = [matchup.away_team, matchup.home_team];
+	    var schools = [controller.getSchool(matchup.away_team),
+			   controller.getSchool(matchup.home_team)];
 	    controller.set(matchupSchools, schools);
 
-            source+='<td>{{view Ember.Select content=controller.' + matchupSchools + ' value=content.bets.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.bets.'+idx+'.score"}}</td>';
+            source+='<td>{{view Ember.Select content=controller.' + matchupSchools + ' optionValuePath="content.abbreviation" optionLabelPath="content.abbreviation" value=content.bets.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.bets.'+idx+'.score"}}</td>';
 	    i++;
         });
 
