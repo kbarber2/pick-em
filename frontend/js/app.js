@@ -13,38 +13,63 @@ App.PlayerBet = Em.Object.extend({
     }.property('bets.@each.score'),
 });
 
-App.BscController = Ember.ArrayController.extend({
-    init: function() {
+App.Router.map(function() {
+    this.resource('bsc', { path: '/'} );
+});
+
+App.BscRoute = Ember.Route.extend({
+    model: function() {
+	return { schools: staticSchools,
+		 
+		 bets: [{ name: 'Keith',
+			  bets: [{ game: 'game1', score: 10, winner: 'MSU' },
+				 { game: 'game2', score: 20, winner: 'PSU' },
+				 { game: 'game3', score: 30, winner: 'UMich' }]
+			},
+			{ name: 'Aaron',
+			  bets: [{ game: 'game1', score: 30, winner: 'MSU' },
+				 { game: 'game2', score: 20, winner: 'Illinois' },
+				 { game: 'game3', score: 10, winner: 'Iowa' }]
+			},
+			{ name: 'Frank',
+			  bets: [{ game: 'game1', score: 5, winner: 'NW' },
+				 { game: 'game2', score: 15, winner: 'PSU' },
+				 { game: 'game3', score: 25, winner: 'Iowa' }]
+			}],
+		 
+		 matchups: [
+		     Em.Object.create({ id: 'game1', line: 7.5, homeTeam: 'NW', awayTeam: 'MSU'}),
+		     Em.Object.create({ id: 'game2', line: 3.5, homeTeam: 'PSU', awayTeam: 'Illinois'}),
+		     Em.Object.create({ id: 'game3', line: -4.5, homeTeam: 'Iowa', awayTeam: 'UMich'}),
+		 ]
+	       };
+    },
+
+    setupController: function(controller, model) {
 	var mapped = staticSchools.map(function(school) {
 	    return school.abbreviation;
 	});
-	this.set('schools', staticSchools);
-    },
+	controller.set('schools', model.schools);
+	controller.set('matchups', model.matchups);
+	controller.set('bets', model.bets.map(function(bet) {
+	    return App.PlayerBet.create(bet);
+	}));
+    }
+});
 
-    bets: [
-	App.PlayerBet.create({ name: 'Keith',
-			       bets: [{ game: 'game1', score: 10, winner: 'MSU' },
-				      { game: 'game2', score: 20, winner: 'PSU' },
-				      { game: 'game3', score: 30, winner: 'UMich' }]
-			      }), 
-	App.PlayerBet.create({ name: 'Aaron',
-			       bets: [{ game: 'game1', score: 30, winner: 'MSU' },
-				      { game: 'game2', score: 20, winner: 'Illinois' },
-				      { game: 'game3', score: 10, winner: 'Iowa' }]
-			     }),
-	App.PlayerBet.create({ name: 'Frank',
-			       bets: [{ game: 'game1', score: 5, winner: 'NW' },
-				      { game: 'game2', score: 15, winner: 'PSU' },
-				      { game: 'game3', score: 25, winner: 'Iowa' }]
-			     }),
-    ],
+/*
+App.ApplicationAdapter = DS.RESTAdapter.extend({
+    host: 'http://localhost:8080'
+});
 
-    matchups: [
-	Em.Object.create({ id: 'game1', line: 7.5, home_team: 'NW', away_team: 'MSU'}),
-	Em.Object.create({ id: 'game2', line: 3.5, home_team: 'PSU', away_team: 'Illinois'}),
-	Em.Object.create({ id: 'game3', line: -4.5, home_team: 'Iowa', away_team: 'UMich'}),
-    ],
+App.BetSetSerializer = DS.ActiveModelSerializer.extend(DS.EmbeddedRecordsMixin, {
+  attrs: {
+    bets: {embedded: 'always'},
+  }
+});
+*/
 
+App.BscController = Ember.ArrayController.extend({
     printNames: function() {
 	return this.matchups.map(function(t) {
 	    return t.name;
@@ -84,8 +109,8 @@ App.DynamicInputView = Em.View.extend( {
 	    }
 
 	    var matchupSchools = matchup.id + 'Schools';
-	    var schools = [controller.getSchool(matchup.away_team),
-			   controller.getSchool(matchup.home_team)];
+	    var schools = [controller.getSchool(matchup.awayTeam),
+			   controller.getSchool(matchup.homeTeam)];
 	    controller.set(matchupSchools, schools);
 
             source+='<td>{{view Ember.Select content=controller.' + matchupSchools + ' optionValuePath="content.abbreviation" optionLabelPath="content.abbreviation" value=content.bets.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.bets.'+idx+'.score"}}</td>';
