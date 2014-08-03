@@ -46,9 +46,6 @@ App.BscRoute = Ember.Route.extend({
     },
 
     setupController: function(controller, model) {
-	var mapped = staticSchools.map(function(school) {
-	    return school.abbreviation;
-	});
 	controller.set('schools', model.schools);
 	controller.set('matchups', model.matchups);
 	controller.set('bets', model.bets.map(function(bet) {
@@ -68,6 +65,27 @@ App.BetSetSerializer = DS.ActiveModelSerializer.extend(DS.EmbeddedRecordsMixin, 
   }
 });
 */
+
+App.School = DS.Model.extend({
+    name: attr('string')
+});
+
+App.BetSet = DS.Model.extend({
+    name: attr('string'),
+    bets: DS.hasMany('bet', {embedded: 'load'}),
+});
+
+App.Bet = DS.Model.extend({
+    matchup: DS.belongsTo('matchup'),
+    score: attr('number'),
+    winner: DS.belongsTo('school'),
+});
+
+App.Matchup = DS.Model.extend({
+    line: attr('number'),
+    awayTeam: DS.belongsTo('school'),
+    homeTeam: DS.belongsTo('school', {async:true}),
+});
 
 App.BscController = Ember.ArrayController.extend({
     printNames: function() {
