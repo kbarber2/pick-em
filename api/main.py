@@ -124,8 +124,10 @@ class WeekHandler(webapp2.RequestHandler):
     def get(self, week_id):
         self.response.headers['Content-Type'] = 'application/json'
         week = Week.get_by_id(int(week_id))
-        users = set()
-        
+
+        showAll = datetime.datetime.now() > week.deadline 
+        current = Person.query(Person.name == 'Keith').get()
+
         response = {}
         schools = []
         response['schools'] = schools
@@ -141,6 +143,9 @@ class WeekHandler(webapp2.RequestHandler):
             schools.append(serializeSchool(m.away_team.get()))
 
         for person in week.active_users:
+            if not showAll and person.id() != current.key.id():
+                continue
+
             theseBets = { 'name': person.get().name, 'bets': [] }
             bets.append(theseBets)
 
