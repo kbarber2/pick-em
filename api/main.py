@@ -165,8 +165,8 @@ class WeekHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
-    webapp2.Route(r'/weeks/<week_id:\d+>', WeekHandler),
-    webapp2.Route(r'/bets', BetHandler),
-    webapp2.Route(r'/schools', SchoolHandler),
-    webapp2.Route(r'/schools/<school_id:\d+>', SchoolHandler),
+    webapp2.Route(r'/api/weeks/<week_id:\d+>', WeekHandler),
+    webapp2.Route(r'/api/bets', BetHandler),
+    webapp2.Route(r'/api/schools', SchoolHandler),
+    webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
 ], debug=True)

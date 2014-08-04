@@ -9,7 +9,12 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
-- url: .*
+- url: /admin
+  static_dir: static
+  static_files: static/index.html
+  upload: static/index.html
+
+- url: /api/.*
   script: main.app
 
 libraries:
