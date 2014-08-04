@@ -81,6 +81,11 @@ class BetHandler(webapp2.RequestHandler):
 
         for jbid in jbids:
             matchup = Matchup.get_by_id(int(jbid['matchup']))
+            week = Week.query(Week.matchups.IN([matchup.key])).get()
+
+            if datetime.datetime.now() > week.deadline:
+                self.response.status = 403
+                return
 
             oldBetsQ = Bet.query(Bet.matchup == matchup.key, ancestor=parent)
             oldBetsQ = oldBetsQ.order(-Bet.number)
@@ -94,9 +99,7 @@ class BetHandler(webapp2.RequestHandler):
                          winner=winner.key, points=int(jbid['points']),
                          number=nextNumber, time_placed=datetime.datetime.now())
             newKey = newBet.put()
-            
-            self.response.write(newKey)
-            self.response.write("\n")
+
 
 def serializeSchool(model):
     out = {}
