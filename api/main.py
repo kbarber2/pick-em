@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import json, datetime
+import json, datetime, logging, time
 import webapp2
 from google.appengine.ext import ndb
 
@@ -24,8 +24,8 @@ class Matchup(ndb.Model):
 class Week(ndb.Model):
     active_users = ndb.KeyProperty(kind=Person, repeated=True)
     matchups = ndb.KeyProperty(kind=Matchup, repeated=True)
-    start_date = ndb.DateTimeProperty()
-    end_date = ndb.DateTimeProperty()
+    start_date = ndb.DateProperty()
+    end_date = ndb.DateProperty()
     number = ndb.IntegerProperty()
     deadline = ndb.DateTimeProperty()
 
@@ -37,17 +37,82 @@ class Bet(ndb.Model):
     number = ndb.IntegerProperty()
     time_placed = ndb.DateTimeProperty()    
 
+class ReloadHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/plain';
+        
+        for clz in (Person, School, Matchup, Week, Bet):
+            self.response.write('Clearing %s\n' % (clz.__name__))
+
+            for inst in clz.query().fetch():
+                inst.key.delete()
+
+        time.sleep(1)
+                
+        self.response.write('\nLoading schools\n');
+        with open('schools.json', 'r') as fp:
+            for s in json.loads(fp.read()):
+                school = School(name=s['name'], full_name=s['longName'],
+                                abbreviation=s['abbreviation'], mascot=s['mascot'],
+                                primary_color=s['primaryColor'],
+                                secondary_color=s['secondaryColor'])
+                school.put();
+
+        self.response.write('Loading users\n')
+        keith = Person(name='Keith')
+        keith.put()
+        frank = Person(name="Frank")
+        frank.put()
+
+        time.sleep(1)
+        
+        self.response.write('Loading matchups\n')
+        m1 = Matchup(home_team = School.query(School.abbreviation == 'MSU').get().key,
+                     away_team = School.query(School.abbreviation == 'PSU').get().key,
+                     kickoff_time = datetime.datetime(2014, 8, 22, 12, 00), line=3.5)
+        m1.put()
+        m2 = Matchup(home_team = School.query(School.abbreviation == 'Iowa').get().key,
+                     away_team = School.query(School.abbreviation == 'NEB').get().key,
+                     kickoff_time = datetime.datetime(2014, 8, 22, 15, 30), line=-10.5)
+        m2.put()
+
+        self.response.write('Loading weeks\n')
+        week = Week(active_users = [keith.key, frank.key],
+                    matchups = [m1.key, m2.key],
+                    start_date = datetime.date(2014, 8, 16),
+                    end_date = datetime.date(2014, 8, 23),
+                    number = 1,
+                    deadline = datetime.datetime(2014, 8, 22, 12, 00))
+        week.put()
+
+        self.response.write('Loading bets\n')
+        b = Bet(person=keith.key, matchup=m1.key,
+                winner=School.query(School.abbreviation == 'MSU').get().key,
+                points=20, number=1, time_placed=datetime.datetime(2014,8,21, 14, 33))
+        b.put()
+        b = Bet(person=keith.key, matchup=m2.key,
+                winner=School.query(School.abbreviation == 'NEB').get().key,
+                points=10, number=1, time_placed=datetime.datetime(2014,8,21, 15, 50))
+        b.put()
+        b = Bet(person=frank.key, matchup=m1.key,
+                winner=School.query(School.abbreviation == 'PSU').get().key,
+                points=55, number=1, time_placed=datetime.datetime(2014,8,19, 10, 04))
+        b.put()
+        
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Hello world!')
 
 class SchoolHandler(webapp2.RequestHandler):
-    def get(self):
+    def getAll(self):
         schools = [serializeSchool(s) for s in School.query().fetch()]
         out = { "school": schools }
         self.response.write(json.dumps(out))
 
-    def get(self, school_id):
+    def get(self, school_id=None):
+        if school_id is None:
+            return self.getAll()
+        
         out = { "school": serializeSchool(School.get_by_id(int(school_id))) }
         self.response.write(json.dumps(out))
 
@@ -72,6 +137,35 @@ class SchoolHandler(webapp2.RequestHandler):
         school.put()
 
         self.response.write(serializeSchool(school))
+
+class MatchupHandler(webapp2.RequestHandler):
+    def serialize(self, matchup):
+        m = {}
+        m['id'] = matchup.key.id()
+        m['line'] = matchup.line
+        m['kickoff'] = matchup.kickoff_time.isoformat(' ')
+        m['homeTeam'] = matchup.home_team.id()
+        m['awayTeam'] = matchup.away_team.id()
+        return m
+
+    def get(self):
+        matchups = []
+
+        for matchup in Matchup.query().fetch():
+            matchups.append(self.serialize(matchup))
+
+        self.response.write(json.dumps({"matchup": matchups}))
+
+    def post(self):
+        matchup = json.loads(self.request.body)['matchup']
+        logging.debug(matchup)
+        away = ndb.Key(School, matchup['awayTeam'])
+        home = ndb.Key(School, matchup['homeTeam'])
+        line = float(matchup['line'])
+        kickoff = datetime.datetime.now()
+        new = Matchup(home_team=home, away_team=away, line=line, kickoff_time=kickoff)
+        key = new.put()
+        self.response.write(json.dumps({'matchup': self.serialize(new)}))
 
 class BetHandler(webapp2.RequestHandler):
     def post(self):
@@ -169,4 +263,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/bets', BetHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
+    webapp2.Route(r'/api/matchups', MatchupHandler),
+    webapp2.Route(r'/api/reload', ReloadHandler),
 ], debug=True)

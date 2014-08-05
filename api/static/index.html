@@ -1,30 +1,220 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Ember Starter Kit</title>
-  <link rel="stylesheet" href="/admin/css/normalize.css">
-  <link rel="stylesheet" href="/admin/css/style.css">
-  <link href="/admin/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <script type="text/x-handlebars">
-    <h2>Welcome to Ember.js</h2>
+  <head>
+    <meta charset="utf-8">
+    <title>Ember Starter Kit</title>
+    <link rel="stylesheet" href="/admin/css/normalize.css">
+    <link rel="stylesheet" href="/admin/css/style.css">
+    <link href="/admin/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <script type="text/x-handlebars">
+      <nav class="navbar navbar-default" role="navigation">
+	<div class="container-fluid">
+	  <!-- Brand and toggle get grouped for better mobile display -->
+	  <div class="navbar-header">
+	    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+	    </button>
+	    <a class="navbar-brand" href="#">Brand</a>
+	  </div>
 
+	  <!-- Collect the nav links, forms, and other content for toggling -->
+	  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+	    <ul class="nav navbar-nav">
+              <li class="active">{{#link-to 'schools'}}Schools{{/link-to}}</li>
+              <li>{{#link-to 'matchups'}}Matchups{{/link-to}}</li>
+              <li class="dropdown">
+		<a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>
+		<ul class="dropdown-menu" role="menu">
+		  <li><a href="#">Action</a></li>
+		  <li><a href="#">Another action</a></li>
+		  <li><a href="#">Something else here</a></li>
+		  <li class="divider"></li>
+		  <li><a href="#">Separated link</a></li>
+		  <li class="divider"></li>
+		  <li><a href="#">One more separated link</a></li>
+		</ul>
+              </li>
+	    </ul>
+	    <form class="navbar-form navbar-left" role="search">
+              <div class="form-group">
+		<input type="text" class="form-control" placeholder="Search">
+              </div>
+              <button type="submit" class="btn btn-default">Submit</button>
+	    </form>
+	    <ul class="nav navbar-nav navbar-right">
+              <li><a href="#">Link</a></li>
+              <li class="dropdown">
+		<a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>
+		<ul class="dropdown-menu" role="menu">
+		  <li><a href="#">Action</a></li>
+		  <li><a href="#">Another action</a></li>
+		  <li><a href="#">Something else here</a></li>
+		  <li class="divider"></li>
+		  <li><a href="#">Separated link</a></li>
+		</ul>
+              </li>
+	    </ul>
+	  </div><!-- /.navbar-collapse -->
+	</div><!-- /.container-fluid -->
+      </nav>
+
+      {{outlet}}
+    </script>
+    
+  <script type="text/x-handlebars" id="index">
+    Main index
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="matchups">
+    <h2>Matchups</h2>
     {{outlet}}
   </script>
 
-  <script type="text/x-handlebars" id="index">
-    <ul>
-    {{#each item in model}}
-      <li>{{item}}</li>
-    {{/each}}
-    </ul>
+  <script type="text/x-handlebars" data-template-name="matchups/index">
+    <table class="table table-striped">
+      <thead>
+	<tr>
+	  <th>Away Team</th>
+	  <th>Home Team</th>
+	  <th>Line</th>
+	  <th>Kickoff</th>
+	<tr>
+      </thead>
+      <tbody>
+	{{#each matchup in model}}
+	<tr>
+	  <td>{{matchup.awayTeam.name}}</td>
+	  <td>{{matchup.homeTeam.name}}</td>
+	  <td>{{matchup.line}}</td>
+	  <td>{{matchup.kickoff}}</td>
+	</tr>
+	{{/each}}
+      </tbody>
+    </table>
+    <button class="btn btn-default" {{action 'newMatchup'}}>New</button>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="matchups/edit">
+    <form class="form-horizontal" role="form" {{action save on="submit"}}>
+      <div class="form-group">
+	<label for="awayTeam" class="col-sm-2 control-label">Away Team</label>
+	<div class="col-sm-10">
+	  {{view Ember.Select value=awayTeam content=schools optionValuePath="content"
+	  optionLabelPath="content.name" prompt="Choose away team"
+	  id="awayTeam" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="homeTeam" class="col-sm-2 control-label">Home Team</label>
+	<div class="col-sm-10">
+	  {{view Ember.Select value=homeTeam content=schools optionValuePath="content"
+	  optionLabelPath="content.name" prompt="Choose home team"
+	  id="homeTeam" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="line" class="col-sm-2 control-label">Line</label>
+	<div class="col-sm-10">
+	  {{input value=line id="line" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="kickoff" class="col-sm-2 control-label">Kickoff Time</label>
+	<div class="col-sm-10">
+	  {{input value=kickoff id="kickoff" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<div class="col-sm-offset-2 col-sm-10">
+	  <button type="submit" class="btn btn-default">Save</button>
+	</div>
+      </div>
+    </form>
+    
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="schools">
+    <h2>Schools</h2>
+    {{outlet}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="schools/index">
+    <table class="table table-striped">
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Abbreviation</th>
+	  <th>Mascot</th>
+	<tr>
+      </thead>
+      <tbody>
+	{{#each school in model}}
+	<tr>
+	  <td>{{#link-to 'schools.edit' school}}{{school.name}}{{/link-to}}</td>
+	  <td>{{school.abbreviation}}</td>
+	  <td>{{school.mascot}}</td>
+	</tr>
+	{{/each}}
+      </tbody>
+    </table>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="schools/edit">
+    <form class="form-horizontal" role="form" {{action save on="submit"}}>
+      <div class="form-group">
+	<label for="name" class="col-sm-2 control-label">Name</label>
+	<div class="col-sm-10">
+	  {{input value=name id="name" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="fullName" class="col-sm-2 control-label">Full Name</label>
+	<div class="col-sm-10">
+	  {{input value=this.fullName id="fullName" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="abbrev" class="col-sm-2 control-label">Abbreviation</label>
+	<div class="col-sm-10">
+	  {{input value=this.abbreviation id="abbrev" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="mascot" class="col-sm-2 control-label">Mascot</label>
+	<div class="col-sm-10">
+	  {{input value=this.mascot id="mascot" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="primaryColor" class="col-sm-2 control-label">Primary Color</label>
+	<div class="col-sm-10">
+	  {{input value=this.primaryColor id="primaryColor" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<label for="secondaryColor" class="col-sm-2 control-label">Secondary Color</label>
+	<div class="col-sm-10">
+	  {{input value=this.secondaryColor id="secondaryColor" class="form-control"}}
+	</div>
+      </div>
+      <div class="form-group">
+	<div class="col-sm-offset-2 col-sm-10">
+	  <button type="submit" class="btn btn-default">Save</button>
+	</div>
+      </div>
+    </form>
   </script>
 
   <script src="/admin/js/libs/jquery-1.10.2.js"></script>
+  <script src="/admin/js/libs/moment.js"></script>
   <script src="/admin/js/libs/handlebars-1.1.2.js"></script>
   <script src="/admin/js/libs/ember-1.6.1.js"></script>
+  <script src="/admin/js/libs/ember-data.js"></script>
   <script src="/admin/js/libs/bootstrap.js"></script>
   <script src="/admin/js/app.js"></script>
 </body>
