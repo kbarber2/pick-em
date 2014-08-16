@@ -79,6 +79,7 @@
     <table class="table table-striped">
       <thead>
 	<tr>
+	  <th></th>
 	  <th>Away Team</th>
 	  <th>Home Team</th>
 	  <th>Line</th>
@@ -88,6 +89,7 @@
       <tbody>
 	{{#each matchup in model}}
 	<tr>
+	  <td>{{#link-to 'matchups.edit' matchup}}Edit{{/link-to}}</td>
 	  <td>{{matchup.awayTeam.name}}</td>
 	  <td>{{matchup.homeTeam.name}}</td>
 	  <td>{{matchup.line}}</td>
@@ -99,7 +101,7 @@
     <button class="btn btn-default" {{action 'newMatchup'}}>New</button>
   </script>
 
-  <script type="text/x-handlebars" data-template-name="matchups/edit">
+  <script type="text/x-handlebars" data-template-name="matchups/_form">
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <div class="form-group">
 	<label for="awayTeam" class="col-sm-2 control-label">Away Team</label>
