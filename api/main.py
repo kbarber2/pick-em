@@ -4,6 +4,16 @@ import json, datetime, logging, time
 import webapp2
 from google.appengine.ext import ndb
 
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+EPOCH = datetime.datetime(1970, 1, 1)
+
+def format_time(obj):
+    return obj.strftime(DATE_FORMAT)
+    #return str((obj - EPOCH).total_seconds())
+
+def parse_time(formatted):
+    return datetime.datetime.strptime(formatted, DATE_FORMAT)
+
 class Person(ndb.Model):
     name = ndb.StringProperty()
 
@@ -143,7 +153,7 @@ class MatchupHandler(webapp2.RequestHandler):
         m = {}
         m['id'] = matchup.key.id()
         m['line'] = matchup.line
-        m['kickoff'] = matchup.kickoff_time.isoformat(' ')
+        m['kickoff'] = format_time(matchup.kickoff_time)
         m['homeTeam'] = matchup.home_team.id()
         m['awayTeam'] = matchup.away_team.id()
         return m
@@ -167,6 +177,19 @@ class MatchupHandler(webapp2.RequestHandler):
         key = new.put()
         self.response.write(json.dumps({'matchup': self.serialize(new)}))
 
+    def put(self, matchup_id):
+        matchup = Matchup.get_by_id(int(matchup_id))
+        data = json.loads(self.request.body)['matchup']
+        logging.debug(matchup)
+
+        matchup.line = float(data['line'])
+        #matchup.kickoff_time = parse_time(data['kickoff'])
+        matchup.away_team = ndb.Key(School, data['awayTeam'])
+        matchup.home_team = ndb.Key(School, data['homeTeam'])
+        matchup.put()
+
+        self.response.write(self.serialize(matchup))
+        
 class BetHandler(webapp2.RequestHandler):
     def post(self):
         person = Person.query(Person.name == "Keith").get()
@@ -264,5 +287,6 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
     webapp2.Route(r'/api/matchups', MatchupHandler),
+    webapp2.Route(r'/api/matchups/<matchup_id:\d+>', MatchupHandler),
     webapp2.Route(r'/api/reload', ReloadHandler),
 ], debug=True)

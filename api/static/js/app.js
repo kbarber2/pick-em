@@ -5,6 +5,22 @@ DS.RESTAdapter.reopen({
     namespace: 'api'
 });
 
+App.EpochTransform = DS.Transform.extend({
+  deserialize: function(serialized) {
+      debugger;
+      var d = new Date(0);
+      d.setUTCSeconds(serialized);
+      return d;
+  },
+
+  serialize: function(deserialized) {
+      debugger;
+      var t = this.deserialize(deserialized)
+      var time = deserialized.getTime();
+      return time / 1000;
+  }
+});
+
 App.School = DS.Model.extend({
     name: DS.attr('string'),
     fullName: DS.attr('string'),
