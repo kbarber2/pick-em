@@ -191,6 +191,23 @@ class MatchupHandler(webapp2.RequestHandler):
         self.response.write(self.serialize(matchup))
         
 class BetHandler(webapp2.RequestHandler):
+    def serialize(self, bet):
+        b = {}
+        b['id'] = bet.key.id()
+        b['person'] = bet.person.get().name
+        b['matchup'] = bet.matchup.id()
+        b['winner'] = bet.winner.id()
+        b['points'] = bet.points
+        return b
+
+    def get(self):
+        bets = []
+
+        for bet in Bet.query().fetch():
+            bets.append(self.serialize(bet))
+
+        self.response.write(json.dumps({"bets": bets}))
+
     def post(self):
         person = Person.query(Person.name == "Keith").get()
         parent = ndb.Key(Person, person.key.id())

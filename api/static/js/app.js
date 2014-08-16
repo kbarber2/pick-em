@@ -37,6 +37,13 @@ App.Matchup = DS.Model.extend({
     kickoff: DS.attr('date')
 });
 
+App.Bet = DS.Model.extend({
+    person: DS.attr('string'),
+    matchup: DS.belongsTo('matchup'),
+    winner: DS.belongsTo('school'),
+    points: DS.attr('number')
+});
+
 App.Router.map(function() {
     this.resource('schools', function() {
 	this.route('edit', { path: ':school_id/edit' });
