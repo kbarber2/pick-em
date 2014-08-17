@@ -149,7 +149,8 @@ class SchoolHandler(webapp2.RequestHandler):
         self.response.write(serializeSchool(school))
 
 class MatchupHandler(webapp2.RequestHandler):
-    def serialize(self, matchup):
+    @staticmethod
+    def serialize(matchup):
         m = {}
         m['id'] = matchup.key.id()
         m['line'] = matchup.line
@@ -158,11 +159,16 @@ class MatchupHandler(webapp2.RequestHandler):
         m['awayTeam'] = matchup.away_team.id()
         return m
 
-    def get(self):
+    def get(self, **kwargs):
+        if 'matchup_id' in kwargs:
+            m = Matchup.get_by_id(int(kwargs['matchup_id']))
+            self.response.write(json.dumps({'matchup': MatchupHandler.serialize(m)}))
+            return
+
         matchups = []
 
         for matchup in Matchup.query().fetch():
-            matchups.append(self.serialize(matchup))
+            matchups.append(MatchupHandler.serialize(matchup))
 
         self.response.write(json.dumps({"matchup": matchups}))
 
@@ -175,7 +181,7 @@ class MatchupHandler(webapp2.RequestHandler):
         kickoff = datetime.datetime.now()
         new = Matchup(home_team=home, away_team=away, line=line, kickoff_time=kickoff)
         key = new.put()
-        self.response.write(json.dumps({'matchup': self.serialize(new)}))
+        self.response.write(json.dumps({'matchup': MatchupHandler.serialize(new)}))
 
     def put(self, matchup_id):
         matchup = Matchup.get_by_id(int(matchup_id))
@@ -188,7 +194,7 @@ class MatchupHandler(webapp2.RequestHandler):
         matchup.home_team = ndb.Key(School, data['homeTeam'])
         matchup.put()
 
-        self.response.write(self.serialize(matchup))
+        self.response.write(MatchupHandler.serialize(matchup))
         
 class BetHandler(webapp2.RequestHandler):
     def serialize(self, bet):
@@ -202,11 +208,13 @@ class BetHandler(webapp2.RequestHandler):
 
     def get(self):
         bets = []
+        matchups = []
 
         for bet in Bet.query().fetch():
+            matchups.append(MatchupHandler.serialize(bet.matchup.get()))
             bets.append(self.serialize(bet))
 
-        self.response.write(json.dumps({"bets": bets}))
+        self.response.write(json.dumps({"bet": bets, "matchup": matchups}))
 
     def post(self):
         person = Person.query(Person.name == "Keith").get()
@@ -301,6 +309,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeekHandler),
     webapp2.Route(r'/api/bets', BetHandler),
+    webapp2.Route(r'/api/bets/current', BetHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
     webapp2.Route(r'/api/matchups', MatchupHandler),
