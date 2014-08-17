@@ -197,7 +197,8 @@ class MatchupHandler(webapp2.RequestHandler):
         self.response.write(MatchupHandler.serialize(matchup))
         
 class BetHandler(webapp2.RequestHandler):
-    def serialize(self, bet):
+    @staticmethod
+    def serialize(bet):
         b = {}
         b['id'] = bet.key.id()
         b['person'] = bet.person.get().name
@@ -212,7 +213,7 @@ class BetHandler(webapp2.RequestHandler):
 
         for bet in Bet.query().fetch():
             matchups.append(MatchupHandler.serialize(bet.matchup.get()))
-            bets.append(self.serialize(bet))
+            bets.append(BetHandler.serialize(bet))
 
         self.response.write(json.dumps({"bet": bets, "matchup": matchups}))
 
@@ -305,9 +306,35 @@ class WeekHandler(webapp2.RequestHandler):
 
         self.response.write(json.dumps(response))
 
+class WeekBetsHandler(webapp2.RequestHandler):
+    def get(self, **kwargs):
+        self.response.write(json.dumps({'bet': []}))
+
+class CurrentBetsHandler(webapp2.RequestHandler):
+    def get(self):
+        out = {}
+        out['bets'] = []
+        out['editable'] = True
+        bets = []
+        matchups = []
+        
+        week = Week.query().get()
+        out['id'] = week.key.id()
+        
+        for matchup in week.matchups:
+            matchups.append(MatchupHandler.serialize(matchup.get()))
+            
+            for bet in Bet.query(Bet.matchup == matchup).fetch():
+                out['bets'].append(bet.key.id())
+                bets.append(BetHandler.serialize(bet))
+
+        self.response.write(json.dumps({ 'week': out, 'bet': bets, 'matchup': matchups }))
+
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
+    webapp2.Route(r'/api/weeks/current/bets', CurrentBetsHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeekHandler),
+    webapp2.Route(r'/api/weeks/<week_id:\d+>/bets', WeekBetsHandler),
     webapp2.Route(r'/api/bets', BetHandler),
     webapp2.Route(r'/api/bets/current', BetHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),

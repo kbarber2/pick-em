@@ -58,6 +58,11 @@ App.Bet = DS.Model.extend({
     }.property('matchup')
 });
 
+App.Week = DS.Model.extend({
+    editable: DS.attr('boolean'),
+    bets: DS.hasMany('bet')
+});
+
 App.Router.map(function() {
     this.resource('schools', function() {
 	this.route('edit', { path: ':school_id/edit' });
@@ -67,9 +72,7 @@ App.Router.map(function() {
 	this.route('edit', { path: ':matchup_id/edit' });
     });
 
-    this.resource('bsc', { path: 'bsc' }, function() {
-	this.route('submit', { path: 'submit' });
-    });
+    this.resource('bsc', { path: 'bsc' });
 });
 
 App.SchoolsEditController = Ember.ObjectController.extend({
@@ -156,16 +159,7 @@ App.MatchupsNewController = App.MatchupsEditController.extend({
     }
 });
 
-App.BscSubmitController = Ember.Controller.extend({
-    actions: {
-	save: function() {
-	    var model = this.get('model');
-	    return model.save();
-	}
-    }
-});
-
-App.BscSubmitRoute = Ember.Route.extend({
+App.BscRoute = Ember.Route.extend({
     beforeModel: function() {
 	var self = this;
 	return this.store.find('school').then(function(schools) {
@@ -173,16 +167,29 @@ App.BscSubmitRoute = Ember.Route.extend({
 	});
     },
 
-    model: function() {
-	// ??? do the matchups have to be returned with the bets?
-	// why does it resolve from handlebars but not in JS?
-	return this.store.find('bet');
+    model: function(params) {
+	var self = this;
+	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
+	    var p = self.store.pushPayload('week', week);
+	    return self.store.find('week', week.week.id);
+	});
     },
 
     setupController: function(controller, model) {
-	controller.set('model', model);
+	debugger;
+	controller.set('model', model.get('bets'));
+	controller.set('week', model);
 	
 	var schools = this.get('schools');
 	controller.set('schools', schools);
+    }
+});
+
+App.BscController = Ember.Controller.extend({
+    actions: {
+	save: function() {
+	    var model = this.get('model');
+	    return model.save();
+	}
     }
 });

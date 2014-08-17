@@ -71,7 +71,15 @@
     Main index
   </script>
 
-  <script type="text/x-handlebars" data-template-name="bsc/submit">
+  <script type="text/x-handlebars" data-template-name="bsc">
+    {{#if week.editable}}
+    {{partial 'picksEdit'}}
+    {{else}}
+    {{partial 'picksView'}}
+    {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="picksEdit">
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <table class="table">
 	<thead>
@@ -101,6 +109,10 @@
 	</tbody>
       </table>
     </form>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="picksView">
+    Keith is cool
   </script>
 
   <script type="text/x-handlebars" data-template-name="matchups">
