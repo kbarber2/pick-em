@@ -313,22 +313,33 @@ class WeekBetsHandler(webapp2.RequestHandler):
 class CurrentBetsHandler(webapp2.RequestHandler):
     def get(self):
         out = {}
-        out['bets'] = []
-        out['editable'] = True
-        bets = []
-        matchups = []
+        out['bet'] = []
+        out['matchup'] = []
+        out['betsByUser'] = []
         
         week = Week.query().get()
-        out['id'] = week.key.id()
-        
+        userBets = dict.fromkeys(week.active_users, [])
+                
         for matchup in week.matchups:
-            matchups.append(MatchupHandler.serialize(matchup.get()))
-            
-            for bet in Bet.query(Bet.matchup == matchup).fetch():
-                out['bets'].append(bet.key.id())
-                bets.append(BetHandler.serialize(bet))
+            out['matchup'].append(MatchupHandler.serialize(matchup.get()))
 
-        self.response.write(json.dumps({ 'week': out, 'bet': bets, 'matchup': matchups }))
+            for user in week.active_users:
+                betQ = Bet.query(ndb.AND(Bet.matchup == matchup, Bet.person == user))
+                bet = betQ.get()
+                if bet is not None:
+                    out['bet'].append(BetHandler.serialize(bet))
+                    userBets[user].append(bet.key.id())
+                else:
+                    userBets[user].append(None)
+
+        ubId = 1
+        for user in userBets:
+            j = { 'id': ubId, 'user': user.get().name, 'bets': userBets[user] }
+            ubId += 1
+            out['betsByUser'].append(j)
+
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.write(json.dumps(out))
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),

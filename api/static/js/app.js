@@ -63,6 +63,17 @@ App.Week = DS.Model.extend({
     bets: DS.hasMany('bet')
 });
 
+App.BetsByUser = DS.Model.extend({
+    user: DS.attr('string'),
+    bets: DS.hasMany('bet'),
+
+    matchups: function() {
+	return this.get('bets').map(function(bet) {
+	    return bet.get('matchup');
+	});
+    }.property('bets.[]')
+});
+
 App.Router.map(function() {
     this.resource('schools', function() {
 	this.route('edit', { path: ':school_id/edit' });
@@ -170,15 +181,17 @@ App.BscRoute = Ember.Route.extend({
     model: function(params) {
 	var self = this;
 	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
-	    var p = self.store.pushPayload('week', week);
-	    return self.store.find('week', week.week.id);
+	    debugger;
+	    self.store.pushPayload('betsByUser', week);
+
+	    return week.betsByUser.map(function(bbu) {
+		return self.store.find('betsByUser', bbu.id);
+	    });
 	});
     },
 
     setupController: function(controller, model) {
-	debugger;
-	controller.set('model', model.get('bets'));
-	controller.set('week', model);
+	controller.set('model', model);
 	
 	var schools = this.get('schools');
 	controller.set('schools', schools);
@@ -186,10 +199,69 @@ App.BscRoute = Ember.Route.extend({
 });
 
 App.BscController = Ember.Controller.extend({
+    matchups: function() {
+	debugger;
+	var first = this.get('model').objectAt(0);
+	var matchups = first.get('bets').map(function(bet) {
+	    return bet.get('matchup');
+	});
+
+	return matchups;
+    }.property('model.[]'),
+
+    betsPerUser: function() {
+	var users = {};
+
+	this.get('model').forEach(function(bet) {
+	    var user = bet.get('person');
+	    if (!(person in users)) {
+		users[user] = new Array;
+	    }
+	    users[user].push(bet);
+	});
+	
+	return this.get('model').map(function(t) {
+	    return Em.ObjectProxy.create({ content: t });
+	});
+    }.property('model.[]'),
+    
     actions: {
 	save: function() {
 	    var model = this.get('model');
 	    return model.save();
 	}
     }
+});
+
+App.DynamicInputView = Em.View.extend( {
+    template: function(context, data) {
+        var controller = data.data.keywords.controller;
+	debugger;
+	
+        var source="";
+        controller.get('matchups').forEach(function(matchup){
+	    var fieldName = matchup.id;
+	    var idx = 0;
+	    for (i = 0; i < context.content.bets.length; i++) {
+		if (context.content.bets[i].game == fieldName) {
+		    idx = i;
+		    break;
+		}
+	    }
+
+	    var matchupSchools = matchup.id + 'Schools';
+	    var schools = [controller.getSchool(matchup.awayTeam),
+			   controller.getSchool(matchup.homeTeam)];
+	    controller.set(matchupSchools, schools);
+
+            source+='<td>{{view Ember.Select content=controller.' + matchupSchools + ' optionValuePath="content.abbreviation" optionLabelPath="content.abbreviation" value=content.bets.' + idx + '.winner}}&nbsp;{{input type="text" valueBinding="content.bets.'+idx+'.score"}}</td>';
+	    i++;
+        });
+
+	source += '<td>{{content.total}}</td>';
+	source += '<td>{{content.bets.0.winner}}</td>';
+        var template = Em.Handlebars.compile(source);
+        return template.call(this,context,data);
+    }
+
 });
