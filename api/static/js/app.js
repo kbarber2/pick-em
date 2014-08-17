@@ -5,6 +5,14 @@ DS.RESTAdapter.reopen({
     namespace: 'api'
 });
 
+App.BetAdapter = DS.RESTAdapter.extend({
+    buildURL: function() {
+	var url = this._super.apply(this, arguments);
+//	debugger;
+	return url;
+    }
+});
+
 App.EpochTransform = DS.Transform.extend({
   deserialize: function(serialized) {
       debugger;
@@ -41,7 +49,13 @@ App.Bet = DS.Model.extend({
     person: DS.attr('string'),
     matchup: DS.belongsTo('matchup'),
     winner: DS.belongsTo('school'),
-    points: DS.attr('number')
+    points: DS.attr('number'),
+
+    teams: function() {
+	var matchup = this.get('matchup');
+	var a = matchup.get('awayTeam');
+	return [matchup.get('awayTeam'), matchup.get('homeTeam')];
+    }.property('matchup')
 });
 
 App.Router.map(function() {
@@ -51,6 +65,10 @@ App.Router.map(function() {
     this.resource('matchups', function() {
 	this.route('new', { path: 'new' });
 	this.route('edit', { path: ':matchup_id/edit' });
+    });
+
+    this.resource('bsc', { path: 'bsc' }, function() {
+	this.route('submit', { path: 'submit' });
     });
 });
 
@@ -65,7 +83,7 @@ App.SchoolsEditController = Ember.ObjectController.extend({
 
 App.SchoolsRoute = Ember.Route.extend({
     model: function() {
-	return this.store.findAll('school');
+	return this.store.find('school');
     }
 });
 
@@ -138,3 +156,33 @@ App.MatchupsNewController = App.MatchupsEditController.extend({
     }
 });
 
+App.BscSubmitController = Ember.Controller.extend({
+    actions: {
+	save: function() {
+	    var model = this.get('model');
+	    return model.save();
+	}
+    }
+});
+
+App.BscSubmitRoute = Ember.Route.extend({
+    beforeModel: function() {
+	var self = this;
+	return this.store.find('school').then(function(schools) {
+	    self.set('schools', schools);
+	});
+    },
+
+    model: function() {
+	// ??? do the matchups have to be returned with the bets?
+	// why does it resolve from handlebars but not in JS?
+	return this.store.find('bet');
+    },
+
+    setupController: function(controller, model) {
+	controller.set('model', model);
+	
+	var schools = this.get('schools');
+	controller.set('schools', schools);
+    }
+});

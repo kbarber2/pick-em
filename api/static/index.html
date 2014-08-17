@@ -27,6 +27,7 @@
 	    <ul class="nav navbar-nav">
               <li class="active">{{#link-to 'schools'}}Schools{{/link-to}}</li>
               <li>{{#link-to 'matchups'}}Matchups{{/link-to}}</li>
+	      <li>{{#link-to 'bsc'}}Bets{{/link-to}}</li>
               <li class="dropdown">
 		<a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>
 		<ul class="dropdown-menu" role="menu">
@@ -68,6 +69,38 @@
     
   <script type="text/x-handlebars" id="index">
     Main index
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="bsc/submit">
+    <form class="form-horizontal" role="form" {{action save on="submit"}}>
+      <table class="table">
+	<thead>
+	  <tr>
+	    <th>Matchup</th>
+	    <th>Line</th>
+	    <th>Winner</th>
+	    <th>Points</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {{#each bet in model}}
+	  <tr>
+	    <td>{{bet.matchup.awayTeam.abbreviation}} at {{bet.matchup.homeTeam.abbreviation}}</td>
+	    <td>{{bet.matchup.line}}
+	    <td>{{view Ember.Select content=bet.teams value=bet.winner
+	      prompt="Choose a winner" optionLabelPath="content.name"
+	      class="form-control"}}</td>
+	    <td>{{input value=bet.points class="form-control"}}</td>
+	  </tr>
+	  {{/each}}
+	  <tr>
+	    <td colspan="4">
+	      <button type="submit" class="btn btn-default">Save</button>
+	    </td>
+	  </tr>
+	</tbody>
+      </table>
+    </form>
   </script>
 
   <script type="text/x-handlebars" data-template-name="matchups">
