@@ -38,6 +38,10 @@ App.School = DS.Model.extend({
     secondaryColor: DS.attr('string')
 });
 
+App.User = DS.Model.extend({
+    name: DS.attr('string')
+});
+
 App.Matchup = DS.Model.extend({
     homeTeam: DS.belongsTo('school'),
     awayTeam: DS.belongsTo('school'),
@@ -60,6 +64,8 @@ App.Bet = DS.Model.extend({
 
 App.Week = DS.Model.extend({
     editable: DS.attr('boolean'),
+    users: DS.hasMany('user'),
+    matchups: DS.hasMany('matchup'),
     bets: DS.hasMany('bet')
 });
 

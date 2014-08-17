@@ -314,12 +314,15 @@ class CurrentBetsHandler(webapp2.RequestHandler):
     def get(self):
         out = {}
         out['bets'] = []
-        out['editable'] = True
+        out['editable'] = False
         bets = []
         matchups = []
         
         week = Week.query().get()
         out['id'] = week.key.id()
+
+        out['users'] = [u.id() for u in week.active_users]
+        users = [{ 'id': u.id(), 'name': u.get().name } for u in week.active_users]
         
         for matchup in week.matchups:
             matchups.append(MatchupHandler.serialize(matchup.get()))
@@ -328,7 +331,8 @@ class CurrentBetsHandler(webapp2.RequestHandler):
                 out['bets'].append(bet.key.id())
                 bets.append(BetHandler.serialize(bet))
 
-        self.response.write(json.dumps({ 'week': out, 'bet': bets, 'matchup': matchups }))
+        self.response.write(json.dumps({ 'week': out, 'bet': bets,
+                                         'matchup': matchups, 'user': users }))
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
