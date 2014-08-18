@@ -373,15 +373,28 @@ class WeekBetsHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.write(json.dumps({'bet': []}))
 
-class CurrentBetsHandler(webapp2.RequestHandler):
+class WeekBetsHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
-        week = Week.query().get()
+
+        if 'week_id' in kwargs:
+            week = Week.get_by_id(int(kwargs['week_id']))
+        elif '/current/' in self.request.path_url:
+            week = Week.query().get()
+        else:
+            return
+
         out = serialize({}, week)
         wout = out['week']
         wout['bets'] = []
 
-        for b in Bet.query(Bet.matchup.IN(week.matchups)):
+        query = Bet.matchup.IN(week.matchups)
+        
+        if False and wout['editable']:
+            current = Person.query(Person.name == 'Keith').get()
+            query = ndb.AND(query, Bet.person == current.key)
+        
+        for b in Bet.query(query):
             wout['bets'].append(b.key.id())
             appendSideModel(out, b)
 
@@ -389,11 +402,10 @@ class CurrentBetsHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
-    webapp2.Route(r'/api/weeks/current/bets', CurrentBetsHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeekHandler),
-    webapp2.Route(r'/api/weeks/<week_id:\d+>/bets', CurrentBetsHandler),
+    webapp2.Route(r'/api/weeks/current/bets', WeekBetsHandler),
+    webapp2.Route(r'/api/weeks/<week_id:\d+>/bets', WeekBetsHandler),
     webapp2.Route(r'/api/bets', BetHandler),
-    webapp2.Route(r'/api/bets/current', BetHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
     webapp2.Route(r'/api/matchups', MatchupHandler),
