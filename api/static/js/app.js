@@ -81,10 +81,23 @@ App.BetsForUser = Ember.Object.extend({
 
     totalPoints: function() {
 	return this.bets.reduce(function(prev, cur, idx, array) {
-	    var points = cur ? cur.get('points') : 0;
-	    return prev + points;
+	    if (!cur) return prev;
+	    
+	    var pointsStr = cur.get('points');
+	    var points = isNumber(pointsStr) ? parseInt(pointsStr, 10) : 0;
+	    var matchup = cur.get('matchup');
+	    
+	    if (matchup.get('winner')) {
+		var line = matchup.get('line');
+		var covered = matchup.get('homeScore') + line;
+		if (covered > matchup.get('awayScore')) {
+		    return prev + points;
+		}
+	    }	    
+
+	    return prev;
 	}, 0);
-    }.property('bets.@each.points')
+    }.property('@each.points')
 });
 
 App.Router.map(function() {
@@ -190,7 +203,6 @@ App.PicksViewCurrentRoute = Ember.Route.extend({
 	var self = this;
 	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
 	    var p = self.store.pushPayload('week', week);
-	    debugger;
 	    self.transitionTo('picks.view', week.week.id);
 	});
     }
