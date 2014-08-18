@@ -69,6 +69,18 @@ App.Week = DS.Model.extend({
     bets: DS.hasMany('bet')
 });
 
+App.BetsForUser = Ember.Object.extend({
+    user: null,
+    bets: null,
+
+    totalPoints: function() {
+	return this.bets.reduce(function(prev, cur, idx, array) {
+	    var points = cur ? cur.get('points') : 0;
+	    return prev + points;
+	}, 0);
+    }.property('bets.@each.points')
+});
+
 App.Router.map(function() {
     this.resource('schools', function() {
 	this.route('edit', { path: ':school_id/edit' });
@@ -78,7 +90,9 @@ App.Router.map(function() {
 	this.route('edit', { path: ':matchup_id/edit' });
     });
 
-    this.resource('bsc', { path: 'bsc' });
+    this.resource('picks', { path: 'picks' }, function() {
+	this.route('view', { path: 'view' });
+    });
 });
 
 App.SchoolsEditController = Ember.ObjectController.extend({
@@ -165,7 +179,7 @@ App.MatchupsNewController = App.MatchupsEditController.extend({
     }
 });
 
-App.BscRoute = Ember.Route.extend({
+App.PicksViewRoute = Ember.Route.extend({
     beforeModel: function() {
 	var self = this;
 	return this.store.find('school').then(function(schools) {
@@ -182,16 +196,34 @@ App.BscRoute = Ember.Route.extend({
     },
 
     setupController: function(controller, model) {
-	debugger;
-	controller.set('model', model.get('bets'));
-	controller.set('week', model);
+	controller.set('model', model);
 	
 	var schools = this.get('schools');
 	controller.set('schools', schools);
-    }
+    },
 });
 
-App.BscController = Ember.Controller.extend({
+App.PicksViewController = Ember.ObjectController.extend({
+    userBets: function() {
+	var self = this;
+	return this.get('users').map(function(user) {
+	    var d = { name: user.get('name'), bets: self.orderedBets(user) };
+	    return App.BetsForUser.create(d);
+	});
+    }.property('model.bets.[]'),
+
+    orderedBets: function(user) {
+	var bets = this.get('bets');
+	var uname = user.get('name');
+	return this.get('matchups').map(function(matchup) {
+	    var f = bets.filter(function(bet) {
+		return (bet.get('person') === uname && bet.get('matchup') === matchup);
+	    });
+
+	    return f.length > 0 ? f.objectAt(0) : null;
+	});
+    },
+
     actions: {
 	save: function() {
 	    var model = this.get('model');

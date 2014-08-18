@@ -314,6 +314,7 @@ class CurrentBetsHandler(webapp2.RequestHandler):
     def get(self):
         out = {}
         out['bets'] = []
+        out['matchups'] = []
         out['editable'] = False
         bets = []
         matchups = []
@@ -325,6 +326,7 @@ class CurrentBetsHandler(webapp2.RequestHandler):
         users = [{ 'id': u.id(), 'name': u.get().name } for u in week.active_users]
         
         for matchup in week.matchups:
+            out['matchups'].append(matchup.id())
             matchups.append(MatchupHandler.serialize(matchup.get()))
             
             for bet in Bet.query(Bet.matchup == matchup).fetch():

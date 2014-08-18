@@ -27,7 +27,7 @@
 	    <ul class="nav navbar-nav">
               <li class="active">{{#link-to 'schools'}}Schools{{/link-to}}</li>
               <li>{{#link-to 'matchups'}}Matchups{{/link-to}}</li>
-	      <li>{{#link-to 'bsc'}}Bets{{/link-to}}</li>
+	      <li>{{#link-to 'picks.view'}}Picks{{/link-to}}</li>
               <li class="dropdown">
 		<a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>
 		<ul class="dropdown-menu" role="menu">
@@ -72,7 +72,7 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="bsc">
-    {{#if week.editable}}
+    {{#if model.editable}}
     {{partial 'picksEdit'}}
     {{else}}
     {{partial 'picksView'}}
@@ -111,8 +111,33 @@
     </form>
   </script>
 
-  <script type="text/x-handlebars" data-template-name="picksView">
-    Keith is cool
+  <script type="text/x-handlebars" data-template-name="picks/view">
+    <div class="table-responsive">
+      <table class="table table-striped">
+	<thead>
+	  <tr>
+	    <th>Name</th>
+	    {{#each matchups}}
+	    <th colspan="2">{{awayTeam.abbreviation}} vs. {{homeTeam.abbreviation}}<br/>{{line}}</th>
+	    {{/each}}
+	    <th>Total</th>
+	  <tr>
+	</thead>
+
+	<tbody>
+	  {{#each userBets}}
+	  <tr>
+	    <td>{{name}}</td>
+	    {{#each bets}}
+	    <td>{{winner.abbreviation}}</td>
+	    <td>{{points}}</td>
+	    {{/each}}
+	    <td>{{totalPoints}}</td>
+	  </tr>
+	  {{/each}}
+	</tbody>
+      </table>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="matchups">
@@ -263,6 +288,7 @@
   <script src="/admin/js/libs/ember-1.6.1.js"></script>
   <script src="/admin/js/libs/ember-data.js"></script>
   <script src="/admin/js/libs/bootstrap.js"></script>
+  <script src="/admin/js/compat.js"></script>
   <script src="/admin/js/app.js"></script>
 </body>
 </html>
