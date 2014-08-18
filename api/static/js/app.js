@@ -202,7 +202,7 @@ App.PicksViewCurrentRoute = Ember.Route.extend({
     model: function() {
 	var self = this;
 	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
-	    var p = self.store.pushPayload('week', week);
+	    self.store.pushPayload('week', week);
 	    self.transitionTo('picks.view', week.week.id);
 	});
     }
@@ -229,6 +229,14 @@ App.PicksViewRoute = Ember.Route.extend({
 });
 
 App.PicksEditRoute = App.PicksViewRoute.extend({
+    model: function() {
+	var self = this;
+	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
+	    self.store.pushPayload('week', week);
+	    return self.store.find('week', week.week.id);
+	});
+    },
+    
     setupController: function(controller, model) {
 	controller.set('week', model);
 	controller.set('model', model.get('bets'));
