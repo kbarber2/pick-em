@@ -72,6 +72,7 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="picks/edit">
+    {{#if week.editable}}
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <table class="table">
 	<thead>
@@ -104,6 +105,9 @@
 	</tbody>
       </table>
     </form>
+    {{else}}
+    Picks can no longer be submitted.
+    {{/if}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="picks/view">

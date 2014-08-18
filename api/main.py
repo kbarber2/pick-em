@@ -333,7 +333,7 @@ class CurrentBetsHandler(webapp2.RequestHandler):
         out = {}
         out['bets'] = []
         out['matchups'] = []
-        out['editable'] = False
+        out['editable'] = True
         bets = []
         matchups = []
         
