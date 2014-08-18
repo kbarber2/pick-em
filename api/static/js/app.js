@@ -1,5 +1,9 @@
 App = Ember.Application.create();
 
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 DS.RESTAdapter.reopen({
     host: 'http://localhost:8080',
     namespace: 'api'
@@ -90,9 +94,8 @@ App.Router.map(function() {
 	this.route('edit', { path: ':matchup_id/edit' });
     });
 
-    this.resource('picks', { path: 'picks' }, function() {
-	this.route('view', { path: 'view' });
-    });
+    this.resource('picks.view', { path: 'picks/view' });
+    this.resource('picks.edit', { path: 'picks/edit' });
 });
 
 App.SchoolsEditController = Ember.ObjectController.extend({
@@ -200,7 +203,30 @@ App.PicksViewRoute = Ember.Route.extend({
 	
 	var schools = this.get('schools');
 	controller.set('schools', schools);
-    },
+    }
+});
+
+App.PicksEditRoute = App.PicksViewRoute.extend({
+    setupController: function(controller, model) {
+	controller.set('week', model);
+	controller.set('model', model.get('bets'));
+    }
+});
+
+App.PicksEditController = Ember.ArrayController.extend({
+    totalPoints: function() {
+	return this.get('model').reduce(function(prev, cur, idx, array) {
+	    var points = cur.get('points');
+	    return prev + (isNumber(points) ? parseInt(points, 10) : 0);
+	}, 0);
+    }.property('@each.points'),
+    
+    actions: {
+	save: function() {
+	    var model = this.get('model');
+	    return model.save();
+	}
+    }
 });
 
 App.PicksViewController = Ember.ObjectController.extend({
@@ -210,7 +236,7 @@ App.PicksViewController = Ember.ObjectController.extend({
 	    var d = { name: user.get('name'), bets: self.orderedBets(user) };
 	    return App.BetsForUser.create(d);
 	});
-    }.property('model.bets.[]'),
+    }.property('model.bets.@each'),
 
     orderedBets: function(user) {
 	var bets = this.get('bets');
@@ -222,12 +248,5 @@ App.PicksViewController = Ember.ObjectController.extend({
 
 	    return f.length > 0 ? f.objectAt(0) : null;
 	});
-    },
-
-    actions: {
-	save: function() {
-	    var model = this.get('model');
-	    return model.save();
-	}
     }
 });

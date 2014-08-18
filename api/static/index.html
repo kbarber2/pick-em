@@ -71,15 +71,7 @@
     Main index
   </script>
 
-  <script type="text/x-handlebars" data-template-name="bsc">
-    {{#if model.editable}}
-    {{partial 'picksEdit'}}
-    {{else}}
-    {{partial 'picksView'}}
-    {{/if}}
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="picksEdit">
+  <script type="text/x-handlebars" data-template-name="picks/edit">
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <table class="table">
 	<thead>
@@ -91,16 +83,19 @@
 	  </tr>
 	</thead>
 	<tbody>
-	  {{#each bet in model}}
+	  {{#each}}
 	  <tr>
-	    <td>{{bet.matchup.awayTeam.abbreviation}} at {{bet.matchup.homeTeam.abbreviation}}</td>
-	    <td>{{bet.matchup.line}}
-	    <td>{{view Ember.Select content=bet.teams value=bet.winner
+	    <td>{{matchup.awayTeam.abbreviation}} at {{matchup.homeTeam.abbreviation}}</td>
+	    <td>{{matchup.line}}
+	    <td>{{view Ember.Select content=teams value=winner
 	      prompt="Choose a winner" optionLabelPath="content.name"
 	      class="form-control"}}</td>
-	    <td>{{input value=bet.points class="form-control"}}</td>
+	    <td>{{input value=points class="form-control"}}</td>
 	  </tr>
 	  {{/each}}
+	  <tr>
+	    <td></td><td></td><td></td><td align="right">Total: {{totalPoints}}</td>
+	  </tr>
 	  <tr>
 	    <td colspan="4">
 	      <button type="submit" class="btn btn-default">Save</button>
