@@ -311,7 +311,7 @@ class WeekBetsHandler(webapp2.RequestHandler):
         self.response.write(json.dumps({'bet': []}))
 
 class CurrentBetsHandler(webapp2.RequestHandler):
-    def get(self):
+    def get(self, **kwargs):
         out = {}
         out['bets'] = []
         out['matchups'] = []
@@ -340,7 +340,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
     webapp2.Route(r'/api/weeks/current/bets', CurrentBetsHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeekHandler),
-    webapp2.Route(r'/api/weeks/<week_id:\d+>/bets', WeekBetsHandler),
+    webapp2.Route(r'/api/weeks/<week_id:\d+>/bets', CurrentBetsHandler),
     webapp2.Route(r'/api/bets', BetHandler),
     webapp2.Route(r'/api/bets/current', BetHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),

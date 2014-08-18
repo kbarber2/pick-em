@@ -9,11 +9,10 @@ DS.RESTAdapter.reopen({
     namespace: 'api'
 });
 
-App.BetAdapter = DS.RESTAdapter.extend({
+App.WeekAdapter = DS.RESTAdapter.extend({
     buildURL: function() {
 	var url = this._super.apply(this, arguments);
-//	debugger;
-	return url;
+	return url + "/bets";
     }
 });
 
@@ -94,8 +93,9 @@ App.Router.map(function() {
 	this.route('edit', { path: ':matchup_id/edit' });
     });
 
-    this.resource('picks.view', { path: 'picks/view' });
-    this.resource('picks.edit', { path: 'picks/edit' });
+    this.route('picks.viewCurrent', { path: 'picks/view' });
+    this.route('picks.view', { path: 'picks/:week_id/view' });
+    this.route('picks.edit', { path: 'picks/edit' });
 });
 
 App.SchoolsEditController = Ember.ObjectController.extend({
@@ -182,6 +182,17 @@ App.MatchupsNewController = App.MatchupsEditController.extend({
     }
 });
 
+App.PicksViewCurrentRoute = Ember.Route.extend({
+    model: function() {
+	var self = this;
+	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
+	    var p = self.store.pushPayload('week', week);
+	    debugger;
+	    self.transitionTo('picks.view', week.week.id);
+	});
+    }
+});
+
 App.PicksViewRoute = Ember.Route.extend({
     beforeModel: function() {
 	var self = this;
@@ -191,11 +202,8 @@ App.PicksViewRoute = Ember.Route.extend({
     },
 
     model: function(params) {
-	var self = this;
-	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
-	    var p = self.store.pushPayload('week', week);
-	    return self.store.find('week', week.week.id);
-	});
+	debugger;
+	return this.store.find('week', params.week_id);
     },
 
     setupController: function(controller, model) {
