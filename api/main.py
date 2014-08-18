@@ -31,6 +31,10 @@ class Matchup(ndb.Model):
     kickoff_time = ndb.DateTimeProperty()
     line = ndb.FloatProperty()
 
+    winner = ndb.KeyProperty(kind=School)
+    home_score = ndb.IntegerProperty()
+    away_score = ndb.IntegerProperty()
+
 class Week(ndb.Model):
     active_users = ndb.KeyProperty(kind=Person, repeated=True)
     matchups = ndb.KeyProperty(kind=Matchup, repeated=True)
@@ -79,11 +83,15 @@ class ReloadHandler(webapp2.RequestHandler):
         self.response.write('Loading matchups\n')
         m1 = Matchup(home_team = School.query(School.abbreviation == 'MSU').get().key,
                      away_team = School.query(School.abbreviation == 'PSU').get().key,
-                     kickoff_time = datetime.datetime(2014, 8, 22, 12, 00), line=3.5)
+                     kickoff_time = datetime.datetime(2014, 8, 22, 12, 00), line=3.5,
+                     winner = School.query(School.abbreviation == 'MSU').get().key,
+                     home_score = 17, away_score = 11)
         m1.put()
         m2 = Matchup(home_team = School.query(School.abbreviation == 'Iowa').get().key,
                      away_team = School.query(School.abbreviation == 'NEB').get().key,
-                     kickoff_time = datetime.datetime(2014, 8, 22, 15, 30), line=-10.5)
+                     kickoff_time = datetime.datetime(2014, 8, 22, 15, 30), line=-10.5,
+                     winner = School.query(School.abbreviation == 'NEB').get().key,
+                     home_score = 24, away_score = 7)
         m2.put()
 
         self.response.write('Loading weeks\n')
@@ -157,6 +165,16 @@ class MatchupHandler(webapp2.RequestHandler):
         m['kickoff'] = format_time(matchup.kickoff_time)
         m['homeTeam'] = matchup.home_team.id()
         m['awayTeam'] = matchup.away_team.id()
+
+        if matchup.winner is not None:
+            m['winner'] = matchup.winner.id()
+            m['homeScore'] = matchup.home_score
+            m['awayScore'] = matchup.away_score
+        else:
+            m['winner'] = None
+            m['homeScore'] = 0
+            m['awayScore'] = 0
+        
         return m
 
     def get(self, **kwargs):

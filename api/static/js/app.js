@@ -49,7 +49,10 @@ App.Matchup = DS.Model.extend({
     homeTeam: DS.belongsTo('school'),
     awayTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
-    kickoff: DS.attr('date')
+    kickoff: DS.attr('date'),
+    winner: DS.belongsTo('school'),
+    homeScore: DS.attr('number'),
+    awayScore: DS.attr('number')
 });
 
 App.Bet = DS.Model.extend({
@@ -202,7 +205,6 @@ App.PicksViewRoute = Ember.Route.extend({
     },
 
     model: function(params) {
-	debugger;
 	return this.store.find('week', params.week_id);
     },
 
