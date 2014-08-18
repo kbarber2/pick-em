@@ -49,7 +49,101 @@ class Bet(ndb.Model):
     winner = ndb.KeyProperty(kind=School)
     points = ndb.IntegerProperty()
     number = ndb.IntegerProperty()
-    time_placed = ndb.DateTimeProperty()    
+    time_placed = ndb.DateTimeProperty()
+
+def serializeSchool(out, school):
+    s = {}
+    s['id'] = school.key.id()
+    s['name'] = school.name
+    s['fullName'] = school.full_name
+    s['abbreviation'] = school.abbreviation
+    s['mascot'] = school.mascot
+    s['primaryColor'] = school.primary_color
+    s['secondaryColor'] = school.secondary_color
+    return s
+
+def serializePerson(out, person):
+    p = {}
+    p['id'] = person.key.id()
+    p['name'] = person.name
+    return p
+
+def serializeMatchup(out, matchup):
+    m = {}
+    m['id'] = matchup.key.id()
+    m['line'] = matchup.line
+    m['kickoff'] = format_time(matchup.kickoff_time)
+
+    m['homeTeam'] = matchup.home_team.id()
+    m['awayTeam'] = matchup.away_team.id()
+    
+    appendSideModel(out, matchup.home_team.get())
+    appendSideModel(out, matchup.away_team.get())
+
+    if matchup.winner is not None:
+        m['winner'] = matchup.winner.id()
+        m['homeScore'] = matchup.home_score
+        m['awayScore'] = matchup.away_score
+    else:
+        m['winner'] = None
+        m['homeScore'] = 0
+        m['awayScore'] = 0
+
+    return m
+
+def serializeBet(out, bet):
+    b = {}
+    b['id'] = bet.key.id()
+    b['person'] = bet.person.get().name
+    b['matchup'] = bet.matchup.id()
+    b['winner'] = bet.winner.id()
+    b['points'] = bet.points
+    
+    appendSideModel(out, bet.matchup.get())
+    appendSideModel(out, bet.winner.get())
+
+    return b
+
+def serializeWeek(out, week):
+    w = {}
+    w['id'] = week.key.id()
+    w['editable'] = True
+    w['users'] = []
+    w['matchups'] = []
+
+    for u in week.active_users:
+        w['users'].append(u.id())
+        appendSideModel(out, u.get())
+
+    for m in week.matchups:
+        w['matchups'].append(m.id())
+        appendSideModel(out, m.get())
+
+    return w
+    
+EMBER_MODEL_NAMES = { Person: 'user', School: 'school', Matchup: 'matchup',
+                      Bet: 'bet', Week: 'week' }
+
+SERIALIZERS = { Person: serializePerson, School: serializeSchool,
+                Matchup: serializeMatchup, Bet: serializeBet,
+                Week: serializeWeek }
+
+def appendSideModel(out, model):
+    key = EMBER_MODEL_NAMES[type(model)]
+    if key not in out: out[key] = []
+    for m in out[key]:
+        if m['id'] == model.key.id(): return
+    out[key].append(SERIALIZERS[type(model)](out, model))
+
+def serialize(out, model):
+    serialized = SERIALIZERS[type(model)](out, model)
+    key = EMBER_MODEL_NAMES[type(model)]
+    if key in out:
+        out[key].append(serialized)
+    else:
+        out[key] = serialized
+
+    return out
 
 class ReloadHandler(webapp2.RequestHandler):
     def get(self):
@@ -123,16 +217,17 @@ class MainHandler(webapp2.RequestHandler):
 
 class SchoolHandler(webapp2.RequestHandler):
     def getAll(self):
-        schools = [serializeSchool(s) for s in School.query().fetch()]
-        out = { "school": schools }
+        out = { "school": [] }
+        for s in School.query().fetch(): serialize(out, s)
         self.response.write(json.dumps(out))
 
     def get(self, school_id=None):
+        self.response.headers['Content-Type'] = 'application/json'
         if school_id is None:
             return self.getAll()
-        
-        out = { "school": serializeSchool(School.get_by_id(int(school_id))) }
-        self.response.write(json.dumps(out))
+
+        school = School.get_by_id(int(school_id))
+        self.response.write(json.dumps(serialize({}, school)))
 
     def post(self):
         d = json.loads(self.request.body)
@@ -154,41 +249,22 @@ class SchoolHandler(webapp2.RequestHandler):
         if 'secondaryColor' in d: school.secondary_color = d['secondaryColor']
         school.put()
 
-        self.response.write(serializeSchool(school))
+        self.response.write(serialize({}, school))
 
 class MatchupHandler(webapp2.RequestHandler):
-    @staticmethod
-    def serialize(matchup):
-        m = {}
-        m['id'] = matchup.key.id()
-        m['line'] = matchup.line
-        m['kickoff'] = format_time(matchup.kickoff_time)
-        m['homeTeam'] = matchup.home_team.id()
-        m['awayTeam'] = matchup.away_team.id()
-
-        if matchup.winner is not None:
-            m['winner'] = matchup.winner.id()
-            m['homeScore'] = matchup.home_score
-            m['awayScore'] = matchup.away_score
-        else:
-            m['winner'] = None
-            m['homeScore'] = 0
-            m['awayScore'] = 0
-        
-        return m
-
     def get(self, **kwargs):
+        self.response.headers['Content-Type'] = 'application/json'
         if 'matchup_id' in kwargs:
             m = Matchup.get_by_id(int(kwargs['matchup_id']))
-            self.response.write(json.dumps({'matchup': MatchupHandler.serialize(m)}))
+            self.response.write(json.dumps(serialize({}, m)))
             return
 
-        matchups = []
+        out = { 'matchup': [] }
 
         for matchup in Matchup.query().fetch():
-            matchups.append(MatchupHandler.serialize(matchup))
+            serialize(out, matchup)
 
-        self.response.write(json.dumps({"matchup": matchups}))
+        self.response.write(json.dumps(out))
 
     def post(self):
         matchup = json.loads(self.request.body)['matchup']
@@ -212,28 +288,17 @@ class MatchupHandler(webapp2.RequestHandler):
         matchup.home_team = ndb.Key(School, data['homeTeam'])
         matchup.put()
 
-        self.response.write(MatchupHandler.serialize(matchup))
+        self.response.write(json.dumps(serialize({}, matchup)))
         
 class BetHandler(webapp2.RequestHandler):
-    @staticmethod
-    def serialize(bet):
-        b = {}
-        b['id'] = bet.key.id()
-        b['person'] = bet.person.get().name
-        b['matchup'] = bet.matchup.id()
-        b['winner'] = bet.winner.id()
-        b['points'] = bet.points
-        return b
-
     def get(self):
-        bets = []
-        matchups = []
+        self.response.headers['Content-Type'] = 'application/json'
+        out = { 'bet': [] }
 
         for bet in Bet.query().fetch():
-            matchups.append(MatchupHandler.serialize(bet.matchup.get()))
-            bets.append(BetHandler.serialize(bet))
+            serialize(out, bet)
 
-        self.response.write(json.dumps({"bet": bets, "matchup": matchups}))
+        self.response.write(json.dumps(out))
 
     def post(self):
         person = Person.query(Person.name == "Keith").get()
@@ -260,26 +325,6 @@ class BetHandler(webapp2.RequestHandler):
                          winner=winner.key, points=int(jbid['points']),
                          number=nextNumber, time_placed=datetime.datetime.now())
             newKey = newBet.put()
-
-
-def serializeSchool(model):
-    out = {}
-    out['id'] = model.key.id()
-    out['name'] = model.name
-    out['fullName'] = model.full_name
-    out['abbreviation'] = model.abbreviation
-    out['mascot'] = model.mascot
-    out['primaryColor'] = model.primary_color
-    out['secondaryColor'] = model.secondary_color
-    return out
-
-def serializeMatchup(model):
-    out = {}
-    out['id'] = model.key.id()
-    out['line'] = model.line
-    out['homeTeam'] = model.home_team.id()
-    out['awayTeam'] = model.away_team.id()
-    return out
 
 class WeekHandler(webapp2.RequestHandler):
     def get(self, week_id):
@@ -330,29 +375,17 @@ class WeekBetsHandler(webapp2.RequestHandler):
 
 class CurrentBetsHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
-        out = {}
-        out['bets'] = []
-        out['matchups'] = []
-        out['editable'] = True
-        bets = []
-        matchups = []
-        
+        self.response.headers['Content-Type'] = 'application/json'
         week = Week.query().get()
-        out['id'] = week.key.id()
+        out = serialize({}, week)
+        wout = out['week']
+        wout['bets'] = []
 
-        out['users'] = [u.id() for u in week.active_users]
-        users = [{ 'id': u.id(), 'name': u.get().name } for u in week.active_users]
-        
-        for matchup in week.matchups:
-            out['matchups'].append(matchup.id())
-            matchups.append(MatchupHandler.serialize(matchup.get()))
-            
-            for bet in Bet.query(Bet.matchup == matchup).fetch():
-                out['bets'].append(bet.key.id())
-                bets.append(BetHandler.serialize(bet))
+        for b in Bet.query(Bet.matchup.IN(week.matchups)):
+            wout['bets'].append(b.key.id())
+            appendSideModel(out, b)
 
-        self.response.write(json.dumps({ 'week': out, 'bet': bets,
-                                         'matchup': matchups, 'user': users }))
+        self.response.write(json.dumps(out))
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
