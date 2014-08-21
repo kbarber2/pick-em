@@ -359,7 +359,7 @@ class WeekEditHandler(webapp2.RequestHandler):
         data = json.loads(self.request.body)
         data = data['weekEdit']
 
-        users = User.query().fetch()[0].key
+        users = [u.key for u in User.query(User.active == True).fetch()]
         matchups = [Matchup.get_by_id(long(mid)).key for mid in data['matchups']]
         
         week = Week(start_date = parse_time(data['startDate']),
@@ -368,7 +368,7 @@ class WeekEditHandler(webapp2.RequestHandler):
                     season = str(data['season']),
                     number = int(data['number']),
                     matchups = matchups,
-                    active_users = [users])
+                    active_users = users)
         week.put()
 
         out = {}
