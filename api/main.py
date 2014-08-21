@@ -13,8 +13,9 @@ def parse_time(formatted):
     formatted = formatted[:-6]
     return datetime.datetime.strptime(formatted, DATE_FORMAT)
 
-class Person(ndb.Model):
+class User(ndb.Model):
     name = ndb.StringProperty()
+    active = ndb.BooleanProperty()
 
 class School(ndb.Model):
     name = ndb.StringProperty()
@@ -35,7 +36,7 @@ class Matchup(ndb.Model):
     away_score = ndb.IntegerProperty()
 
 class Week(ndb.Model):
-    active_users = ndb.KeyProperty(kind=Person, repeated=True)
+    active_users = ndb.KeyProperty(kind=User, repeated=True)
     matchups = ndb.KeyProperty(kind=Matchup, repeated=True)
     start_date = ndb.DateProperty()
     end_date = ndb.DateProperty()
@@ -44,7 +45,7 @@ class Week(ndb.Model):
     deadline = ndb.DateTimeProperty()
 
 class Bet(ndb.Model):
-    person = ndb.KeyProperty(kind=Person)
+    user = ndb.KeyProperty(kind=User)
     matchup = ndb.KeyProperty(kind=Matchup)
     winner = ndb.KeyProperty(kind=School)
     points = ndb.IntegerProperty()
@@ -62,10 +63,10 @@ def serializeSchool(out, school):
     s['secondaryColor'] = school.secondary_color
     return s
 
-def serializePerson(out, person):
+def serializeUser(out, user):
     p = {}
-    p['id'] = person.key.id()
-    p['name'] = person.name
+    p['id'] = user.key.id()
+    p['name'] = user.name
     return p
 
 def serializeMatchup(out, matchup):
@@ -94,7 +95,7 @@ def serializeMatchup(out, matchup):
 def serializeBet(out, bet):
     b = {}
     b['id'] = bet.key.id()
-    b['person'] = bet.person.get().name
+    b['person'] = bet.user.get().name
     b['matchup'] = bet.matchup.id()
     b['winner'] = bet.winner.id()
     b['points'] = bet.points
@@ -132,10 +133,10 @@ def serializeEditableWeek(out, week):
 
     return w
     
-EMBER_MODEL_NAMES = { Person: 'user', School: 'school', Matchup: 'matchup',
+EMBER_MODEL_NAMES = { User: 'user', School: 'school', Matchup: 'matchup',
                       Bet: 'bet', Week: 'week' }
 
-SERIALIZERS = { Person: serializePerson, School: serializeSchool,
+SERIALIZERS = { User: serializeUser, School: serializeSchool,
                 Matchup: serializeMatchup, Bet: serializeBet,
                 Week: serializeWeek }
 
@@ -160,7 +161,7 @@ class ReloadHandler(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/plain';
         
-        for clz in (Person, School, Matchup, Week, Bet):
+        for clz in (User, School, Matchup, Week, Bet):
             self.response.write('Clearing %s\n' % (clz.__name__))
 
             for inst in clz.query().fetch():
@@ -178,9 +179,9 @@ class ReloadHandler(webapp2.RequestHandler):
                 school.put();
 
         self.response.write('Loading users\n')
-        keith = Person(name='Keith')
+        keith = User(name='Keith', active=True)
         keith.put()
-        frank = Person(name="Frank")
+        frank = User(name="Frank", active=True)
         frank.put()
 
         time.sleep(1)
@@ -209,15 +210,15 @@ class ReloadHandler(webapp2.RequestHandler):
         week.put()
 
         self.response.write('Loading bets\n')
-        b = Bet(person=keith.key, matchup=m1.key,
+        b = Bet(user=keith.key, matchup=m1.key,
                 winner=School.query(School.abbreviation == 'MSU').get().key,
                 points=20, number=1, time_placed=datetime.datetime(2014,8,21, 14, 33))
         b.put()
-        b = Bet(person=keith.key, matchup=m2.key,
+        b = Bet(user=keith.key, matchup=m2.key,
                 winner=School.query(School.abbreviation == 'NEB').get().key,
                 points=10, number=1, time_placed=datetime.datetime(2014,8,21, 15, 50))
         b.put()
-        b = Bet(person=frank.key, matchup=m1.key,
+        b = Bet(user=frank.key, matchup=m1.key,
                 winner=School.query(School.abbreviation == 'PSU').get().key,
                 points=55, number=1, time_placed=datetime.datetime(2014,8,19, 10, 04))
         b.put()
@@ -312,8 +313,8 @@ class BetHandler(webapp2.RequestHandler):
         self.response.write(json.dumps(out))
 
     def post(self):
-        person = Person.query(Person.name == "Keith").get()
-        parent = ndb.Key(Person, person.key.id())
+        person = User.query(User.name == "Keith").get()
+        parent = ndb.Key(User, person.key.id())
         jbids = json.loads(self.request.body)
 
         for jbid in jbids:
@@ -332,7 +333,7 @@ class BetHandler(webapp2.RequestHandler):
             
             winner = School.get_by_id(long(jbid['winner']))
 
-            newBet = Bet(parent=parent, person=person.key, matchup=matchup.key,
+            newBet = Bet(parent=parent, user=person.key, matchup=matchup.key,
                          winner=winner.key, points=int(jbid['points']),
                          number=nextNumber, time_placed=datetime.datetime.now())
             newKey = newBet.put()
@@ -358,7 +359,7 @@ class WeekEditHandler(webapp2.RequestHandler):
         data = json.loads(self.request.body)
         data = data['weekEdit']
 
-        users = Person.query().fetch()[0].key
+        users = User.query().fetch()[0].key
         matchups = [Matchup.get_by_id(long(mid)).key for mid in data['matchups']]
         
         week = Week(start_date = parse_time(data['startDate']),
@@ -413,8 +414,8 @@ class WeekBetsHandler(webapp2.RequestHandler):
         query = Bet.matchup.IN(week.matchups)
         
         if False and wout['editable']:
-            current = Person.query(Person.name == 'Keith').get()
-            query = ndb.AND(query, Bet.person == current.key)
+            current = User.query(User.name == 'Keith').get()
+            query = ndb.AND(query, Bet.user == current.key)
         
         for b in Bet.query(query):
             wout['bets'].append(b.key.id())
