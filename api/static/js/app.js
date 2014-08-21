@@ -345,7 +345,8 @@ App.WeeksNewRoute = Ember.Route.extend({
 	return w;
     },
 
-     setupController: function(controller, model) {
+    setupController: function(controller, model) {
+	controller = this.controllerFor('weeksEdit');
 	controller.set('model', model);
 	
 	var schools = this.get('schools');
@@ -353,7 +354,7 @@ App.WeeksNewRoute = Ember.Route.extend({
     },
 
     renderTemplate: function() {
-	this.render('weeks._form', { controller: 'weeksNew' });
+	this.render('weeks._form', { controller: 'weeksEdit' });
     }
 });
 
@@ -367,7 +368,7 @@ App.WeeksEditRoute = App.WeeksNewRoute.extend({
     }
 });
 
-App.MatchupEditorMixin = Ember.Mixin.create({
+App.WeeksEditController = Ember.ObjectController.extend({
     actions: {
 	newMatchup: function() {
 	    var newM = this.store.createRecord('matchup');
@@ -378,37 +379,11 @@ App.MatchupEditorMixin = Ember.Mixin.create({
 	removeMatchup: function(arg) {
 	    var m = this.get('matchups');
 	    m.removeObject(arg);
-	}
-    }
-});
+	},
 
-App.WeeksNewController = Ember.ObjectController.extend(App.MatchupEditorMixin, {
-    actions: {
 	save: function() {
 	    var self = this;
 	    var model = this.get('model');
-
-	    var promises = model.get('matchups').map(function(matchup) {
-		return matchup.save();
-	    });
-
-	    var after = Ember.RSVP.all(promises);
-	    after.then(function(results) {
-		model.save().then(function(result) {
-		    self.transitionToRoute('weeks.index');
-		});
-	    });
-	}
-    }
-});
-
-App.WeeksEditController = App.WeeksNewController.extend(App.MatchupEditorMixin, {
-    actions: {
-	save: function() {
-	    var self = this;
-	    var model = this.get('model');
-	    model.save();
-	    return;
 
 	    var promises = model.get('matchups').map(function(matchup) {
 		return matchup.save();
@@ -434,6 +409,10 @@ App.WeeksIndexController = Ember.ArrayController.extend({
     actions: {
 	editWeek: function(week) {
 	    this.transitionToRoute('weeks.edit', week);
+	},
+
+	newWeek: function() {
+	    this.transitionToRoute('weeks.new');
 	}
     }
 });

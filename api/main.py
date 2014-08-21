@@ -237,7 +237,7 @@ class SchoolHandler(webapp2.RequestHandler):
         if school_id is None:
             return self.getAll()
 
-        school = School.get_by_id(int(school_id))
+        school = School.get_by_id(long(school_id))
         self.response.write(json.dumps(serialize({}, school)))
 
     def post(self):
@@ -250,7 +250,7 @@ class SchoolHandler(webapp2.RequestHandler):
 
     def put(self, school_id):
         d = json.loads(self.request.body)
-        school = School.get_by_id(int(school_id))
+        school = School.get_by_id(long(school_id))
 
         if 'name'           in d: school.name = d['name']
         if 'fullName'       in d: school.full_name = d['fullName']
@@ -266,7 +266,7 @@ class MatchupHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
         if 'matchup_id' in kwargs:
-            m = Matchup.get_by_id(int(kwargs['matchup_id']))
+            m = Matchup.get_by_id(long(kwargs['matchup_id']))
             self.response.write(json.dumps(serialize({}, m)))
             return
 
@@ -280,23 +280,23 @@ class MatchupHandler(webapp2.RequestHandler):
     def post(self):
         matchup = json.loads(self.request.body)['matchup']
 
-        away = School.get_by_id(int(matchup['awayTeam']))
-        home = School.get_by_id(int(matchup['homeTeam']))
+        away = ndb.Key(School, long(matchup['awayTeam']))
+        home = ndb.Key(School, long(matchup['homeTeam']))
         
         line = float(matchup['line'])
         kickoff = datetime.datetime.now()
-        new = Matchup(home_team=home.key, away_team=away.key, line=line, kickoff_time=kickoff)
+        new = Matchup(home_team=home, away_team=away, line=line, kickoff_time=kickoff)
         key = new.put()
         self.response.write(json.dumps(serialize({}, new)))
 
     def put(self, matchup_id):
-        matchup = Matchup.get_by_id(int(matchup_id))
+        matchup = Matchup.get_by_id(long(matchup_id))
         data = json.loads(self.request.body)['matchup']
 
         matchup.line = float(data['line'])
         matchup.kickoff_time = parse_time(data['kickoff'])
-        matchup.away_team = ndb.Key(School, data['awayTeam'])
-        matchup.home_team = ndb.Key(School, data['homeTeam'])
+        matchup.away_team = ndb.Key(School, long(data['awayTeam']))
+        matchup.home_team = ndb.Key(School, long(data['homeTeam']))
         matchup.put()
 
         self.response.write(json.dumps(serialize({}, matchup)))
@@ -317,7 +317,7 @@ class BetHandler(webapp2.RequestHandler):
         jbids = json.loads(self.request.body)
 
         for jbid in jbids:
-            matchup = Matchup.get_by_id(int(jbid['matchup']))
+            matchup = Matchup.get_by_id(long(jbid['matchup']))
             week = Week.query(Week.matchups.IN([matchup.key])).get()
 
             if datetime.datetime.now() > week.deadline:
@@ -330,7 +330,7 @@ class BetHandler(webapp2.RequestHandler):
             oldBet = oldBetsQ.fetch(1)
             nextNumber = oldBet[0].number + 1 if len(oldBet) > 0 else 1
             
-            winner = School.get_by_id(int(jbid['winner']))
+            winner = School.get_by_id(long(jbid['winner']))
 
             newBet = Bet(parent=parent, person=person.key, matchup=matchup.key,
                          winner=winner.key, points=int(jbid['points']),
@@ -342,7 +342,7 @@ class WeekEditHandler(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = 'application/json'
 
         if 'week_id' in kwargs:
-            week_id = int(kwargs['week_id'])
+            week_id = long(kwargs['week_id'])
             week = Week.get_by_id(week_id)
             out = {}
             out['weekEdit'] = serializeEditableWeek(out, week)
@@ -359,7 +359,7 @@ class WeekEditHandler(webapp2.RequestHandler):
         data = data['weekEdit']
 
         users = Person.query().fetch()[0].key
-        matchups = [Matchup.get_by_id(int(mid)).key for mid in data['matchups']]
+        matchups = [Matchup.get_by_id(long(mid)).key for mid in data['matchups']]
         
         week = Week(start_date = parse_time(data['startDate']),
                     end_date = parse_time(data['endDate']),
@@ -379,23 +379,28 @@ class WeekEditHandler(webapp2.RequestHandler):
         data = json.loads(self.request.body)
         data = data['weekEdit']
 
-        week = Week.get_by_id(int(week_id))
+        week = Week.get_by_id(long(week_id))
         week.start_date = parse_time(data['startDate'])
         week.end_date = parse_time(data['endDate'])
         week.deadline = parse_time(data['deadline'])
         week.season = str(data['season'])
-        week.number = str(data['number'])
+        week.number = int(data['number'])
+
+        matchups = [ndb.Key('Matchup', long(m)) for m in data['matchups']]
+        week.matchups = matchups
 
         week.put()
-        
-        
+
+        out = {}
+        out['weekEdit'] = serializeEditableWeek(out, week)
+        self.response.write(json.dumps(out))
         
 class WeekBetsHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
         if 'week_id' in kwargs:
-            week = Week.get_by_id(int(kwargs['week_id']))
+            week = Week.get_by_id(long(kwargs['week_id']))
         elif '/current/' in self.request.path_url:
             week = Week.query().get()
         else:
