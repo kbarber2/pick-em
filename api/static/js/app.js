@@ -4,10 +4,17 @@ function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+Ember.Handlebars.registerBoundHelper('display-datetime', function(value, dateOnly) {
+    var m = moment.tz(value, 'MM/DD/YYYY hh:mm a', 'America/New_York');
+    var fmt = 'MM/DD/YYYY';
+    if (!dateOnly) {
+	fmt += ' hh:mm a';
+    }
+    return m.format(fmt);
+});
+
 App.MdateTransform = DS.Transform.extend({
     deserialize: function(serialized) {
-	debugger;
-
 	if (serialized) {
 	    var m = moment(serialized);
 	    m = m.tz('America/New_York');
@@ -18,8 +25,6 @@ App.MdateTransform = DS.Transform.extend({
     },
 
     serialize: function(deserialized) {
-	debugger;
-
 	if (deserialized) {
 	    var m = moment.tz(deserialized, 'MM/DD/YYYY hh:mm a', 'America/New_York');
 	    var m2 = m.tz('UTC');
@@ -48,22 +53,6 @@ App.WeekEditAdapter = DS.RESTAdapter.extend({
 	var idx = url.lastIndexOf('/');
 	return url.substring(0, idx) + '/weeks';
     }
-});
-
-App.EpochTransform = DS.Transform.extend({
-  deserialize: function(serialized) {
-      debugger;
-      var d = new Date(0);
-      d.setUTCSeconds(serialized);
-      return d;
-  },
-
-  serialize: function(deserialized) {
-      debugger;
-      var t = this.deserialize(deserialized)
-      var time = deserialized.getTime();
-      return time / 1000;
-  }
 });
 
 App.School = DS.Model.extend({
@@ -157,6 +146,7 @@ App.Router.map(function() {
 
     this.resource('weeks', function() {
 	this.route('new', { path: 'new' });
+	this.route('edit', { path: ':week_id/edit' });
     });
 
     this.route('picks.viewCurrent', { path: 'picks/view' });
@@ -400,6 +390,20 @@ App.WeeksNewController = Ember.ObjectController.extend({
 		    self.transitionTo('weeks');
 		});
 	    });
+	}
+    }
+});
+
+App.WeeksIndexRoute = Ember.Route.extend({
+    model: function() {
+	return this.store.find('weekEdit');
+    }
+});
+
+App.WeeksIndexController = Ember.ArrayController.extend({
+    actions: {
+	editWeek: function(week) {
+	    this.transitionToRoute('weeks.edit', week);
 	}
     }
 });

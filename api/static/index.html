@@ -145,7 +145,30 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="weeks/index">
-    
+    <table class="table table-striped">
+      <thead>
+	<tr>
+	  <th>Week</th>
+	  <th>Start Date</th>
+	  <th>End Date</th>
+	  <th>Deadline</th>
+	  <th>Matchups</th>
+	  <th></th>
+	<tr>
+      </thead>
+      <tbody>
+	{{#each}}
+	<tr>
+	  <td>{{number}}</td>
+	  <td>{{display-datetime startDate 1}}</td>
+	  <td>{{display-datetime endDate 1}}</td>
+	  <td>{{display-datetime deadline 0}}</td>
+	  <td>{{matchups.length}}</td>
+	  <td><button class="btn btn-default" {{action "editWeek" this}}>Edit</button></td>
+	</tr>
+	{{/each}}
+      </tbody>
+    </table>
   </script>
 
   <script type="text/x-handlebars" data-template-name="weeks/new">

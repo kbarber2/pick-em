@@ -10,6 +10,7 @@ def format_time(obj):
     return obj.isoformat()
 
 def parse_time(formatted):
+    formatted = formatted[:-6]
     return datetime.datetime.strptime(formatted, DATE_FORMAT)
 
 class Person(ndb.Model):
@@ -117,6 +118,17 @@ def serializeWeek(out, week):
     for m in week.matchups:
         w['matchups'].append(m.id())
         appendSideModel(out, m.get())
+
+    return w
+
+def serializeEditableWeek(out, week):
+    w = serializeWeek(out, week)
+
+    w['startDate'] = format_time(week.start_date)
+    w['endDate'] = format_time(week.end_date)
+    w['deadline'] = format_time(week.deadline)
+    w['season'] = week.season
+    w['number'] = week.number
 
     return w
     
@@ -332,13 +344,13 @@ class WeekHandler(webapp2.RequestHandler):
         if 'week_id' in kwargs:
             week_id = int(kwargs['week_id'])
             week = Week.get_by_id(week_id)
-            self.response.write(json.dumps(serialize({}, week)))
+            out = {}
+            out['weekEdit'] = serializeEditableWeek(out, w)
+            self.response.write(json.dumps(out))
             return
 
-        out = { 'weekEdit': [] }
-        for w in Week.query().fetch():
-            serialize(out, w)
-            
+        out = {}
+        out['weekEdit'] = [serializeEditableWeek(out, w) for w in Week.query().fetch()]
         self.response.write(json.dumps(out))
 
     def post(self):
@@ -358,7 +370,9 @@ class WeekHandler(webapp2.RequestHandler):
                     active_users = [users])
         week.put()
 
-        self.response.write(json.dumps(serialize({}, week)))
+        out = {}
+        out['weekEdit'] = serializeEditableWeek(out, week)
+        self.response.write(json.dumps(out))
         
 class WeekBetsHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
