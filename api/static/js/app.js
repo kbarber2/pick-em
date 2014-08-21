@@ -4,6 +4,32 @@ function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+App.MdateTransform = DS.Transform.extend({
+    deserialize: function(serialized) {
+	debugger;
+
+	if (serialized) {
+	    var m = moment(serialized);
+	    m = m.tz('America/New_York');
+	    serialized = m.format('MM/DD/YYYY hh:mm a');
+	}
+	
+	return serialized;
+    },
+
+    serialize: function(deserialized) {
+	debugger;
+
+	if (deserialized) {
+	    var m = moment.tz(deserialized, 'MM/DD/YYYY hh:mm a', 'America/New_York');
+	    var m2 = m.tz('UTC');
+	    deserialized = m.tz('UTC').format();
+	}
+
+	return deserialized;
+    }
+});
+
 DS.RESTAdapter.reopen({
     host: 'http://localhost:8080',
     namespace: 'api'
@@ -13,6 +39,14 @@ App.WeekAdapter = DS.RESTAdapter.extend({
     buildURL: function() {
 	var url = this._super.apply(this, arguments);
 	return url + "/bets";
+    }
+});
+
+App.WeekEditAdapter = DS.RESTAdapter.extend({
+    buildURL: function() {
+	var url = this._super.apply(this, arguments);
+	var idx = url.lastIndexOf('/');
+	return url.substring(0, idx) + '/weeks';
     }
 });
 
@@ -49,7 +83,7 @@ App.Matchup = DS.Model.extend({
     homeTeam: DS.belongsTo('school'),
     awayTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
-    kickoff: DS.attr('date'),
+    kickoff: DS.attr('mdate'),
     winner: DS.belongsTo('school'),
     homeScore: DS.attr('number'),
     awayScore: DS.attr('number')
@@ -68,11 +102,22 @@ App.Bet = DS.Model.extend({
     }.property('matchup')
 });
 
-App.Week = DS.Model.extend({
-    editable: DS.attr('boolean'),
+App.WeekBase = DS.Model.extend({
     users: DS.hasMany('user'),
     matchups: DS.hasMany('matchup'),
+});
+
+App.Week = App.WeekBase.extend({
+    editable: DS.attr('boolean'),
     bets: DS.hasMany('bet')
+});
+
+App.WeekEdit = App.WeekBase.extend({
+    startDate: DS.attr('mdate'),
+    endDate: DS.attr('mdate'),
+    season: DS.attr('number'),
+    number: DS.attr('number'),
+    deadline: DS.attr('mdate')
 });
 
 App.BetsForUser = Ember.Object.extend({
@@ -104,9 +149,14 @@ App.Router.map(function() {
     this.resource('schools', function() {
 	this.route('edit', { path: ':school_id/edit' });
     });
+
     this.resource('matchups', function() {
 	this.route('new', { path: 'new' });
 	this.route('edit', { path: ':matchup_id/edit' });
+    });
+
+    this.resource('weeks', function() {
+	this.route('new', { path: 'new' });
     });
 
     this.route('picks.viewCurrent', { path: 'picks/view' });
@@ -278,5 +328,87 @@ App.PicksViewController = Ember.ObjectController.extend({
 
 	    return f.length > 0 ? f.objectAt(0) : null;
 	});
+    }
+});
+
+App.WeeksNewRoute = Ember.Route.extend({
+    beforeModel: function() {
+	var self = this;
+	return this.store.find('school').then(function(schools) {
+	    self.set('schools', schools);
+	});
+    },
+
+    model: function() {
+	var w = this.store.createRecord('weekEdit');
+	w.set('season', moment().year());
+	return w;
+	//return {matchups: Ember.ArrayProxy.create({content: [{line: 10}]})};
+    },
+
+     setupController: function(controller, model) {
+	controller.set('model', model);
+	
+	var schools = this.get('schools');
+	controller.set('schools', schools);
+    }
+});
+
+App.DatePickerView = Ember.TextField.extend({
+    didInsertElement: function() {
+	this.$().datetimepicker({
+	    format: 'm/d/Y',
+	    timepicker: false
+	});
+    }
+});
+
+App.DateTimePickerView = Ember.TextField.extend({
+    didInsertElement: function() {
+	this.$().datetimepicker({
+	    format: 'm/d/Y h:i a',
+	    hours12: false
+	});
+    }
+});
+
+App.WeeksNewController = Ember.ObjectController.extend({
+    actions: {
+	newMatchup: function() {
+	    var newM = this.store.createRecord('matchup');
+	    var m = this.get('matchups');
+	    m.pushObject(newM);
+	},
+
+	removeMatchup: function(arg) {
+	    var m = this.get('matchups');
+	    m.rollback();
+	    m.removeObject(arg);
+	},
+
+	save: function() {
+	    var self = this;
+	    var model = this.get('model');
+
+	    var promises = model.get('matchups').map(function(matchup) {
+		return matchup.save();
+	    });
+
+	    var after = Ember.RSVP.all(promises);
+	    after.then(function(results) {
+		model.save().then(function(result) {
+		    self.transitionTo('weeks');
+		});
+	    });
+	}
+    }
+});
+
+App.MatchupEditor = Ember.View.extend({
+    templateName: 'matchup-editor',
+    tagName: 'tr',
+
+    didInsertElement: function() {
+
     }
 });
