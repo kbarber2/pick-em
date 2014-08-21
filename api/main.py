@@ -337,7 +337,7 @@ class BetHandler(webapp2.RequestHandler):
                          number=nextNumber, time_placed=datetime.datetime.now())
             newKey = newBet.put()
 
-class WeekHandler(webapp2.RequestHandler):
+class WeekEditHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
@@ -345,7 +345,7 @@ class WeekHandler(webapp2.RequestHandler):
             week_id = int(kwargs['week_id'])
             week = Week.get_by_id(week_id)
             out = {}
-            out['weekEdit'] = serializeEditableWeek(out, w)
+            out['weekEdit'] = serializeEditableWeek(out, week)
             self.response.write(json.dumps(out))
             return
 
@@ -373,11 +373,23 @@ class WeekHandler(webapp2.RequestHandler):
         out = {}
         out['weekEdit'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
-        
-class WeekBetsHandler(webapp2.RequestHandler):
-    def get(self, **kwargs):
-        self.response.write(json.dumps({'bet': []}))
 
+    def put(self, week_id):
+        self.response.headers['Content-Type'] = 'application/json'
+        data = json.loads(self.request.body)
+        data = data['weekEdit']
+
+        week = Week.get_by_id(int(week_id))
+        week.start_date = parse_time(data['startDate'])
+        week.end_date = parse_time(data['endDate'])
+        week.deadline = parse_time(data['deadline'])
+        week.season = str(data['season'])
+        week.number = str(data['number'])
+
+        week.put()
+        
+        
+        
 class WeekBetsHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
@@ -407,8 +419,8 @@ class WeekBetsHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
-    webapp2.Route(r'/api/weeks', WeekHandler),
-    webapp2.Route(r'/api/weeks/<week_id:\d+>', WeekHandler),
+    webapp2.Route(r'/api/weekEdits', WeekEditHandler),
+    webapp2.Route(r'/api/weekEdits/<week_id:\d+>', WeekEditHandler),
     webapp2.Route(r'/api/weeks/current/bets', WeekBetsHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>/bets', WeekBetsHandler),
     webapp2.Route(r'/api/bets', BetHandler),

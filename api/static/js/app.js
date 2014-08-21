@@ -4,6 +4,24 @@ function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+App.DatePickerView = Ember.TextField.extend({
+    didInsertElement: function() {
+	this.$().datetimepicker({
+	    format: 'm/d/Y',
+	    timepicker: false
+	});
+    }
+});
+
+App.DateTimePickerView = Ember.TextField.extend({
+    didInsertElement: function() {
+	this.$().datetimepicker({
+	    format: 'm/d/Y h:i a',
+	    hours12: false
+	});
+    }
+});
+
 Ember.Handlebars.registerBoundHelper('display-datetime', function(value, dateOnly) {
     var m = moment.tz(value, 'MM/DD/YYYY hh:mm a', 'America/New_York');
     var fmt = 'MM/DD/YYYY';
@@ -44,14 +62,6 @@ App.WeekAdapter = DS.RESTAdapter.extend({
     buildURL: function() {
 	var url = this._super.apply(this, arguments);
 	return url + "/bets";
-    }
-});
-
-App.WeekEditAdapter = DS.RESTAdapter.extend({
-    buildURL: function() {
-	var url = this._super.apply(this, arguments);
-	var idx = url.lastIndexOf('/');
-	return url.substring(0, idx) + '/weeks';
     }
 });
 
@@ -333,7 +343,6 @@ App.WeeksNewRoute = Ember.Route.extend({
 	var w = this.store.createRecord('weekEdit');
 	w.set('season', moment().year());
 	return w;
-	//return {matchups: Ember.ArrayProxy.create({content: [{line: 10}]})};
     },
 
      setupController: function(controller, model) {
@@ -341,28 +350,24 @@ App.WeeksNewRoute = Ember.Route.extend({
 	
 	var schools = this.get('schools');
 	controller.set('schools', schools);
+    },
+
+    renderTemplate: function() {
+	this.render('weeks._form', { controller: 'weeksNew' });
     }
 });
 
-App.DatePickerView = Ember.TextField.extend({
-    didInsertElement: function() {
-	this.$().datetimepicker({
-	    format: 'm/d/Y',
-	    timepicker: false
-	});
+App.WeeksEditRoute = App.WeeksNewRoute.extend({
+    model: function(params) {
+	return this.store.find('weekEdit', params.week_id);
+    },
+    
+    renderTemplate: function() {
+	this.render('weeks._form', { controller: 'weeksEdit' });
     }
 });
 
-App.DateTimePickerView = Ember.TextField.extend({
-    didInsertElement: function() {
-	this.$().datetimepicker({
-	    format: 'm/d/Y h:i a',
-	    hours12: false
-	});
-    }
-});
-
-App.WeeksNewController = Ember.ObjectController.extend({
+App.MatchupEditorMixin = Ember.Mixin.create({
     actions: {
 	newMatchup: function() {
 	    var newM = this.store.createRecord('matchup');
@@ -372,10 +377,13 @@ App.WeeksNewController = Ember.ObjectController.extend({
 
 	removeMatchup: function(arg) {
 	    var m = this.get('matchups');
-	    m.rollback();
 	    m.removeObject(arg);
-	},
+	}
+    }
+});
 
+App.WeeksNewController = Ember.ObjectController.extend(App.MatchupEditorMixin, {
+    actions: {
 	save: function() {
 	    var self = this;
 	    var model = this.get('model');
@@ -387,7 +395,29 @@ App.WeeksNewController = Ember.ObjectController.extend({
 	    var after = Ember.RSVP.all(promises);
 	    after.then(function(results) {
 		model.save().then(function(result) {
-		    self.transitionTo('weeks');
+		    self.transitionToRoute('weeks.index');
+		});
+	    });
+	}
+    }
+});
+
+App.WeeksEditController = App.WeeksNewController.extend(App.MatchupEditorMixin, {
+    actions: {
+	save: function() {
+	    var self = this;
+	    var model = this.get('model');
+	    model.save();
+	    return;
+
+	    var promises = model.get('matchups').map(function(matchup) {
+		return matchup.save();
+	    });
+
+	    var after = Ember.RSVP.all(promises);
+	    after.then(function(results) {
+		model.save().then(function(result) {
+		    self.transitionToRoute('weeks.index');
 		});
 	    });
 	}
