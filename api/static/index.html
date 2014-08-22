@@ -346,11 +346,11 @@
 	<tr>
       </thead>
       <tbody>
-	{{#each school in model}}
+	{{#each}}
 	<tr>
-	  <td>{{#link-to 'schools.edit' school}}{{school.name}}{{/link-to}}</td>
-	  <td>{{school.abbreviation}}</td>
-	  <td>{{school.mascot}}</td>
+	  <td>{{#link-to 'schools.edit' this}}{{name}}{{/link-to}}</td>
+	  <td>{{abbreviation}}</td>
+	  <td>{{mascot}}</td>
 	</tr>
 	{{/each}}
       </tbody>
