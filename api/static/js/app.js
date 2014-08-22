@@ -149,6 +149,7 @@ App.BetsForUser = Ember.Object.extend({
 
 App.Router.map(function() {
     this.resource('schools', function() {
+	this.route('new', { path: 'new' });
 	this.route('edit', { path: ':school_id/edit' });
     });
 
@@ -169,18 +170,23 @@ App.Router.map(function() {
     this.resource('users', { path: 'users' });
 });
 
-App.SchoolsEditController = Ember.ObjectController.extend({
-    save: function() {
-	var name = this.get('name');
-	var dirty = this.get('model').serialize();
-	var store = this.get('store');
-	this.get('model').save();
-    }
-});
-
 App.SchoolsRoute = Ember.Route.extend({
     model: function() {
 	return this.store.find('school');
+    }
+});
+
+App.SchoolsEditController = Ember.ObjectController.extend({
+    actions: {
+	save: function() {
+	    var self = this;
+	    var name = this.get('name');
+	    var dirty = this.get('model').serialize();
+	    var store = this.get('store');
+	    this.get('model').save().then(function() {
+		self.transitionToRoute('schools');
+	    });
+	}
     }
 });
 

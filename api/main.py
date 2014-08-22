@@ -175,7 +175,25 @@ def deserializeUser(user, serialized):
         user.admin = serialized['admin']
 
     return user
-    
+
+def deserializeSchool(school, data):
+    if school is None:
+        school = School(name=data['name'],
+                        full_name=data['fullName'],
+                        abbreviation=data['abbreviation'],
+                        mascot=data['mascot'],
+                        primary_color=data['primaryColor'],
+                        secondary_color=data['secondaryColor'])
+    else:
+        school.name = data['name']
+        school.full_name = data['fullName']
+        school.abbreviation = data['abbreviation']
+        school.mascot = data['mascot']
+        school.primary_color = data['primaryColor']
+        school.secondary_color = data['secondaryColor']
+
+    return school
+
 class UsersHandler(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'application/json'
@@ -286,26 +304,16 @@ class SchoolHandler(webapp2.RequestHandler):
         self.response.write(json.dumps(serialize({}, school)))
 
     def post(self):
-        d = json.loads(self.request.body)
-        school = School(name=d['name'], full_name=d['fullName'],
-                        abbreviation=d['abbreviation'], mascot=d['mascot'],
-                        primary_color=d['primaryColor'],
-                        secondary_color=d['secondaryColor'])
-        self.response.write(school.put().id())
+        d = json.loads(self.request.body)['school']
+        school = deserializeSchool(None, d)
+        school.put()
+        self.response.write(json.dumps(serialize({}, school)))
 
     def put(self, school_id):
-        d = json.loads(self.request.body)
+        d = json.loads(self.request.body)['school']
         school = School.get_by_id(long(school_id))
-
-        if 'name'           in d: school.name = d['name']
-        if 'fullName'       in d: school.full_name = d['fullName']
-        if 'abbreviation'   in d: school.abbreviation = d['abbreviation']
-        if 'mascot'         in d: school.mascot = d['mascot']
-        if 'primaryColor'   in d: school.primary_color = d['primaryColor']
-        if 'secondaryColor' in d: school.secondary_color = d['secondaryColor']
-        school.put()
-
-        self.response.write(serialize({}, school))
+        deserializeSchool(school, d).put()
+        self.response.write(json.dumps(serialize({}, school)))
 
 class MatchupHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
