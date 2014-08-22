@@ -16,6 +16,7 @@ def parse_time(formatted):
 class User(ndb.Model):
     name = ndb.StringProperty()
     active = ndb.BooleanProperty()
+    order = ndb.IntegerProperty()
 
 class School(ndb.Model):
     name = ndb.StringProperty()
@@ -67,6 +68,8 @@ def serializeUser(out, user):
     p = {}
     p['id'] = user.key.id()
     p['name'] = user.name
+    p['active'] = user.active
+    p['order'] = user.order
     return p
 
 def serializeMatchup(out, matchup):
@@ -156,6 +159,42 @@ def serialize(out, model):
         out[key] = serialized
 
     return out
+
+def deserializeUser(user, serialized):
+    if user is None:
+        user = User(name = serialized['name'],
+                    active = serialized['active'],
+                    order = serialized['order'])
+    else:
+        user.name = serialized['name']
+        user.active = serialized['active']
+        user.order = serialized['order']
+    return user
+    
+class UsersHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type'] = 'application/json'
+
+        out = { 'user': [] }
+        for user in User.query().fetch():
+            serialize(out, user);
+
+        self.response.write(json.dumps(out))
+
+    def post(self):
+        self.response.headers['Content-Type'] = 'application/json'
+        data = json.loads(self.request.body)['user']
+        user = deserializeUser(None, data)
+        user.put()
+        self.response.write(json.dumps(serialize({}, user)))
+
+    def put(self, user_id):
+        self.response.headers['Content-Type'] = 'application/json'
+        data = json.loads(self.request.body)['user']
+        user = deserializeUser(User.get_by_id(long(user_id)), data)
+        user.put()
+        self.response.write(json.dumps(serialize({}, user)))
+        
 
 class ReloadHandler(webapp2.RequestHandler):
     def get(self):
@@ -425,6 +464,8 @@ class WeekBetsHandler(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
+    webapp2.Route(r'/api/users', UsersHandler),
+    webapp2.Route(r'/api/users/<user_id:\d+>', UsersHandler),
     webapp2.Route(r'/api/weekEdits', WeekEditHandler),
     webapp2.Route(r'/api/weekEdits/<week_id:\d+>', WeekEditHandler),
     webapp2.Route(r'/api/weeks/current/bets', WeekBetsHandler),

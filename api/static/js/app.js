@@ -75,7 +75,9 @@ App.School = DS.Model.extend({
 });
 
 App.User = DS.Model.extend({
-    name: DS.attr('string')
+    name: DS.attr('string'),
+    active: DS.attr('boolean'),
+    order: DS.attr('number')
 });
 
 App.Matchup = DS.Model.extend({
@@ -162,6 +164,8 @@ App.Router.map(function() {
     this.route('picks.viewCurrent', { path: 'picks/view' });
     this.route('picks.view', { path: 'picks/:week_id/view' });
     this.route('picks.edit', { path: 'picks/edit' });
+
+    this.resource('users', { path: 'users' });
 });
 
 App.SchoolsEditController = Ember.ObjectController.extend({
@@ -423,5 +427,55 @@ App.MatchupEditor = Ember.View.extend({
 
     didInsertElement: function() {
 
+    }
+});
+
+App.UsersRoute = Ember.Route.extend({
+    model: function() {
+	return this.store.find('user');
+    }
+});
+
+App.UserController = Ember.ObjectController.extend({
+    _isEditing: true,
+    
+    isEditing: function() {
+	/*if (this.get('name').length === 0 ||
+	    this.get('order').toString().length === 0)
+	    this._isEditing = true;
+	*/
+	return this._isEditing;
+    }.property(),
+
+    actions: {
+	editUser: function() {
+	    this.set('isEditing', true);
+	},
+
+	doneEditing: function() {
+	    //this.set('isEditing', false);
+	}
+    }
+});
+
+App.UsersController = Ember.ArrayController.extend({
+    itemController: 'user',
+    sortProperties: ['order'],
+    sortAscending: true,
+
+    actions: {
+	save: function() {
+	    var promises = this.get('model').map(function(user) {
+		return user.save();
+	    });
+	    var after = Ember.RSVP.all(promises);
+	    after.then(function(results) {
+		
+	    });
+	},
+
+	newUser: function() {
+	    this.store.createRecord('user', {active: true});
+	}
     }
 });

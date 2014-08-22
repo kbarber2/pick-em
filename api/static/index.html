@@ -407,6 +407,43 @@
     </form>
   </script>
 
+  <script type="text/x-handlebars" data-template-name="users">
+    <form class="form-horizontal" role="form" {{action save on="submit"}}>
+      <table class="table table-striped">
+	<thead>
+	  <tr>
+	    <th>Name</th>
+	    <th>Active</th>
+	    <th>Order</th>
+	  <tr>
+	</thead>
+	<tbody>
+	  {{#each}}
+	  <tr>
+	    <td>
+	      {{#if isEditing}}
+	      {{input value=name focus-out="doneEditing"}}
+	      {{else}}
+	      <span {{action "editUser" on="click"}}>{{name}}</span>
+	      {{/if}}
+	    </td>
+	    <td>{{input type="checkbox" checked=active}}</td>
+	    <td>
+	      {{#if isEditing}}
+	      {{input value=order focus-out="doneEditing"}}
+	      {{else}}
+	      <span {{action "editUser" on="click"}}>{{order}}</span>
+	      {{/if}}
+	    </td>
+	  </tr>
+	  {{/each}}
+	</tbody>
+      </table>
+      <button type="submit" class="btn btn-default">Save</button>
+      <button class="btn btn-default" {{action 'newUser'}}>New User</button>
+    </form>
+  </script>
+  
   <script src="/admin/js/libs/jquery-1.10.2.js"></script>
   <script src="/admin/js/libs/moment.js"></script>
   <script src="/admin/js/libs/moment-timezone-with-data-2010-2020.js"></script>
