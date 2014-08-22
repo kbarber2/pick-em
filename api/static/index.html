@@ -26,22 +26,17 @@
 	  <!-- Collect the nav links, forms, and other content for toggling -->
 	  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 	    <ul class="nav navbar-nav">
-              <li class="active">{{#link-to 'schools'}}Schools{{/link-to}}</li>
-              <li>{{#link-to 'matchups'}}Matchups{{/link-to}}</li>
 	      <li>{{#link-to 'picks.viewCurrent'}}Picks{{/link-to}}</li>
               <li class="dropdown">
-		<a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>
+		<a href="#" class="dropdown-toggle" data-toggle="dropdown">Admin <span class="caret"></span></a>
 		<ul class="dropdown-menu" role="menu">
-		  <li><a href="#">Action</a></li>
-		  <li><a href="#">Another action</a></li>
-		  <li><a href="#">Something else here</a></li>
-		  <li class="divider"></li>
-		  <li><a href="#">Separated link</a></li>
-		  <li class="divider"></li>
-		  <li><a href="#">One more separated link</a></li>
+		  <li>{{#link-to 'weeks'}}Week Editor{{/link-to}}</li>
+		  <li>{{#link-to 'schools'}}Schools{{/link-to}}</li>
+		  <li>{{#link-to 'users'}}Users{{/link-to}}</li>
 		</ul>
               </li>
 	    </ul>
+	    <!--
 	    <form class="navbar-form navbar-left" role="search">
               <div class="form-group">
 		<input type="text" class="form-control" placeholder="Search">
@@ -61,6 +56,7 @@
 		</ul>
               </li>
 	    </ul>
+	    -->
 	  </div><!-- /.navbar-collapse -->
 	</div><!-- /.container-fluid -->
       </nav>
@@ -413,8 +409,9 @@
 	<thead>
 	  <tr>
 	    <th>Name</th>
-	    <th>Active</th>
 	    <th>Order</th>
+	    <th>Active</th>
+	    <th>Admin</th>
 	  <tr>
 	</thead>
 	<tbody>
@@ -427,7 +424,6 @@
 	      <span {{action "editUser" on="click"}}>{{name}}</span>
 	      {{/if}}
 	    </td>
-	    <td>{{input type="checkbox" checked=active}}</td>
 	    <td>
 	      {{#if isEditing}}
 	      {{input value=order focus-out="doneEditing"}}
@@ -435,6 +431,8 @@
 	      <span {{action "editUser" on="click"}}>{{order}}</span>
 	      {{/if}}
 	    </td>
+	    <td>{{input type="checkbox" checked=active}}</td>
+	    <td>{{input type="checkbox" checked=admin}}</td>
 	  </tr>
 	  {{/each}}
 	</tbody>

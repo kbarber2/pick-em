@@ -16,6 +16,7 @@ def parse_time(formatted):
 class User(ndb.Model):
     name = ndb.StringProperty()
     active = ndb.BooleanProperty()
+    admin = ndb.BooleanProperty()
     order = ndb.IntegerProperty()
 
 class School(ndb.Model):
@@ -70,6 +71,7 @@ def serializeUser(out, user):
     p['name'] = user.name
     p['active'] = user.active
     p['order'] = user.order
+    p['admin'] = user.admin
     return p
 
 def serializeMatchup(out, matchup):
@@ -164,11 +166,14 @@ def deserializeUser(user, serialized):
     if user is None:
         user = User(name = serialized['name'],
                     active = serialized['active'],
-                    order = serialized['order'])
+                    order = serialized['order'],
+                    admin = serialized['admin'])
     else:
         user.name = serialized['name']
         user.active = serialized['active']
         user.order = serialized['order']
+        user.admin = serialized['admin']
+
     return user
     
 class UsersHandler(webapp2.RequestHandler):

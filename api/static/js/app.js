@@ -77,6 +77,7 @@ App.School = DS.Model.extend({
 App.User = DS.Model.extend({
     name: DS.attr('string'),
     active: DS.attr('boolean'),
+    admin: DS.attr('boolean'),
     order: DS.attr('number')
 });
 
