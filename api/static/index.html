@@ -355,9 +355,10 @@
 	{{/each}}
       </tbody>
     </table>
+    <button class="btn btn-default" {{action 'newSchool'}}>New School</button>
   </script>
 
-  <script type="text/x-handlebars" data-template-name="schools/edit">
+  <script type="text/x-handlebars" data-template-name="schools/_form">
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <div class="form-group">
 	<label for="name" class="col-sm-2 control-label">Name</label>

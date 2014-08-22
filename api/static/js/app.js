@@ -176,13 +176,44 @@ App.SchoolsRoute = Ember.Route.extend({
     }
 });
 
+App.SchoolsEditRoute = Ember.Route.extend({
+    model: function(params) {
+	return this.store.find('school', params.school_id);
+    },
+
+    renderTemplate: function() {
+	this.render('schools._form', { controller: 'schoolsEdit' });
+    }    
+});
+
+App.SchoolsNewRoute = Ember.Route.extend({
+    model: function(params) {
+	return this.store.createRecord('school');
+    },
+
+    setupController: function(controller, model) {
+	var edit = this.controllerFor('schoolsEdit');
+	edit.set('model', model);
+    },
+    
+    renderTemplate: function() {
+	this.render('schools._form', { controller: 'schoolsEdit' });
+    }    
+});
+
+App.SchoolsIndexController = Ember.ArrayController.extend({
+    actions: {
+	newSchool: function() {
+	    this.transitionToRoute('schools.new');
+	}
+    }
+});
+
 App.SchoolsEditController = Ember.ObjectController.extend({
     actions: {
 	save: function() {
 	    var self = this;
-	    var name = this.get('name');
-	    var dirty = this.get('model').serialize();
-	    var store = this.get('store');
+	    var m = this.get('model');
 	    this.get('model').save().then(function() {
 		self.transitionToRoute('schools');
 	    });
