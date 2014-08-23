@@ -122,6 +122,68 @@ App.WeekEdit = App.WeekBase.extend({
     deadline: DS.attr('mdate')
 });
 
+App.Pick = DS.Model.extend({
+    users: DS.hasMany('user'),
+    matchups: DS.hasMany('matchup'),
+    editable: DS.attr('boolean'),
+    bets: DS.attr()
+});
+/*
+App.PickAdapter = DS.RESTAdapter.extend({
+    find: function(store, type, id, record) {
+	debugger;
+
+	var done = new Ember.RSVP.Promise(function(resolve, reject) {
+	    
+	});
+
+	var p = this._super(store, type, id, record);
+	p.then(function(payload) {
+	    var picks = payload.picks;
+	    debugger;
+	    if (picks.bets) {
+		picks.bets.forEach(function(bet) {
+		    debugger;
+		    store.find('matchup', bet.matchup).then(function(m) {
+			debugger;
+			bet.matchup = m;
+		    });
+		});
+	    }
+	    debugger;
+	});
+	
+	return done;
+    }
+});
+*/
+/*
+App.PickSerializer = DS.JSONSerializer.extend({
+    extractSingle: function(store, type, payload) {
+	debugger;
+
+	var u = store.getById('user', 5248518755188736);
+	if (payload.user) {
+	    store.pushPayload({user: payload.user});
+	    
+	    payload.user.forEach(function(user) {
+		store.pushPayload('user', user);
+	    });
+	}
+
+	debugger;
+	
+	u = store.getById('user', 5248518755188736);
+	var s = this._super(store, type, payload);
+	u = store.getById('user', 5248518755188736);
+	return s;
+    },
+
+    normalizePayload: function(payload) {
+	return payload.picks;
+    }
+});
+*/
 App.BetsForUser = Ember.Object.extend({
     user: null,
     bets: null,
@@ -130,9 +192,9 @@ App.BetsForUser = Ember.Object.extend({
 	return this.bets.reduce(function(prev, cur, idx, array) {
 	    if (!cur) return prev;
 	    
-	    var pointsStr = cur.get('points');
+	    var pointsStr = cur.points;
 	    var points = isNumber(pointsStr) ? parseInt(pointsStr, 10) : 0;
-	    var matchup = cur.get('matchup');
+	    var matchup = cur.matchup;
 	    
 	    if (matchup.get('winner')) {
 		var line = matchup.get('line');
@@ -293,10 +355,28 @@ App.MatchupsNewController = App.MatchupsEditController.extend({
 App.PicksViewCurrentRoute = Ember.Route.extend({
     model: function() {
 	var self = this;
-	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
-	    self.store.pushPayload('week', week);
-	    self.transitionTo('picks.view', week.week.id);
+	var p = this.store.find('pick', 'current');
+
+	// TODO: seems like this should be in an adapter 
+	p.then(function(picks) {
+	    if (picks.get('bets')) {
+		picks.get('bets').forEach(function(bet) {
+		    bet.matchup = self.store.getById('matchup', bet.matchup);
+		    bet.user = self.store.getById('user', bet.user);
+		    bet.winner = self.store.getById('school', bet.winner);
+		});
+	    }
 	});
+	return p;
+    },
+
+    setupController: function(controller, model) {
+	controller = this.controllerFor('picksView');
+	controller.set('model', model);
+    },
+
+    renderTemplate: function() {
+	this.render('picks.view', { controller: 'picksView' });
     }
 });
 
@@ -353,6 +433,7 @@ App.PicksEditController = Ember.ArrayController.extend({
 
 App.PicksViewController = Ember.ObjectController.extend({
     userBets: function() {
+	var m = this.get('model');
 	var self = this;
 	return this.get('users').map(function(user) {
 	    var d = { name: user.get('name'), bets: self.orderedBets(user) };
@@ -365,7 +446,7 @@ App.PicksViewController = Ember.ObjectController.extend({
 	var uname = user.get('name');
 	return this.get('matchups').map(function(matchup) {
 	    var f = bets.filter(function(bet) {
-		return (bet.get('person') === uname && bet.get('matchup') === matchup);
+		return (bet.user === user && bet.matchup === matchup);
 	    });
 
 	    return f.length > 0 ? f.objectAt(0) : null;

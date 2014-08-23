@@ -138,6 +138,7 @@ def serializeEditableWeek(out, week):
 
     return w
     
+    
 EMBER_MODEL_NAMES = { User: 'user', School: 'school', Matchup: 'matchup',
                       Bet: 'bet', Week: 'week' }
 
@@ -447,42 +448,64 @@ class WeekEditHandler(webapp2.RequestHandler):
         out = {}
         out['weekEdit'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
-        
-class WeekBetsHandler(webapp2.RequestHandler):
+
+class PicksHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
         if 'week_id' in kwargs:
             week = Week.get_by_id(long(kwargs['week_id']))
-        elif '/current/' in self.request.path_url:
-            week = Week.query().get()
+        elif '/current' in self.request.path_url:
+            week = self.get_current_week()
         else:
             return
 
-        out = serialize({}, week)
-        wout = out['week']
-        wout['bets'] = []
+        editable = True
+        picks = {}
+        out = { 'picks': picks }
+
+        picks['id'] = week.key.id()
+        picks['editable'] = editable
+        picks['users'] = []
+        picks['matchups'] = []
+        picks['bets'] = []
+
+        current_user = User.query(User.name == 'Keith').get()
+        active_users = week.active_users if not editable else [current_user.key]
+        
+        for u in active_users:
+            picks['users'].append(u.id())
+            appendSideModel(out, u.get())
+
+        for m in week.matchups:
+            picks['matchups'].append(m.id())
+            appendSideModel(out, m.get())
 
         query = Bet.matchup.IN(week.matchups)
-        
-        if False and wout['editable']:
-            current = User.query(User.name == 'Keith').get()
-            query = ndb.AND(query, Bet.user == current.key)
+        if editable:
+            query = ndb.AND(query, Bet.user == current_user.key)
         
         for b in Bet.query(query):
-            wout['bets'].append(b.key.id())
-            appendSideModel(out, b)
+            bet = { 'user': b.user.id(),
+                    'matchup': b.matchup.id(),
+                    'winner': b.winner.id(),
+                    'points': b.points }
+            picks['bets'].append(bet)
 
         self.response.write(json.dumps(out))
+
+    def get_current_week(self):
+        return Week.query().get()
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
     webapp2.Route(r'/api/users', UsersHandler),
     webapp2.Route(r'/api/users/<user_id:\d+>', UsersHandler),
+    webapp2.Route(r'/api/picks', PicksHandler),
+    webapp2.Route(r'/api/picks/current', PicksHandler),
+    webapp2.Route(r'/api/picks/<week_id:\d+>', PicksHandler),
     webapp2.Route(r'/api/weekEdits', WeekEditHandler),
     webapp2.Route(r'/api/weekEdits/<week_id:\d+>', WeekEditHandler),
-    webapp2.Route(r'/api/weeks/current/bets', WeekBetsHandler),
-    webapp2.Route(r'/api/weeks/<week_id:\d+>/bets', WeekBetsHandler),
     webapp2.Route(r'/api/bets', BetHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
