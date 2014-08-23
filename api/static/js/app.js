@@ -128,62 +128,7 @@ App.Pick = DS.Model.extend({
     editable: DS.attr('boolean'),
     bets: DS.attr()
 });
-/*
-App.PickAdapter = DS.RESTAdapter.extend({
-    find: function(store, type, id, record) {
-	debugger;
 
-	var done = new Ember.RSVP.Promise(function(resolve, reject) {
-	    
-	});
-
-	var p = this._super(store, type, id, record);
-	p.then(function(payload) {
-	    var picks = payload.picks;
-	    debugger;
-	    if (picks.bets) {
-		picks.bets.forEach(function(bet) {
-		    debugger;
-		    store.find('matchup', bet.matchup).then(function(m) {
-			debugger;
-			bet.matchup = m;
-		    });
-		});
-	    }
-	    debugger;
-	});
-	
-	return done;
-    }
-});
-*/
-/*
-App.PickSerializer = DS.JSONSerializer.extend({
-    extractSingle: function(store, type, payload) {
-	debugger;
-
-	var u = store.getById('user', 5248518755188736);
-	if (payload.user) {
-	    store.pushPayload({user: payload.user});
-	    
-	    payload.user.forEach(function(user) {
-		store.pushPayload('user', user);
-	    });
-	}
-
-	debugger;
-	
-	u = store.getById('user', 5248518755188736);
-	var s = this._super(store, type, payload);
-	u = store.getById('user', 5248518755188736);
-	return s;
-    },
-
-    normalizePayload: function(payload) {
-	return payload.picks;
-    }
-});
-*/
 App.BetsForUser = Ember.Object.extend({
     user: null,
     bets: null,
