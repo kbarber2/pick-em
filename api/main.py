@@ -47,12 +47,15 @@ class Week(ndb.Model):
     deadline = ndb.DateTimeProperty()
 
 class Bet(ndb.Model):
-    user = ndb.KeyProperty(kind=User)
-    matchup = ndb.KeyProperty(kind=Matchup)
     winner = ndb.KeyProperty(kind=School)
     points = ndb.IntegerProperty()
-    number = ndb.IntegerProperty()
     time_placed = ndb.DateTimeProperty()
+
+class Picks(ndb.Model):
+    week = ndb.KeyProperty(kind=Week)
+    user = ndb.KeyProperty(kind=User)
+    matchup = ndb.KeyProperty(kind=Matchup)
+    bets = ndb.StructuredProperty(Bet, repeated=True)
 
 def serializeSchool(out, school):
     s = {}
@@ -450,6 +453,10 @@ class WeekEditHandler(webapp2.RequestHandler):
         self.response.write(json.dumps(out))
 
 class PicksHandler(webapp2.RequestHandler):
+    def past_deadline(self, week):
+        return True
+        return datetime.datetime.now() >= week.deadline
+
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
@@ -460,7 +467,7 @@ class PicksHandler(webapp2.RequestHandler):
         else:
             return
 
-        editable = True
+        editable = not self.past_deadline(week)
         picks = {}
         out = { 'picks': picks }
 
@@ -481,13 +488,16 @@ class PicksHandler(webapp2.RequestHandler):
             picks['matchups'].append(m.id())
             appendSideModel(out, m.get())
 
-        query = Bet.matchup.IN(week.matchups)
+        query = Picks.week == week.key
         if editable:
-            query = ndb.AND(query, Bet.user == current_user.key)
+            query = ndb.AND(query, Picks.user == current_user.key)
         
-        for b in Bet.query(query):
-            bet = { 'user': b.user.id(),
-                    'matchup': b.matchup.id(),
+        for p in Picks.query(query):
+            if len(p.bets) == 0: continue
+            
+            b = p.bets[-1]
+            bet = { 'user': p.user.id(),
+                    'matchup': p.matchup.id(),
                     'winner': b.winner.id(),
                     'points': b.points }
             picks['bets'].append(bet)
@@ -496,6 +506,44 @@ class PicksHandler(webapp2.RequestHandler):
 
     def get_current_week(self):
         return Week.query().get()
+
+    def put(self, week_id):
+        self.response.headers['Content-Type'] = 'application/json'
+        data = json.loads(self.request.body)['pick']
+        current_user = User.query(User.name == 'Keith').get()
+
+        if 'user' in data:
+            current_user = User.get_by_id(long(data['user']))
+            logging.info('Overriding user to ' + current_user.name)
+            
+        week = Week.get_by_id(long(week_id))
+        if self.past_deadline(week):
+            self.response.status = 422
+            return
+
+        # TODO: validate that the matchups are in that week
+
+        for bet in data['bets']:
+            matchup = ndb.Key(Matchup, long(bet['matchup']))
+            winner = ndb.Key(School, long(bet['winner']))
+            points = int(bet['points'])
+
+            picksQ = Picks.query(ndb.AND(Picks.matchup == matchup,
+                                         Picks.user == current_user.key))
+            picks = picksQ.get()
+            if picks is None:
+                picks = Picks(week = week.key, user = current_user.key,
+                              matchup = matchup, bets = [])
+            else:
+                old = picks.bets[-1]
+                if old.winner == winner and old.points == points:
+                    continue
+
+            betRecord = Bet(winner = winner, points = points,
+                            time_placed = datetime.datetime.now())
+
+            picks.bets.append(betRecord)
+            picks.put()
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),

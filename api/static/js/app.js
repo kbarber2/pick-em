@@ -53,6 +53,23 @@ App.MdateTransform = DS.Transform.extend({
     }
 });
 
+App.PickSerializer = DS.RESTSerializer.extend({
+    serialize: function(record, options) {
+	var bets = record.get('bets').map(function(bet) {
+	    return { matchup: bet.matchup.get('id'),
+		     points: bet.points,
+		     winner: bet.winner.get('id')
+	    };
+	});
+	var d = { bets: bets };
+	debugger;
+	if (record.get('userOverride')) {
+	    d.user = record.get('userOverride').get('id');
+	}
+	return d;
+    }
+});
+
 DS.RESTAdapter.reopen({
     host: 'http://localhost:8080',
     namespace: 'api'
@@ -91,19 +108,6 @@ App.Matchup = DS.Model.extend({
     awayScore: DS.attr('number')
 });
 
-App.Bet = DS.Model.extend({
-    person: DS.attr('string'),
-    matchup: DS.belongsTo('matchup'),
-    winner: DS.belongsTo('school'),
-    points: DS.attr('number'),
-
-    teams: function() {
-	var matchup = this.get('matchup');
-	var a = matchup.get('awayTeam');
-	return [matchup.get('awayTeam'), matchup.get('homeTeam')];
-    }.property('matchup')
-});
-
 App.WeekBase = DS.Model.extend({
     users: DS.hasMany('user'),
     matchups: DS.hasMany('matchup'),
@@ -111,7 +115,7 @@ App.WeekBase = DS.Model.extend({
 
 App.Week = App.WeekBase.extend({
     editable: DS.attr('boolean'),
-    bets: DS.hasMany('bet')
+//    bets: DS.hasMany('bet')
 });
 
 App.WeekEdit = App.WeekBase.extend({
@@ -127,6 +131,17 @@ App.Pick = DS.Model.extend({
     matchups: DS.hasMany('matchup'),
     editable: DS.attr('boolean'),
     bets: DS.attr()
+});
+
+App.Bet = Ember.Object.extend({
+    matchup: null,
+    winner: null,
+    points: 0,
+
+    teams: function() {
+	var matchup = this.get('matchup');
+	return [matchup.get('awayTeam'), matchup.get('homeTeam')];
+    }.property('matchup')
 });
 
 App.BetsForUser = Ember.Object.extend({
@@ -206,6 +221,12 @@ App.SchoolsNewRoute = Ember.Route.extend({
     renderTemplate: function() {
 	this.render('schools._form', { controller: 'schoolsEdit' });
     }    
+});
+
+App.ApplicationController = Ember.ObjectController.extend({
+    isAdmin: function() {
+	return true;
+    }.property()
 });
 
 App.SchoolsIndexController = Ember.ArrayController.extend({
@@ -305,11 +326,13 @@ App.PicksViewCurrentRoute = Ember.Route.extend({
 	// TODO: seems like this should be in an adapter 
 	p.then(function(picks) {
 	    if (picks.get('bets')) {
-		picks.get('bets').forEach(function(bet) {
+		var mapped = picks.get('bets').map(function(bet) {
 		    bet.matchup = self.store.getById('matchup', bet.matchup);
 		    bet.user = self.store.getById('user', bet.user);
 		    bet.winner = self.store.getById('school', bet.winner);
+		    return App.Bet.create(bet);
 		});
+		picks.set('bets', mapped);
 	    }
 	});
 	return p;
@@ -339,38 +362,91 @@ App.PicksViewRoute = Ember.Route.extend({
 
     setupController: function(controller, model) {
 	controller.set('model', model);
-	
+
 	var schools = this.get('schools');
 	controller.set('schools', schools);
     }
 });
 
-App.PicksEditRoute = App.PicksViewRoute.extend({
-    model: function() {
+App.PicksEditRoute = App.PicksViewCurrentRoute.extend({
+    beforeModel: function() {
 	var self = this;
-	return Ember.$.getJSON('/api/weeks/current/bets').then(function(week) {
-	    self.store.pushPayload('week', week);
-	    return self.store.find('week', week.week.id);
+	var promises = new Array;
+
+	if (this.controllerFor('picksEdit').get('isAdmin')) {
+	    var users = this.store.find('user');
+	    users.then(function(users) {
+		self.set('users', users);
+	    });
+	    promises.push(users);
+	}
+
+	var schools = this.store.find('school').then(function(schools) {
+	    self.set('schools', schools);
 	});
+
+	promises.push(schools);
+	return Ember.RSVP.all(promises);
     },
-    
+
     setupController: function(controller, model) {
+	var schools = this.get('schools');
+	controller.set('schools', schools);
 	controller.set('week', model);
-	controller.set('model', model.get('bets'));
+	controller.set('users', this.get('users'));
+
+	var newBets = model.get('matchups').map(function(matchup) {
+	    var lastBets = model.get('bets').filter(function(bet) {
+		return bet.matchup === matchup;
+	    });
+
+	    var bet = App.Bet.create({ matchup: matchup, winner: null, points: 0 });
+
+	    if (lastBets.length > 0) {
+		bet.set('winner', lastBets[0].winner);
+		bet.set('points', lastBets[0].points);
+	    }
+
+	    return bet;
+	});
+
+	model.set('bets', newBets);
+	controller.set('model', newBets);
+    },
+
+    renderTemplate: function() {
+	this.render('picks.edit', { controller: 'picksEdit' });
     }
 });
 
 App.PicksEditController = Ember.ArrayController.extend({
+    needs: ['application'],
+    isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
+    _userOverride: null,
+    
     totalPoints: function() {
 	return this.get('model').reduce(function(prev, cur, idx, array) {
-	    var points = cur.get('points');
+	    var points = cur.points;
 	    return prev + (isNumber(points) ? parseInt(points, 10) : 0);
 	}, 0);
     }.property('@each.points'),
+
+    userOverride: function(key, value, previous) {
+	if (value) {
+	    this._userOverride = value;
+	} else {
+	    return this._userOverride;
+	}
+    }.property(),
     
     actions: {
 	save: function() {
-	    var model = this.get('model');
+	    var model = this.get('week');
+	    if (this._userOverride) {
+		model.set('userOverride', this._userOverride);
+	    }
+
+	    debugger;
 	    return model.save();
 	}
     }
