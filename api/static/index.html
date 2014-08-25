@@ -12,6 +12,7 @@
       max-height: 200px;
       overflow: auto;
       }
+      .is-current-user { font-weight: bold; }
     </style>
   </head>
   <body>
@@ -134,21 +135,21 @@
 	    {{#each matchups}}
 	    <th colspan="2">{{awayTeam.abbreviation}} vs. {{homeTeam.abbreviation}}<br/>{{line}}</th>
 	    {{/each}}
-	    <th>Total Points</th>
-	    <th>Total Games</th>
+	    <th>Total<br/>Points</th>
+	    <th>Total<br/>Games</th>
 	  <tr>
 	</thead>
 
 	<tbody>
 	  {{#each userBets}}
 	  <tr>
-	    <td>{{name}}</td>
+	    <td {{bind-attr class="isCurrentUser"}}>{{name}}</td>
 	    {{#each bets}}
 	    <td {{bind-attr style="colors"}}>{{winner.abbreviation}}</td>
-	    <td {{bind-attr style="colors"}}>{{points}}</td>
+	    <td align="right" {{bind-attr style="colors"}}>{{points}}</td>
 	    {{/each}}
-	    <td>{{totalPoints}}</td>
-	    <td>{{gamesWon}}</td>
+	    <td align="right">{{totalPoints}}</td>
+	    <td align="right">{{gamesWon}}</td>
 	  </tr>
 	  {{/each}}
 	</tbody>
