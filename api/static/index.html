@@ -134,7 +134,8 @@
 	    {{#each matchups}}
 	    <th colspan="2">{{awayTeam.abbreviation}} vs. {{homeTeam.abbreviation}}<br/>{{line}}</th>
 	    {{/each}}
-	    <th>Total</th>
+	    <th>Total Points</th>
+	    <th>Total Games</th>
 	  <tr>
 	</thead>
 
@@ -147,6 +148,7 @@
 	    <td {{bind-attr style="colors"}}>{{points}}</td>
 	    {{/each}}
 	    <td>{{totalPoints}}</td>
+	    <td>{{gamesWon}}</td>
 	  </tr>
 	  {{/each}}
 	</tbody>

@@ -34,7 +34,6 @@ class Matchup(ndb.Model):
     kickoff_time = ndb.DateTimeProperty()
     line = ndb.FloatProperty()
 
-    winner = ndb.KeyProperty(kind=School)
     home_score = ndb.IntegerProperty()
     away_score = ndb.IntegerProperty()
 
@@ -91,14 +90,8 @@ def serializeMatchup(out, matchup):
     appendSideModel(out, matchup.home_team.get())
     appendSideModel(out, matchup.away_team.get())
 
-    if matchup.winner is not None:
-        m['winner'] = matchup.winner.id()
-        m['homeScore'] = matchup.home_score
-        m['awayScore'] = matchup.away_score
-    else:
-        m['winner'] = None
-        m['homeScore'] = 0
-        m['awayScore'] = 0
+    m['homeScore'] = matchup.home_score
+    m['awayScore'] = matchup.away_score
 
     return m
 
@@ -346,7 +339,8 @@ class MatchupHandler(webapp2.RequestHandler):
         
         line = float(matchup['line'])
         kickoff = datetime.datetime.now()
-        new = Matchup(home_team=home, away_team=away, line=line, kickoff_time=kickoff)
+        new = Matchup(home_team=home, away_team=away, line=line, kickoff_time=kickoff,
+                      home_score=0, away_score=0)
         key = new.put()
         self.response.write(json.dumps(serialize({}, new)))
 

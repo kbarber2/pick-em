@@ -8,6 +8,23 @@ function parseDate(date) {
     return moment.tz(date, 'MM/DD/YYYY hh:mm a', 'America/New_York');
 }
 
+function betCovered(matchup, winner) {
+    var awayScore = matchup.get('awayScore');
+    var homeScore = matchup.get('homeScore');
+	    
+    if (homeScore || awayScore) {
+	var line = matchup.get('line');
+	var covered = homeScore + line > awayScore;
+
+	if ((covered && winner === matchup.get('homeTeam')) ||
+	    (!covered && winner === matchup.get('awayTeam'))) {
+	    return true;
+	}
+    }
+
+    return false;
+}
+
 App.DatePickerView = Ember.TextField.extend({
     didInsertElement: function() {
 	this.$().datetimepicker({
@@ -155,25 +172,22 @@ App.BetsForUser = Ember.Object.extend({
     user: null,
     bets: null,
 
+    gamesWon: function() {
+	return this.bets.reduce(function(prev, cur, idx, array) {
+	    return betCovered(cur.matchup, cur.winner) ? prev + 1 : prev;
+	}, 0);
+    }.property('bets.@each.points', 'bets.@each.winner'),
+
     totalPoints: function() {
 	return this.bets.reduce(function(prev, cur, idx, array) {
 	    if (!cur) return prev;
-	    
+
 	    var pointsStr = cur.points;
 	    var points = isNumber(pointsStr) ? parseInt(pointsStr, 10) : 0;
-	    var matchup = cur.matchup;
 	    
-	    if (matchup.get('winner')) {
-		var line = matchup.get('line');
-		var covered = matchup.get('homeScore') + line;
-		if (covered > matchup.get('awayScore')) {
-		    return prev + points;
-		}
-	    }	    
-
-	    return prev;
+	    return betCovered(cur.matchup, cur.winner) ? prev + points : prev;
 	}, 0);
-    }.property('@each.points')
+    }.property('bets.@each.points', 'bets.@each.winner')
 });
 
 App.Router.map(function() {
@@ -197,7 +211,8 @@ App.Router.map(function() {
     this.route('picks.view', { path: 'picks/:week_id/view' });
     this.route('picks.edit', { path: 'picks/:week_id/edit' });
 
-    this.route('scores.edit', { path: 'scores/edit' });
+    this.route('scores.editCurrent', { path: 'scores/edit' });
+    this.route('scores.edit', { path: 'scores/:week_id/edit' });    
 
     this.resource('users', { path: 'users' });
 });
@@ -328,9 +343,22 @@ App.MatchupsNewController = App.MatchupsEditController.extend({
     }
 });
 
-App.ScoresEditRoute = Ember.Route.extend({
+App.ScoresEditCurrentRoute = Ember.Route.extend({
+    controllerName: 'scoresEdit',
+    templateName: 'scores.edit',
+
     model: function(params) {
 	return this.store.find('pick', 'current');
+    },
+
+    setupController: function(controller, model) {
+	controller.set('model', model.get('matchups'));
+    }
+});
+
+App.ScoresEditRoute = Ember.Route.extend({
+    model: function(params) {
+	return this.store.find('pick', params.week_id);
     },
 
     setupController: function(controller, model) {
@@ -595,7 +623,6 @@ App.ToggleableUser = Ember.Object.extend({
 	if (value == undefined) {
 	    return this.list.indexOf(this.user) >= 0;
 	} else {
-	    debugger;
 	    if (value && this.list.indexOf(this.user) < 0) {
 		this.list.addObject(this.user);
 	    } else if (!value) {
