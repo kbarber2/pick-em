@@ -374,8 +374,14 @@ class WeeksHandler(webapp2.RequestHandler):
             self.response.write(json.dumps(out))
             return
 
+        query = None
+        if 'season' in self.request.GET:
+            query = Week.season == str(self.request.GET['season'])
+
+        query = Week.query(query) if query is not None else Week.query()
+            
         out = {}
-        out['week'] = [serializeEditableWeek(out, w) for w in Week.query().fetch()]
+        out['week'] = [serializeEditableWeek(out, w) for w in query.fetch()]
         self.response.write(json.dumps(out))
 
     def post(self):

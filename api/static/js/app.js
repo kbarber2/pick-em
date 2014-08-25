@@ -372,7 +372,7 @@ App.PicksViewRoute = Ember.Route.extend({
     },
 
     model: function(params) {
-	return this.store.find('week', params.week_id);
+	return this.store.find('pick', params.week_id);
     },
 
     setupController: function(controller, model) {
@@ -517,6 +517,32 @@ App.WeeksNewRoute = Ember.Route.extend({
     }
 });
 
+App.WeeksRoute = Ember.Route.extend({
+    actions: {
+	search: function(args) {
+	    var self = this;
+	    var child = this.controllerFor('weeksIndex');
+	    var season = this.controllerFor('weeks')._season;
+	    this.store.find('week', { season: season }).then(function(weeks) {
+		child.set('model', weeks);
+	    });
+	}
+    }
+});
+
+App.WeeksController = Ember.Controller.extend({
+    _season: '',
+
+    query: function(key, value, previous) {
+	if (value) {
+	    this._season = parseInt(value, 10);
+	} else {
+	    return this._season;
+	}
+    }.property(),
+
+});
+
 App.WeeksEditRoute = App.WeeksNewRoute.extend({
     model: function(params) {
 	return this.store.find('week', params.week_id);
@@ -560,7 +586,12 @@ App.WeeksEditController = Ember.ObjectController.extend({
 
 App.WeeksIndexRoute = Ember.Route.extend({
     model: function() {
-	return this.store.find('week');
+	var now = moment();
+	var currentYear = moment().year();
+	if (now.month() === 1) {
+	    currentYear -= 1;
+	}
+	return this.store.find('week', { season: currentYear });
     }
 });
 
