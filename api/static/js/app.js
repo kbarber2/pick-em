@@ -563,7 +563,6 @@ App.WeeksEditController = Ember.ObjectController.extend({
 	    var kickoff = '';
 	    
 	    if (this.get('startDate')) {
-		debugger;
 		var m = parseDate(this.get('startDate') + " 12:00 pm");
 		m.day(6);
 		kickoff = m.format('MM/DD/YYYY hh:mm a');
@@ -622,6 +621,9 @@ App.WeeksIndexRoute = Ember.Route.extend({
 });
 
 App.WeeksIndexController = Ember.ArrayController.extend({
+    sortProperties: ['number'],
+    sortAscending: false,
+    
     actions: {
 	editWeek: function(week) {
 	    this.transitionToRoute('weeks.edit', week);
