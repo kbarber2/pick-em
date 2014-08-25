@@ -275,6 +275,32 @@
     {{outlet}}
   </script>
 
+  <script type="text/x-handlebars" data-template-name="scores/edit">
+    <form class="form-horizontal" role="form" {{action save on="submit"}}>
+      <table class="table">
+	<thead>
+	  <tr>
+	    <th colspan="2">Away</th>
+	    <th colspan="2">Home</th>
+	    <th>Line</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {{#each}}
+	  <tr>
+	    <td>{{awayTeam.name}}</td>
+	    <td>{{input class="form-control" value=awayScore}}</td>
+	    <td>{{homeTeam.name}}</td>
+	    <td>{{input class="form-control" value=homeScore}}</td>
+	    <td {{bind-attr class="coveredColor"}}>{{line}}</td>
+	  </tr>
+	  {{/each}}
+	</tbody>
+      </table>
+      <button type="submit" class="btn btn-default">Save</button>
+    </form>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="matchups/index">
     <table class="table table-striped">
       <thead>

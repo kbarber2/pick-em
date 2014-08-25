@@ -75,13 +75,6 @@ DS.RESTAdapter.reopen({
     namespace: 'api'
 });
 
-App.WeekAdapter = DS.RESTAdapter.extend({
-    buildURL: function() {
-	var url = this._super.apply(this, arguments);
-	return url + "/bets";
-    }
-});
-
 App.School = DS.Model.extend({
     name: DS.attr('string'),
     fullName: DS.attr('string'),
@@ -103,22 +96,24 @@ App.Matchup = DS.Model.extend({
     awayTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
     kickoff: DS.attr('mdate'),
-    winner: DS.belongsTo('school'),
     homeScore: DS.attr('number'),
-    awayScore: DS.attr('number')
+    awayScore: DS.attr('number'),
+
+    coveredColor: function() {
+	if (this.get('homeScore') || this.get('awayScore')) {
+	    var away = parseInt(this.get('awayScore'), 10);
+	    var home = parseInt(this.get('homeScore'), 10);
+	    var line = parseFloat(this.get('line'), 10);
+
+	    return home + line > away ? 'success' : 'danger';
+	}
+	
+	return '';
+    }.property('homeScore', 'awayScore')
 });
 
-App.WeekBase = DS.Model.extend({
-    users: DS.hasMany('user'),
+App.Week = DS.Model.extend({
     matchups: DS.hasMany('matchup'),
-});
-
-App.Week = App.WeekBase.extend({
-    editable: DS.attr('boolean'),
-//    bets: DS.hasMany('bet')
-});
-
-App.WeekEdit = App.WeekBase.extend({
     startDate: DS.attr('mdate'),
     endDate: DS.attr('mdate'),
     season: DS.attr('number'),
@@ -188,6 +183,8 @@ App.Router.map(function() {
     this.route('picks.viewCurrent', { path: 'picks/view' });
     this.route('picks.view', { path: 'picks/:week_id/view' });
     this.route('picks.edit', { path: 'picks/edit' });
+
+    this.route('scores.edit', { path: 'scores/edit' });
 
     this.resource('users', { path: 'users' });
 });
@@ -314,6 +311,24 @@ App.MatchupsNewController = App.MatchupsEditController.extend({
 	    var model = this.get('model');
 	    var record = this.store.createRecord('matchup', model);
 	    return record.save();
+	}
+    }
+});
+
+App.ScoresEditRoute = Ember.Route.extend({
+    model: function(params) {
+	return this.store.find('pick', 'current');
+    },
+
+    setupController: function(controller, model) {
+	controller.set('model', model.get('matchups'));
+    }
+});
+
+App.ScoresEditController = Ember.ArrayController.extend({
+    actions: {
+	save: function() {
+	    this.get('model').save();
 	}
     }
 });
@@ -484,7 +499,7 @@ App.WeeksNewRoute = Ember.Route.extend({
     },
 
     model: function() {
-	var w = this.store.createRecord('weekEdit');
+	var w = this.store.createRecord('week');
 	w.set('season', moment().year());
 	return w;
     },
@@ -504,7 +519,7 @@ App.WeeksNewRoute = Ember.Route.extend({
 
 App.WeeksEditRoute = App.WeeksNewRoute.extend({
     model: function(params) {
-	return this.store.find('weekEdit', params.week_id);
+	return this.store.find('week', params.week_id);
     },
     
     renderTemplate: function() {
@@ -545,7 +560,7 @@ App.WeeksEditController = Ember.ObjectController.extend({
 
 App.WeeksIndexRoute = Ember.Route.extend({
     model: function() {
-	return this.store.find('weekEdit');
+	return this.store.find('week');
     }
 });
 

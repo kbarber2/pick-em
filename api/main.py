@@ -354,47 +354,15 @@ class MatchupHandler(webapp2.RequestHandler):
         matchup.kickoff_time = parse_time(data['kickoff'])
         matchup.away_team = ndb.Key(School, long(data['awayTeam']))
         matchup.home_team = ndb.Key(School, long(data['homeTeam']))
+
+        if 'awayScore' in data: matchup.away_score = int(data['awayScore']) 
+        if 'homeScore' in data: matchup.home_score = int(data['homeScore'])
+
         matchup.put()
 
         self.response.write(json.dumps(serialize({}, matchup)))
-        
-class BetHandler(webapp2.RequestHandler):
-    def get(self, **kwargs):
-        self.response.headers['Content-Type'] = 'application/json'
-        out = { 'bet': [] }
 
-        for bet in Bet.query().fetch():
-            serialize(out, bet)
-
-        self.response.write(json.dumps(out))
-
-    def post(self):
-        person = User.query(User.name == "Keith").get()
-        parent = ndb.Key(User, person.key.id())
-        jbids = json.loads(self.request.body)
-
-        for jbid in jbids:
-            matchup = Matchup.get_by_id(long(jbid['matchup']))
-            week = Week.query(Week.matchups.IN([matchup.key])).get()
-
-            if datetime.datetime.now() > week.deadline:
-                self.response.status = 403
-                return
-
-            oldBetsQ = Bet.query(Bet.matchup == matchup.key, ancestor=parent)
-            oldBetsQ = oldBetsQ.order(-Bet.number)
-
-            oldBet = oldBetsQ.fetch(1)
-            nextNumber = oldBet[0].number + 1 if len(oldBet) > 0 else 1
-            
-            winner = School.get_by_id(long(jbid['winner']))
-
-            newBet = Bet(parent=parent, user=person.key, matchup=matchup.key,
-                         winner=winner.key, points=int(jbid['points']),
-                         number=nextNumber, time_placed=datetime.datetime.now())
-            newKey = newBet.put()
-
-class WeekEditHandler(webapp2.RequestHandler):
+class WeeksHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
@@ -402,18 +370,18 @@ class WeekEditHandler(webapp2.RequestHandler):
             week_id = long(kwargs['week_id'])
             week = Week.get_by_id(week_id)
             out = {}
-            out['weekEdit'] = serializeEditableWeek(out, week)
+            out['week'] = serializeEditableWeek(out, week)
             self.response.write(json.dumps(out))
             return
 
         out = {}
-        out['weekEdit'] = [serializeEditableWeek(out, w) for w in Week.query().fetch()]
+        out['week'] = [serializeEditableWeek(out, w) for w in Week.query().fetch()]
         self.response.write(json.dumps(out))
 
     def post(self):
         self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)
-        data = data['weekEdit']
+        data = data['week']
 
         users = [u.key for u in User.query(User.active == True).fetch()]
         matchups = [Matchup.get_by_id(long(mid)).key for mid in data['matchups']]
@@ -428,13 +396,13 @@ class WeekEditHandler(webapp2.RequestHandler):
         week.put()
 
         out = {}
-        out['weekEdit'] = serializeEditableWeek(out, week)
+        out['week'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
 
     def put(self, week_id):
         self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)
-        data = data['weekEdit']
+        data = data['week']
 
         week = Week.get_by_id(long(week_id))
         week.start_date = parse_time(data['startDate'])
@@ -449,7 +417,7 @@ class WeekEditHandler(webapp2.RequestHandler):
         week.put()
 
         out = {}
-        out['weekEdit'] = serializeEditableWeek(out, week)
+        out['week'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
 
 class PicksHandler(webapp2.RequestHandler):
@@ -552,9 +520,8 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/picks', PicksHandler),
     webapp2.Route(r'/api/picks/current', PicksHandler),
     webapp2.Route(r'/api/picks/<week_id:\d+>', PicksHandler),
-    webapp2.Route(r'/api/weekEdits', WeekEditHandler),
-    webapp2.Route(r'/api/weekEdits/<week_id:\d+>', WeekEditHandler),
-    webapp2.Route(r'/api/bets', BetHandler),
+    webapp2.Route(r'/api/weeks', WeeksHandler),
+    webapp2.Route(r'/api/weeks/<week_id:\d+>', WeeksHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
     webapp2.Route(r'/api/matchups', MatchupHandler),
