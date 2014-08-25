@@ -118,6 +118,7 @@ App.Matchup = DS.Model.extend({
 
 App.Week = DS.Model.extend({
     matchups: DS.hasMany('matchup'),
+    users: DS.hasMany('user'),
     startDate: DS.attr('mdate'),
     endDate: DS.attr('mdate'),
     season: DS.attr('number'),
@@ -505,12 +506,29 @@ App.PicksViewController = Ember.ObjectController.extend({
     }
 });
 
+App.WeeksRoute = Ember.Route.extend({
+    actions: {
+	search: function(args) {
+	    var self = this;
+	    var child = this.controllerFor('weeksIndex');
+	    var season = this.controllerFor('weeks')._season;
+	    this.store.find('week', { season: season }).then(function(weeks) {
+		child.set('model', weeks);
+	    });
+	}
+    }
+});
+
 App.WeeksNewRoute = Ember.Route.extend({
     beforeModel: function() {
 	var self = this;
-	return this.store.find('school').then(function(schools) {
+	var schools = this.store.find('school').then(function(schools) {
 	    self.set('schools', schools);
 	});
+	var users = this.store.find('user').then(function(users) {
+	    self.set('users', users);
+	});
+	return Ember.RSVP.all([schools, users]);
     },
 
     model: function() {
@@ -522,26 +540,13 @@ App.WeeksNewRoute = Ember.Route.extend({
     setupController: function(controller, model) {
 	controller = this.controllerFor('weeksEdit');
 	controller.set('model', model);
-	
-	var schools = this.get('schools');
-	controller.set('schools', schools);
+
+	controller.set('schools', this.get('schools'));
+	controller.set('allUsers', this.get('users'));
     },
 
     renderTemplate: function() {
 	this.render('weeks._form', { controller: 'weeksEdit' });
-    }
-});
-
-App.WeeksRoute = Ember.Route.extend({
-    actions: {
-	search: function(args) {
-	    var self = this;
-	    var child = this.controllerFor('weeksIndex');
-	    var season = this.controllerFor('weeks')._season;
-	    this.store.find('week', { season: season }).then(function(weeks) {
-		child.set('model', weeks);
-	    });
-	}
     }
 });
 
@@ -568,7 +573,39 @@ App.WeeksEditRoute = App.WeeksNewRoute.extend({
     }
 });
 
+App.ToggleableUser = Ember.Object.extend({
+    user: null,
+    list: null,
+    name: Ember.computed.alias('user.name'),
+
+    active: function(key, value, previous) {
+	if (value == undefined) {
+	    return this.list.indexOf(this.user) >= 0;
+	} else {
+	    debugger;
+	    if (value && this.list.indexOf(this.user) < 0) {
+		this.list.addObject(this.user);
+	    } else if (!value) {
+		this.list.removeObject(this.user);
+	    }
+	}
+    }.property(),
+});
+
 App.WeeksEditController = Ember.ObjectController.extend({
+    toggleableUsers: function() {
+	var active = this.get('users');
+
+	return this.get('allUsers').map(function(user) {
+	    return App.ToggleableUser.create({ user: user, list: active });
+	});
+    }.property('users.[]'),
+
+    isNotNew: function() {
+	var n = this.get('isNew');
+	return !n;
+    }.property('isNew'),
+
     actions: {
 	newMatchup: function() {
 	    var kickoff = '';

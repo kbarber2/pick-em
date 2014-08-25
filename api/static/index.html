@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="/admin/css/style.css">
     <link rel="stylesheet" href="/admin/css/bootstrap.min.css">
     <link rel="stylesheet" href="/admin/css/jquery.datetimepicker.css">
+    <style>
+      .user-list {
+      max-height: 200px;
+      overflow: auto;
+      }
+    </style>
   </head>
   <body>
     <script type="text/x-handlebars">
@@ -237,6 +243,14 @@
 	</tbody>
       </table>
 
+      {{#if isNotNew}}
+      <ul class="list-group user-list">
+	{{#each toggleableUsers}}
+	<li class="list-group-item">{{name}} {{input type="checkbox" checked=active}}</li>
+	{{/each}}
+      </ul>
+      {{/if}}
+      
       <div class="form-group">
 	<div class="col-sm-offset-2 col-sm-10">
 	  <button type="submit" class="btn btn-default">Save</button>

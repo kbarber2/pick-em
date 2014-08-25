@@ -420,7 +420,8 @@ class WeeksHandler(webapp2.RequestHandler):
         week.deadline = parse_time(data['deadline'])
         week.season = str(data['season'])
         week.number = int(data['number'])
-
+        week.active_users = [ndb.Key(User, long(uid)) for uid in data['users']]
+        
         matchups = [ndb.Key('Matchup', long(m)) for m in data['matchups']]
         week.matchups = matchups
 
