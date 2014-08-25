@@ -15,6 +15,7 @@ def parse_time(formatted):
 
 class User(ndb.Model):
     name = ndb.StringProperty()
+    email = ndb.StringProperty()
     active = ndb.BooleanProperty()
     admin = ndb.BooleanProperty()
     order = ndb.IntegerProperty()
@@ -72,6 +73,7 @@ def serializeUser(out, user):
     p = {}
     p['id'] = user.key.id()
     p['name'] = user.name
+    p['email'] = user.email
     p['active'] = user.active
     p['order'] = user.order
     p['admin'] = user.admin
@@ -169,11 +171,13 @@ def serialize(out, model):
 def deserializeUser(user, serialized):
     if user is None:
         user = User(name = serialized['name'],
+                    email = serialized['email'],
                     active = serialized['active'],
                     order = serialized['order'],
                     admin = serialized['admin'])
     else:
         user.name = serialized['name']
+        user.email = serialized['email']
         user.active = serialized['active']
         user.order = serialized['order']
         user.admin = serialized['admin']

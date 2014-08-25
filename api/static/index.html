@@ -449,6 +449,7 @@
 	<thead>
 	  <tr>
 	    <th>Name</th>
+	    <th>Email</th>
 	    <th>Order</th>
 	    <th>Active</th>
 	    <th>Admin</th>
@@ -462,6 +463,13 @@
 	      {{input value=name focus-out="doneEditing"}}
 	      {{else}}
 	      <span {{action "editUser" on="click"}}>{{name}}</span>
+	      {{/if}}
+	    </td>
+	    <td>
+	      {{#if isEditing}}
+	      {{input value=email focus-out="doneEditing"}}
+	      {{else}}
+	      <span {{action "editUser" on="click"}}>{{email}}</span>
 	      {{/if}}
 	    </td>
 	    <td>

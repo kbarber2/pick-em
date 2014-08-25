@@ -90,6 +90,7 @@ App.School = DS.Model.extend({
 
 App.User = DS.Model.extend({
     name: DS.attr('string'),
+    email: DS.attr('string'),
     active: DS.attr('boolean'),
     admin: DS.attr('boolean'),
     order: DS.attr('number')
@@ -674,8 +675,8 @@ App.UserController = Ember.ObjectController.extend({
 
 App.UsersController = Ember.ArrayController.extend({
     itemController: 'user',
-    sortProperties: ['order'],
-    sortAscending: true,
+    //sortProperties: ['order'],
+    //sortAscending: true,
 
     actions: {
 	save: function() {
