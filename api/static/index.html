@@ -70,6 +70,10 @@
 
   <script type="text/x-handlebars" data-template-name="picks/edit">
     {{#if week.editable}}
+    {{#if showSavedDialog}}
+    <div>Picks saved</div>
+    {{/if}}
+    
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <table class="table">
 	<thead>
@@ -133,8 +137,8 @@
 	  <tr>
 	    <td>{{name}}</td>
 	    {{#each bets}}
-	    <td>{{winner.abbreviation}}</td>
-	    <td>{{points}}</td>
+	    <td {{bind-attr style="colors"}}>{{winner.abbreviation}}</td>
+	    <td {{bind-attr style="colors"}}>{{points}}</td>
 	    {{/each}}
 	    <td>{{totalPoints}}</td>
 	  </tr>

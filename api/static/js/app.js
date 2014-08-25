@@ -66,7 +66,6 @@ App.PickSerializer = DS.RESTSerializer.extend({
 	    };
 	});
 	var d = { bets: bets };
-	debugger;
 	if (record.get('userOverride')) {
 	    d.user = record.get('userOverride').get('id');
 	}
@@ -141,7 +140,14 @@ App.Bet = Ember.Object.extend({
     teams: function() {
 	var matchup = this.get('matchup');
 	return [matchup.get('awayTeam'), matchup.get('homeTeam')];
-    }.property('matchup')
+    }.property('matchup'),
+
+    colors: function() {
+	var w = this.get('winner');
+	var c1 = w.get('primaryColor');
+	var c2 = w.get('secondaryColor');
+	return 'color:' + c1 + ';background-color:' + c2;
+    }.property('winner')
 });
 
 App.BetsForUser = Ember.Object.extend({
@@ -186,8 +192,9 @@ App.Router.map(function() {
     });
 
     this.route('picks.viewCurrent', { path: 'picks/view' });
+    this.route('picks.editCurrent', { path: 'picks/edit' });
     this.route('picks.view', { path: 'picks/:week_id/view' });
-    this.route('picks.edit', { path: 'picks/edit' });
+    this.route('picks.edit', { path: 'picks/:week_id/edit' });
 
     this.route('scores.edit', { path: 'scores/edit' });
 
@@ -338,57 +345,42 @@ App.ScoresEditController = Ember.ArrayController.extend({
     }
 });
 
-App.PicksViewCurrentRoute = Ember.Route.extend({
-    model: function() {
+App.PicksBaseRoute = Ember.Route.extend({
+    afterModel: function(picks, transition) {
 	var self = this;
-	var p = this.store.find('pick', 'current');
+	if (picks.get('bets')) {
+	    var mapped = picks.get('bets').map(function(bet) {
+		bet.matchup = self.store.getById('matchup', bet.matchup);
+		bet.user = self.store.getById('user', bet.user);
+		bet.winner = self.store.getById('school', bet.winner);
+		return App.Bet.create(bet);
+	    });
+	    picks.set('bets', mapped);
+	}
+    }
+});
 
-	// TODO: seems like this should be in an adapter 
-	p.then(function(picks) {
-	    if (picks.get('bets')) {
-		var mapped = picks.get('bets').map(function(bet) {
-		    bet.matchup = self.store.getById('matchup', bet.matchup);
-		    bet.user = self.store.getById('user', bet.user);
-		    bet.winner = self.store.getById('school', bet.winner);
-		    return App.Bet.create(bet);
-		});
-		picks.set('bets', mapped);
-	    }
-	});
-	return p;
+App.PicksViewCurrentRoute = App.PicksBaseRoute.extend({
+    controllerName: 'picksView',
+    templateName: 'picks.view',
+
+    model: function() {
+	return this.store.find('pick', 'current');
     },
 
     setupController: function(controller, model) {
 	controller = this.controllerFor('picksView');
 	controller.set('model', model);
-    },
-
-    renderTemplate: function() {
-	this.render('picks.view', { controller: 'picksView' });
     }
 });
 
-App.PicksViewRoute = Ember.Route.extend({
-    beforeModel: function() {
-	var self = this;
-	return this.store.find('school').then(function(schools) {
-	    self.set('schools', schools);
-	});
-    },
-
+App.PicksViewRoute = App.PicksBaseRoute.extend({
     model: function(params) {
 	return this.store.find('pick', params.week_id);
-    },
-
-    setupController: function(controller, model) {
-	controller.set('model', model);
-
-	var schools = this.get('schools');
-	controller.set('schools', schools);
     }
 });
 
-App.PicksEditRoute = App.PicksViewCurrentRoute.extend({
+App.PicksEditRoute = App.PicksViewRoute.extend({
     beforeModel: function() {
 	var self = this;
 	var promises = new Array;
@@ -401,41 +393,42 @@ App.PicksEditRoute = App.PicksViewCurrentRoute.extend({
 	    promises.push(users);
 	}
 
-	var schools = this.store.find('school').then(function(schools) {
-	    self.set('schools', schools);
-	});
-
-	promises.push(schools);
 	return Ember.RSVP.all(promises);
     },
 
     setupController: function(controller, model) {
-	var schools = this.get('schools');
-	controller.set('schools', schools);
 	controller.set('week', model);
 	controller.set('users', this.get('users'));
+	var bets = model.get('bets');
 
-	var newBets = model.get('matchups').map(function(matchup) {
-	    var lastBets = model.get('bets').filter(function(bet) {
-		return bet.matchup === matchup;
+	if (model.get('editable')) {
+	    bets = model.get('matchups').map(function(matchup) {
+		var lastBets = model.get('bets').filter(function(bet) {
+		    return bet.matchup === matchup;
+		});
+
+		var bet = App.Bet.create({ matchup: matchup, winner: null, points: 0 });
+
+		if (lastBets.length > 0) {
+		    bet.set('winner', lastBets[0].winner);
+		    bet.set('points', lastBets[0].points);
+		}
+
+		return bet;
 	    });
+	}
 
-	    var bet = App.Bet.create({ matchup: matchup, winner: null, points: 0 });
+	model.set('bets', bets);
+	controller.set('model', bets);
+    }
+});
 
-	    if (lastBets.length > 0) {
-		bet.set('winner', lastBets[0].winner);
-		bet.set('points', lastBets[0].points);
-	    }
-
-	    return bet;
-	});
-
-	model.set('bets', newBets);
-	controller.set('model', newBets);
-    },
-
-    renderTemplate: function() {
-	this.render('picks.edit', { controller: 'picksEdit' });
+App.PicksEditCurrentRoute = App.PicksEditRoute.extend({
+    controllerName: 'picksEdit',
+    templateName: 'picks.edit',
+    
+    model: function() {
+	return this.store.find('pick', 'current');
     }
 });
 
@@ -443,6 +436,15 @@ App.PicksEditController = Ember.ArrayController.extend({
     needs: ['application'],
     isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
     _userOverride: null,
+    _showSaved: false,
+
+    showSavedDialog: function(key, value, previous) {
+	if (value) {
+	    this._showSaved = value;
+	} else {
+	    return this._showSaved;
+	}
+    }.property(),
     
     totalPoints: function() {
 	return this.get('model').reduce(function(prev, cur, idx, array) {
@@ -466,8 +468,16 @@ App.PicksEditController = Ember.ArrayController.extend({
 		model.set('userOverride', this._userOverride);
 	    }
 
-	    debugger;
-	    return model.save();
+	    var self = this;
+	    self.set('showSavedDialog', true);
+	    var p = model.save();
+	    p.then(function(args) {
+		self.set('showSavedDialog', true);
+
+		Ember.run.later(function() {
+		    self.set('showSavedDialog', false);
+		}, 5000);
+	    });
 	}
     }
 });

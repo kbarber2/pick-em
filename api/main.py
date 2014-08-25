@@ -523,6 +523,9 @@ class PicksHandler(webapp2.RequestHandler):
             picks.bets.append(betRecord)
             picks.put()
 
+        self.response.status = 200
+        self.response.write('{}')
+
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
     webapp2.Route(r'/api/users', UsersHandler),
