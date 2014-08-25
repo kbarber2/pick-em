@@ -485,9 +485,22 @@ App.PicksEditController = Ember.ArrayController.extend({
 
 App.PicksViewController = Ember.ObjectController.extend({
     userBets: function() {
-	var m = this.get('model');
 	var self = this;
-	return this.get('users').map(function(user) {
+	var users = this.get('users').toArray();
+	var current = 'Keith'; 	// TODO
+
+	users.sort(function(u1, u2) {
+	    if (u1.get('name') === current) return -1;
+	    if (u2.get('name') === current) return 1;
+	    
+	    var o1 = u1.get('order'),
+	        o2 = u2.get('order');
+	    if (o1 < o2) return -1;
+	    if (o1 > o2) return 1;
+	    return 0;
+	});
+
+	return users.map(function(user) {
 	    var d = { name: user.get('name'), bets: self.orderedBets(user) };
 	    return App.BetsForUser.create(d);
 	});
