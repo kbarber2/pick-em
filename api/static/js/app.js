@@ -4,6 +4,10 @@ function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+function parseDate(date) {
+    return moment.tz(date, 'MM/DD/YYYY hh:mm a', 'America/New_York');
+}
+
 App.DatePickerView = Ember.TextField.extend({
     didInsertElement: function() {
 	this.$().datetimepicker({
@@ -44,7 +48,7 @@ App.MdateTransform = DS.Transform.extend({
 
     serialize: function(deserialized) {
 	if (deserialized) {
-	    var m = moment.tz(deserialized, 'MM/DD/YYYY hh:mm a', 'America/New_York');
+	    var m = parseDate(deserialized);
 	    var m2 = m.tz('UTC');
 	    deserialized = m.tz('UTC').format();
 	}
@@ -556,7 +560,16 @@ App.WeeksEditRoute = App.WeeksNewRoute.extend({
 App.WeeksEditController = Ember.ObjectController.extend({
     actions: {
 	newMatchup: function() {
-	    var newM = this.store.createRecord('matchup');
+	    var kickoff = '';
+	    
+	    if (this.get('startDate')) {
+		debugger;
+		var m = parseDate(this.get('startDate') + " 12:00 pm");
+		m.day(6);
+		kickoff = m.format('MM/DD/YYYY hh:mm a');
+	    }
+
+	    var newM = this.store.createRecord('matchup', { kickoff: kickoff });
 	    var m = this.get('matchups');
 	    m.pushObject(newM);
 	},
@@ -570,6 +583,19 @@ App.WeeksEditController = Ember.ObjectController.extend({
 	    var self = this;
 	    var model = this.get('model');
 
+	    // default the deadline to the first kickoff time
+	    if (!model.get('deadline')) {
+		var first = model.get('matchups').reduce(function(prev, cur, idx, array) {
+		    var kickoff = parseDate(cur.get('kickoff'));
+		    if (!prev) return kickoff;
+		    return kickoff.isBefore(prev) ? kickoff : prev;
+		});
+
+		if (first) {
+		    model.set('deadline', first.format('MM/DD/YYYY hh:mm a'));
+		}
+	    }
+	    
 	    var promises = model.get('matchups').map(function(matchup) {
 		return matchup.save();
 	    });
