@@ -90,9 +90,15 @@ App.PickSerializer = DS.RESTSerializer.extend({
     }
 });
 
-DS.RESTAdapter.reopen({
+App.ApplicationAdapter = DS.RESTAdapter.extend({
     host: 'http://localhost:8080',
-    namespace: 'api'
+    namespace: 'api',
+
+    headers: function() {
+	return {
+	    "X-BSC-Auth-Key": this.get("session.authToken")
+	};
+    }.property("session.authToken")
 });
 
 App.School = DS.Model.extend({
@@ -179,6 +185,7 @@ App.BetsForUser = Ember.Object.extend({
 
     gamesWon: function() {
 	return this.bets.reduce(function(prev, cur, idx, array) {
+	    if (!cur) return prev;
 	    return betCovered(cur.matchup, cur.winner) ? prev + 1 : prev;
 	}, 0);
     }.property('bets.@each.points', 'bets.@each.winner'),
@@ -220,6 +227,9 @@ App.Router.map(function() {
     this.route('scores.edit', { path: 'scores/:week_id/edit' });    
 
     this.resource('users', { path: 'users' });
+
+    this.route('auth', { path: 'login/:token' });
+    this.route('tokens', { path: 'tokens/:week_id/create' });
 });
 
 App.SchoolsRoute = Ember.Route.extend({
@@ -781,5 +791,42 @@ App.UsersController = Ember.ArrayController.extend({
 	newUser: function() {
 	    this.store.createRecord('user', {active: true});
 	}
+    }
+});
+
+App.TokensRoute = Ember.Route.extend({
+    model: function(params) {
+	return this.store.find('week', params.week_id);
+    }
+});
+
+App.TokensController = Ember.ObjectController.extend({
+    actions: {
+	fetchTokens: function() {
+	    var self = this;
+	    var users = this.get('users');
+	    var callback = function(tokens) {
+		tokens.forEach(function(token) {
+		    var user = users.filter(function(user) {
+			return user.get('id') == token.user;
+		    });
+		    if (user.length > 0) {
+			user[0].set('token', token.token);
+		    }
+		});
+	    };
+	    var p = Ember.$.get('/api/tokens/' + this.get('id'), '', callback);
+	}
+    }
+});
+
+App.AuthRoute = Ember.Route.extend({
+    model: function(params) {
+	debugger;
+	var post = { token: params.token };
+	var p = Ember.$.post('/api/login', post, function(args) {
+	    debugger;
+	});
+	return p;
     }
 });

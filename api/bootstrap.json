@@ -1,0 +1,327 @@
+{ "user": [
+    { "id": "KEITH", "name": "Keith", "email": "", "active": true, "admin": true,  "order": 3 },
+    { "id": "AARON", "name": "Aaron", "email": "", "active": true, "admin": false, "order": 1 },
+    { "id": "FRANK", "name": "Frank", "email": "", "active": true, "admin": false, "order": 2 },
+    { "id": "JASON", "name": "Jason", "email": "", "active": true, "admin": false, "order": 4 },
+    { "id": "MATT", "name": "Matt Orlando", "email": "", "active": true, "admin": false, "order": 5 },
+    { "id": "BEN", "name": "Ben", "email": "", "active": true, "admin": false, "order": 6 },
+    { "id": "MCCORMICK", "name": "McCormick", "email": "", "active": true, "admin": false, "order": 7 },
+    { "id": "FLO", "name": "Flo", "email": "", "active": true, "admin": false, "order": 8 },
+    { "id": "ANDREW", "name": "Andrew Orlando", "email": "", "active": true, "admin": false, "order": 9 },
+    { "id": "JIMMY", "name": "Jimmy", "email": "", "active": true, "admin": false, "order": 10 },
+    { "id": "JOE", "name": "Joe S", "email": "", "active": true, "admin": false, "order": 11 },
+    { "id": "AIR", "name": "Air Lansing", "email": "", "active": true, "admin": false, "order": 12 },
+    { "id": "RAMOS", "name": "Ramos", "email": "", "active": true, "admin": false, "order": 13 },
+    { "id": "VAL", "name": "Val", "email": "", "active": true, "admin": false, "order": 14 },
+    { "id": "GREG", "name": "Greg", "email": "", "active": true, "admin": false, "order": 15 },
+    { "id": "BOB", "name": "Bob", "email": "", "active": true, "admin": false, "order": 16 }
+  ],
+
+  "school": [
+    {
+	"id": "ILLINOIS",
+	"fullName": "University of Illinois",
+	"name": "Illinois",
+	"abbreviation": "Illinois",
+	"mascot": "Illini",
+	"primaryColor": "#003C7D",
+	"secondaryColor": "#F47F24"
+    },
+    {
+	"id": "INDIANA",
+	"fullName": "Indiana University",
+	"name": "Indiana",
+	"abbreviation": "IU",
+	"mascot": "Hoosiers",
+	"secondaryColor": "#7D110C",
+	"primaryColor": "#E1D8B7"
+    },
+    {
+	"id": "IOWA",
+	"fullName": "University of Iowa",
+	"name": "Iowa",
+	"abbreviation": "Iowa",
+	"mascot": "Hawkeyes",
+	"primaryColor": "#FFE100",
+	"secondaryColor": "#000000"
+    },
+    {
+	"id": "MICH",
+	"fullName": "University of Michigan",
+	"name": "Michigan",
+	"abbreviation": "UMich",
+	"mascot": "Wolverines",
+	"primaryColor": "#ffcb05",
+	"secondaryColor": "#00274c"
+    },
+    {
+	"id": "MSU",
+	"fullName": "Michigan State University",
+	"name": "Michigan State",
+	"abbreviation": "MSU",
+	"mascot": "Spartans",
+	"secondaryColor": "#18453B",
+	"primaryColor": "#FFFFFF"
+    },
+    {
+	"id": "MINNESOTA",
+	"fullName": "University of Minnesota",
+	"name": "Minnesota",
+	"abbreviation": "UMinn",
+	"mascot": "Golden Gopher",
+	"primaryColor": "#FFCC33",
+	"secondaryColor": "#7A0019"
+    },
+    {
+	"id": "NEB",
+	"fullName": "University of Nebraska",
+	"name": "Nebraska",
+	"abbreviation": "NEB",
+	"mascot": "Cornhuskers",
+	"primaryColor": "#CC0000",
+	"secondaryColor": "#F5F3EB"
+    },
+    {
+	"id": "NW",
+	"fullName": "Northwestern University",
+	"name": "Northwestern",
+	"abbreviation": "NW",
+	"mascot": "Wildcats",
+	"secondaryColor": "#520063",
+	"primaryColor": "#FFFFFF"
+    },
+    {
+	"id": "OSU",
+	"fullName": "Ohio State University",
+	"name": "Ohio State",
+	"abbreviation": "OSU",
+	"mascot": "Buckeyes",
+	"primaryColor": "#BB0000",
+	"secondaryColor": "rgba(102,102,102, 0.5)"
+    },
+    {
+	"id": "PSU",
+	"fullName": "Pennsylvania State University",
+	"name": "Penn State",
+	"abbreviation": "PSU",
+	"mascot": "Nittany Lions",
+	"primaryColor": "#003893",
+	"secondaryColor": "#FFFFFF"
+    },
+    {
+	"id": "PURDUE",
+	"fullName": "Purdue University",
+	"name": "Purdue",
+	"abbreviation": "Purdue",
+	"mascot": "Boilermakers",
+	"primaryColor": "#BF910C",
+	"secondaryColor": "#000000"
+    },
+    {
+	"id": "WISCONSIN",
+	"fullName": "University of Wisconsin",
+	"name": "Wisconsin",
+	"abbreviation": "WI",
+	"mascot": "Badgers",
+	"secondaryColor": "#C41E3A",
+	"primaryColor": "#FFFFFF"
+    }
+  ],
+
+  "matchup": [
+      { "id": "W6M1",
+	"awayTeam": "MSU",
+	"homeTeam": "IOWA",
+	"kickoff": "2013-10-05T12:00:00-05:00",
+	"line": -1.5,
+	"awayScore": 26,
+	"homeScore": 14
+      },
+      { "id": "W6M2",
+	"awayTeam": "ILLINOIS",
+	"homeTeam": "NEB",
+	"kickoff": "2013-10-05T12:00:00-05:00",
+	"line": -10.5,
+	"awayScore": 19,
+	"homeScore": 39
+      },
+      { "id": "W6M3",
+	"awayTeam": "PSU",
+	"homeTeam": "INDIANA",
+	"kickoff": "2013-10-05T12:00:00-05:00",
+	"line": 3.5,
+	"awayScore": 24,
+	"homeScore": 44
+      },
+      { "id": "W6M4",
+	"awayTeam": "MINNESOTA",
+	"homeTeam": "MICH",
+	"kickoff": "2013-10-05T12:00:00-05:00",
+	"line": -20.5,
+	"awayScore": 13,
+	"homeScore": 42
+      },
+      { "id": "W6M5",
+	"awayTeam": "OSU",
+	"homeTeam": "NW",
+	"kickoff": "2013-10-05T12:00:00-05:00",
+	"line": 5.5,
+	"awayScore": 40,
+	"homeScore": 30
+      }
+  ],
+
+  "week": [
+      { "matchups": [ "W6M1", "W6M2", "W6M3", "W6M4", "W6M5" ],
+	"startDate": "2013-09-29", "endDate": "2013-10-05",
+	"season": "2014", "number": 6, "deadline": "2013-10-05T12:00:00-05:00"
+      }
+  ],
+
+  "pick": [
+      { "user": "AARON",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "IOWA", "points": 1 },
+	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 1 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 96 }
+	]
+      },
+      { "user": "FRANK",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 96 },
+	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 1 }
+	]
+      },
+      { "user": "KEITH",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 15 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 15 },
+	    { "matchup": "W6M3", "winner": "INDIANA", "points": 5 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 15 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 50 }
+	]
+      },
+      { "user": "JASON",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 50 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 25 },
+	    { "matchup": "W6M3", "winner": "INDIANA", "points": 5 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 5 },
+	    { "matchup": "W6M5", "winner": "NW", "points": 15 }
+	]
+      },
+      { "user": "MATT",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 24 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 24 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 27 },
+	    { "matchup": "W6M5", "winner": "NW", "points": 24 }
+	]
+      },
+      { "user": "MCCORMICK",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 15 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 20 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 35 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 15 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 15 }
+	]
+      },
+      { "user": "BEN",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 80 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 1 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 8 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 10 }
+	]
+      },
+      { "user": "FLO",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 15 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 20 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 35 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 15 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 15 }
+	]
+      },
+      { "user": "ANDREW",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 23 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 40 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 35 }
+	]
+      },
+      { "user": "JIMMY",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "IOWA", "points": 20 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 8 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 22 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 30 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 20 }
+	]
+      },
+      { "user": "JOE",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 96 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 1 }
+	]
+      },
+      { "user": "AIR",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 5 },
+	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 10 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 40 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 5 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 40 }
+	]
+      },
+      { "user": "RAMOS",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "IOWA", "points": 1 },
+	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 96 }
+	]
+      },
+      { "user": "VAL",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 96 },
+	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 1 }
+	]
+      },
+      { "user": "GREG",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "MSU", "points": 5 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 10 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 10 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 70 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 5 }
+	]
+      },
+      { "user": "BOB",
+	"bets": [
+	    { "matchup": "W6M1", "winner": "IOWA", "points": 1 },
+	    { "matchup": "W6M2", "winner": "NEB", "points": 1 },
+	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
+	    { "matchup": "W6M4", "winner": "MICH", "points": 1 },
+	    { "matchup": "W6M5", "winner": "OSU", "points": 96 }
+	]
+      }
+  ]
+}

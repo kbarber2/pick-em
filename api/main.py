@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
-import json, datetime, logging, time
+import json, datetime, logging, time, struct, base64, random
 import webapp2
 from google.appengine.ext import ndb
+from Crypto.Cipher import AES
+from Crypto import Random
 
+KEY = 'secretkey1234567'
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 def format_time(obj):
@@ -223,69 +226,83 @@ class UsersHandler(webapp2.RequestHandler):
 class ReloadHandler(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/plain';
-        
-        for clz in (User, School, Matchup, Week, Bet):
+
+        for clz in (User, School, Matchup, Week, Bet, Picks):
             self.response.write('Clearing %s\n' % (clz.__name__))
 
             for inst in clz.query().fetch():
                 inst.key.delete()
 
         time.sleep(1)
-                
-        self.response.write('\nLoading schools\n');
-        with open('schools.json', 'r') as fp:
-            for s in json.loads(fp.read()):
-                school = School(name=s['name'], full_name=s['longName'],
-                                abbreviation=s['abbreviation'], mascot=s['mascot'],
-                                primary_color=s['primaryColor'],
-                                secondary_color=s['secondaryColor'])
-                school.put();
+        
+        with open('bootstrap.json', 'r') as fp:
+            data = json.loads(fp.read())
 
-        self.response.write('Loading users\n')
-        keith = User(name='Keith', active=True)
-        keith.put()
-        frank = User(name="Frank", active=True)
-        frank.put()
+        users = {}
+        for user in data['user']:
+            u = deserializeUser(None, user)
+            u.put()
+            users[user['id']] = u
 
         time.sleep(1)
-        
-        self.response.write('Loading matchups\n')
-        m1 = Matchup(home_team = School.query(School.abbreviation == 'MSU').get().key,
-                     away_team = School.query(School.abbreviation == 'PSU').get().key,
-                     kickoff_time = datetime.datetime(2014, 8, 22, 12, 00), line=3.5,
-                     winner = School.query(School.abbreviation == 'MSU').get().key,
-                     home_score = 17, away_score = 11)
-        m1.put()
-        m2 = Matchup(home_team = School.query(School.abbreviation == 'Iowa').get().key,
-                     away_team = School.query(School.abbreviation == 'NEB').get().key,
-                     kickoff_time = datetime.datetime(2014, 8, 22, 15, 30), line=-10.5,
-                     winner = School.query(School.abbreviation == 'NEB').get().key,
-                     home_score = 24, away_score = 7)
-        m2.put()
 
-        self.response.write('Loading weeks\n')
-        week = Week(active_users = [keith.key, frank.key],
-                    matchups = [m1.key, m2.key],
-                    start_date = datetime.date(2014, 8, 16),
-                    end_date = datetime.date(2014, 8, 23),
-                    number = 1,
-                    deadline = datetime.datetime(2014, 8, 22, 12, 00))
-        week.put()
+        schools = {}
+        for school in data['school']:
+            s = deserializeSchool(None, school)
+            s.put()
+            schools[school['id']] = s
 
-        self.response.write('Loading bets\n')
-        b = Bet(user=keith.key, matchup=m1.key,
-                winner=School.query(School.abbreviation == 'MSU').get().key,
-                points=20, number=1, time_placed=datetime.datetime(2014,8,21, 14, 33))
-        b.put()
-        b = Bet(user=keith.key, matchup=m2.key,
-                winner=School.query(School.abbreviation == 'NEB').get().key,
-                points=10, number=1, time_placed=datetime.datetime(2014,8,21, 15, 50))
-        b.put()
-        b = Bet(user=frank.key, matchup=m1.key,
-                winner=School.query(School.abbreviation == 'PSU').get().key,
-                points=55, number=1, time_placed=datetime.datetime(2014,8,19, 10, 04))
-        b.put()
+        time.sleep(1)
+
+        matchups = {}
+        for m in data['matchup']:
+            matchup = Matchup(away_team = schools[m['awayTeam']].key,
+                              home_team = schools[m['homeTeam']].key,
+                              kickoff_time = parse_time(m['kickoff']),
+                              line = m['line'],
+                              away_score = m['awayScore'],
+                              home_score = m['homeScore'])
+            matchup.put()
+            matchups[m['id']] = matchup
+            
+        time.sleep(1)
         
+        for w in data['week']:
+            week = Week(matchups = [matchups[m].key for m in w['matchups']],
+                        active_users = [u.key for u in users.values()],
+                        start_date = datetime.datetime.strptime(w['startDate'], '%Y-%m-%d'),
+                        end_date = datetime.datetime.strptime(w['endDate'], '%Y-%m-%d'),
+                        season = w['season'], number = w['number'],
+                        deadline = parse_time(w['deadline']))
+            week.put()
+
+        time.sleep(1)
+
+        for p in data['pick']:
+            user = users[p['user']]
+            for b in p['bets']:
+                bet = Bet(winner = schools[b['winner']].key,
+                          points = b['points'],
+                          time_placed = datetime.datetime.now())
+
+                pick = Picks(week = week.key, user = user.key,
+                             matchup = matchups[b['matchup']].key,
+                             bets = [bet])
+                pick.put()
+            
+
+class Bet(ndb.Model):
+    winner = ndb.KeyProperty(kind=School)
+    points = ndb.IntegerProperty()
+    time_placed = ndb.DateTimeProperty()
+
+class Picks(ndb.Model):
+    week = ndb.KeyProperty(kind=Week)
+    user = ndb.KeyProperty(kind=User)
+    matchup = ndb.KeyProperty(kind=Matchup)
+    bets = ndb.StructuredProperty(Bet, repeated=True)
+            
+            
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Hello world!')
@@ -521,8 +538,51 @@ class PicksHandler(webapp2.RequestHandler):
         self.response.status = 200
         self.response.write('{}')
 
+class AuthHandler(webapp2.RequestHandler):
+    def get(self, **kwargs):
+        token = self.request.cookies.get('auth')
+        self.response.write(token)
+
+    def post(self):
+        self.response.headers['Content-Type'] = 'application/json'
+
+        encoded = self.request.get('token').encode('ascii')
+        encrypted = base64.urlsafe_b64decode(encoded)
+        nonce = encrypted[-16:]
+        encrypted = encrypted[:-16]
+
+        cipher = AES.new(KEY, AES.MODE_CFB, nonce)
+        packed = cipher.decrypt(encrypted)
+
+        (user_id, week_id, exp) = struct.unpack('!QQi', packed)
+        expiration = datetime.datetime.now() + datetime.timedelta(days=4)
+
+        self.response.set_cookie('auth', encoded, expires = expiration,
+                                 path = '/', domain = '')
+        self.response.write('{"user":"' + str(user_id) + '"}')
+
+class TokensHandler(webapp2.RequestHandler):
+    def get(self, week_id):
+        self.response.headers['Content-Type'] = 'application/json'
+        week = Week.get_by_id(long(week_id))
+
+        tokens = []
+        for user in week.active_users:
+            nonce = Random.new().read(16)
+            packed = struct.pack('!QQi', user.id(), week.key.id(), 0)
+
+            cipher = AES.new(KEY, AES.MODE_CFB, nonce)
+            encrypted = cipher.encrypt(packed) + nonce
+            encoded = base64.urlsafe_b64encode(encrypted)
+            tokens.append({'user': user.id(), 'token': encoded})
+
+        self.response.write(json.dumps(tokens))
+
+
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
+    webapp2.Route(r'/api/login', AuthHandler),
+    webapp2.Route(r'/api/tokens/<week_id:\d+>', TokensHandler),
     webapp2.Route(r'/api/users', UsersHandler),
     webapp2.Route(r'/api/users/<user_id:\d+>', UsersHandler),
     webapp2.Route(r'/api/picks', PicksHandler),

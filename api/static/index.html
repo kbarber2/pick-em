@@ -510,6 +510,34 @@
       <button class="btn btn-default" {{action 'newUser'}}>New User</button>
     </form>
   </script>
+
+  <script type="text/x-handlebars" data-template-name="tokens">
+    <h2>{{season}} Week {{number}}</h2>
+    <table class="table table-striped">
+      <thead>
+	<th>User</th>
+	<th>Email</th>
+	<th>Token</th>
+      </thead>
+      <tbody>
+	{{#each users}}
+	<tr>
+	  <td>{{name}}</td>
+	  <td>{{email}}</td>
+	  <td>
+	    {{#if token}}
+	    {{#link-to 'auth' token}}{{token}}{{/link-to}}
+	    {{else}}
+	    ********
+	    {{/if}}
+	  </td>
+	</tr>
+	{{/each}}
+      </tbody>
+    </table>
+
+    <button class="btn btn-default" {{action 'fetchTokens'}}>Fetch tokens</button>
+  </script>
   
   <script src="/admin/js/libs/jquery-1.10.2.js"></script>
   <script src="/admin/js/libs/moment.js"></script>
