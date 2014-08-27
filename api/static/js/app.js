@@ -230,6 +230,8 @@ App.Router.map(function() {
 
     this.route('auth', { path: 'login/:token' });
     this.route('tokens', { path: 'tokens/:week_id/create' });
+    this.route('loginError', { path: 'login/error' });
+    this.route('logout', { path: 'logout' });
 });
 
 App.SchoolsRoute = Ember.Route.extend({
@@ -822,10 +824,36 @@ App.TokensController = Ember.ObjectController.extend({
 
 App.AuthRoute = Ember.Route.extend({
     model: function(params) {
-	debugger;
+	var self = this;
 	var post = { token: params.token };
-	var p = Ember.$.post('/api/login', post, function(args) {
-	    debugger;
+	var p = Ember.$.post('/api/login', post, function(response) {
+	    if (!response.error) {
+		self.transitionTo('picks.editCurrent');
+	    }
+	}).error(function(response) {
+	    self.controllerFor('auth').set('message', response.responseText);
+	    self.transitionTo('loginError');
+	});
+	return p;
+    }
+});
+
+App.AuthController = Ember.ObjectController.extend({
+    content: {}
+});
+
+App.LoginErrorController = Ember.ObjectController.extend({
+    needs: ['auth']
+});
+
+App.LogoutRoute = Ember.Route.extend({
+    model: function(params) {
+	var self = this;
+	var post = { token: params.token };
+	var p = Ember.$.get('/api/logout', post, function(response) {
+	    self.transitionTo('logout');
+	}).error(function(response) {
+	    self.transitionTo('logout');
 	});
 	return p;
     }

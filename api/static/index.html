@@ -528,7 +528,7 @@
 	    {{#if token}}
 	    {{#link-to 'auth' token}}{{token}}{{/link-to}}
 	    {{else}}
-	    ********
+	    ****************
 	    {{/if}}
 	  </td>
 	</tr>
@@ -539,6 +539,17 @@
     <button class="btn btn-default" {{action 'fetchTokens'}}>Fetch tokens</button>
   </script>
   
+  <script type="text/x-handlebars" data-template-name="loginError">
+    {{controllers.auth.message}}
+    <p>If you are having trouble submitting your picks, email them to the
+      commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
+    <p>Report problems with the BSC site to Keith at <a href="mailto:kbarber2@gmail.com">kbarber2@gmail.com</a>.</p>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="logout">
+    You have successfully logged out.
+  </script>
+
   <script src="/admin/js/libs/jquery-1.10.2.js"></script>
   <script src="/admin/js/libs/moment.js"></script>
   <script src="/admin/js/libs/moment-timezone-with-data-2010-2020.js"></script>

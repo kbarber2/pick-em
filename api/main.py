@@ -2,6 +2,7 @@
 
 import json, datetime, logging, time, struct, base64, random
 import webapp2
+from webapp2_extras import sessions
 from google.appengine.ext import ndb
 from Crypto.Cipher import AES
 from Crypto import Random
@@ -197,6 +198,19 @@ def deserializeSchool(school, data):
         school.secondary_color = data['secondaryColor']
 
     return school
+
+class BaseHandler(webapp2.RequestHandler):
+    def dispatch(self):
+        self.session_store = sessions.get_store(request=self.request)
+
+        try:
+            webapp2.RequestHandler.dispatch(self)
+        finally:
+            self.session_store.save_sessions(self.response)
+
+    @webapp2.cached_property
+    def session(self):
+        return self.session_store.get_session()
 
 class UsersHandler(webapp2.RequestHandler):
     def get(self):
@@ -538,10 +552,12 @@ class PicksHandler(webapp2.RequestHandler):
         self.response.status = 200
         self.response.write('{}')
 
-class AuthHandler(webapp2.RequestHandler):
+class AuthHandler(BaseHandler):
     def get(self, **kwargs):
-        token = self.request.cookies.get('auth')
-        self.response.write(token)
+        if '/logout' in self.request.path_url:
+            self.session.clear()
+            self.response.write('{}')
+            return
 
     def post(self):
         self.response.headers['Content-Type'] = 'application/json'
@@ -555,11 +571,21 @@ class AuthHandler(webapp2.RequestHandler):
         packed = cipher.decrypt(encrypted)
 
         (user_id, week_id, exp) = struct.unpack('!QQi', packed)
+
+        user = User.get_by_id(user_id)
+        week = Week.get_by_id(week_id)
+
+        if user is None or week is None:
+            self.response.status = 400
+            self.response.write('Invalid login URL.')
+            return
+
         expiration = datetime.datetime.now() + datetime.timedelta(days=4)
 
-        self.response.set_cookie('auth', encoded, expires = expiration,
-                                 path = '/', domain = '')
-        self.response.write('{"user":"' + str(user_id) + '"}')
+        self.session['user'] = user_id
+        self.session['week'] = week_id
+        self.session['admin'] = user.admin
+        self.response.write('{}')
 
 class TokensHandler(webapp2.RequestHandler):
     def get(self, week_id):
@@ -578,10 +604,15 @@ class TokensHandler(webapp2.RequestHandler):
 
         self.response.write(json.dumps(tokens))
 
+config = {}
+config['webapp2_extras.sessions'] = {
+    'secret_key': 'my-super-secret-key',
+}
 
 app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
     webapp2.Route(r'/api/login', AuthHandler),
+    webapp2.Route(r'/api/logout', AuthHandler),
     webapp2.Route(r'/api/tokens/<week_id:\d+>', TokensHandler),
     webapp2.Route(r'/api/users', UsersHandler),
     webapp2.Route(r'/api/users/<user_id:\d+>', UsersHandler),
@@ -595,4 +626,4 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/matchups', MatchupHandler),
     webapp2.Route(r'/api/matchups/<matchup_id:\d+>', MatchupHandler),
     webapp2.Route(r'/api/reload', ReloadHandler),
-], debug=True)
+], config=config, debug=True)
