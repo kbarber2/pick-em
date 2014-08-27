@@ -1,4 +1,5 @@
 App = Ember.Application.create();
+var API_URI = '/api/';
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -234,6 +235,37 @@ App.Router.map(function() {
     this.route('logout', { path: 'logout' });
 });
 
+App.ApplicationRoute = Ember.Route.extend({
+    model: function() {
+	var self = this;
+	var model = {user: null, schools: []};
+
+	var p1 = Ember.$.get(API_URI + 'current', '', function(user) {
+	    model.user = user.user ? self.store.push('user', user.user) : null;
+	});
+
+	var p2 = this.store.find('school');
+	p2.then(function(schools) {
+	    model.schools = schools;
+	});
+
+	return Ember.RSVP.all([p1, p2]).then(function(all) {
+	    return model;
+	});
+    }
+});
+
+App.ApplicationController = Ember.ObjectController.extend({
+    isAdmin: function() {
+	if (!this.get('user')) return false;
+	return this.get('user').get('admin');
+    }.property('user'),
+
+    isLoggedIn: function() {
+	return !Ember.isEmpty(this.get('user'));
+    }.property('user')
+});
+
 App.SchoolsRoute = Ember.Route.extend({
     model: function() {
 	return this.store.find('school');
@@ -263,12 +295,6 @@ App.SchoolsNewRoute = Ember.Route.extend({
     renderTemplate: function() {
 	this.render('schools._form', { controller: 'schoolsEdit' });
     }    
-});
-
-App.ApplicationController = Ember.ObjectController.extend({
-    isAdmin: function() {
-	return true;
-    }.property()
 });
 
 App.SchoolsIndexController = Ember.ArrayController.extend({

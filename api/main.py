@@ -554,13 +554,22 @@ class PicksHandler(webapp2.RequestHandler):
 
 class AuthHandler(BaseHandler):
     def get(self, **kwargs):
+        self.response.headers['Content-Type'] = 'application/json'
+
+        if '/current' in self.request.path_url:
+            if 'user' in self.session and 'week' in self.session:
+                user = User.get_by_id(self.session['user'])
+                self.response.write(json.dumps(serialize({}, user)))
+            else:
+                self.response.write(json.dumps({ "user": None }))
+
+    def post(self):
+        self.response.headers['Content-Type'] = 'application/json'
+
         if '/logout' in self.request.path_url:
             self.session.clear()
             self.response.write('{}')
             return
-
-    def post(self):
-        self.response.headers['Content-Type'] = 'application/json'
 
         encoded = self.request.get('token').encode('ascii')
         encrypted = base64.urlsafe_b64decode(encoded)
@@ -613,6 +622,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/', MainHandler),
     webapp2.Route(r'/api/login', AuthHandler),
     webapp2.Route(r'/api/logout', AuthHandler),
+    webapp2.Route(r'/api/current', AuthHandler),
     webapp2.Route(r'/api/tokens/<week_id:\d+>', TokensHandler),
     webapp2.Route(r'/api/users', UsersHandler),
     webapp2.Route(r'/api/users/<user_id:\d+>', UsersHandler),
