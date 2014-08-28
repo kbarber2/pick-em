@@ -501,6 +501,10 @@ class PicksHandler(webapp2.RequestHandler):
         else:
             return
 
+        if week is None:
+            self.response.status = 404
+            return
+
         editable = not self.past_deadline(week)
         picks = {}
         out = { 'picks': picks }
@@ -510,6 +514,10 @@ class PicksHandler(webapp2.RequestHandler):
         picks['users'] = []
         picks['matchups'] = []
         picks['bets'] = []
+        picks['weekNumber'] = week.number
+        picks['weekSeason'] = week.season
+        picks['weekStart'] = format_time(week.start_date)
+        picks['weekEnd'] = format_time(week.end_date)
 
         current_user = User.query(User.name == 'Keith').get()
         

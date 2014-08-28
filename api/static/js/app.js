@@ -154,6 +154,10 @@ App.Pick = DS.Model.extend({
     users: DS.hasMany('user'),
     matchups: DS.hasMany('matchup'),
     editable: DS.attr('boolean'),
+    weekNumber: DS.attr('number'),
+    weekSeason: DS.attr('string'),
+    weekStart: DS.attr('mdate'),
+    weekEnd: DS.attr('mdate'),
     bets: DS.attr()
 });
 
