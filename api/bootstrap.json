@@ -168,13 +168,49 @@
 	"line": 5.5,
 	"awayScore": 40,
 	"homeScore": 30
+      },
+      { "id": "W7M1",
+	"awayTeam": "INDIANA",
+	"homeTeam": "MSU",
+	"kickoff": "2013-10-12T12:00:00-05:00",
+	"line": -9.5,
+	"awayScore": 28,
+	"homeScore": 42
+      },
+      { "id": "W7M2",
+	"awayTeam": "NEB",
+	"homeTeam": "PURDUE",
+	"kickoff": "2013-10-12T12:00:00-05:00",
+	"line": 14.5,
+	"awayScore": 44,
+	"homeScore": 7
+      },
+      { "id": "W7M3",
+	"awayTeam": "NW",
+	"homeTeam": "WISCONSIN",
+	"kickoff": "2013-10-12T12:00:00-05:00",
+	"line": -10.5,
+	"awayScore": 6,
+	"homeScore": 35
+      },
+      { "id": "W7M4",
+	"awayTeam": "MICH",
+	"homeTeam": "PSU",
+	"kickoff": "2013-10-12T12:00:00-05:00",
+	"line": -2.5,
+	"awayScore": 40,
+	"homeScore": 43
       }
   ],
 
   "week": [
       { "matchups": [ "W6M1", "W6M2", "W6M3", "W6M4", "W6M5" ],
 	"startDate": "2013-09-29", "endDate": "2013-10-05",
-	"season": "2014", "number": 6, "deadline": "2013-10-05T12:00:00-05:00"
+	"season": "2013", "number": 6, "deadline": "2013-10-05T12:00:00-05:00"
+      },
+      { "matchups": [ "W7M1", "W7M2", "W7M3", "W7M4" ],
+	"startDate": "2013-10-06", "endDate": "2013-10-12",
+	"season": "2013", "number": 7, "deadline": "2013-10-12T12:00:00-05:00"
       }
   ],
 
@@ -185,7 +221,11 @@
 	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 1 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 96 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 96 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 49 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 1 },
+	    { "matchup": "W7M3", "winner": "WISCONSIN", "points": 1 },
+	    { "matchup": "W7M4", "winner": "PSU", "points": 49 }
 	]
       },
       { "user": "FRANK",
@@ -194,7 +234,11 @@
 	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 1 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 1 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 97 },
+	    { "matchup": "W7M2", "winner": "PURDUE", "points": 1 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 1 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 1 }
 	]
       },
       { "user": "KEITH",
@@ -203,7 +247,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 15 },
 	    { "matchup": "W6M3", "winner": "INDIANA", "points": 5 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 15 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 50 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 50 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 1 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 1 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 97 }
 	]
       },
       { "user": "JASON",
@@ -212,7 +260,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 25 },
 	    { "matchup": "W6M3", "winner": "INDIANA", "points": 5 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 5 },
-	    { "matchup": "W6M5", "winner": "NW", "points": 15 }
+	    { "matchup": "W6M5", "winner": "NW", "points": 15 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 50 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 40 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 5 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 5 }
 	]
       },
       { "user": "MATT",
@@ -221,7 +273,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 24 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 24 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 27 },
-	    { "matchup": "W6M5", "winner": "NW", "points": 24 }
+	    { "matchup": "W6M5", "winner": "NW", "points": 24 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 97 },
+	    { "matchup": "W7M3", "winner": "WISCONSIN", "points": 1 },
+	    { "matchup": "W7M4", "winner": "PSU", "points": 1 }
 	]
       },
       { "user": "MCCORMICK",
@@ -230,7 +286,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 20 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 35 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 15 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 15 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 15 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 10 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 40 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 10 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 40 }
 	]
       },
       { "user": "BEN",
@@ -239,7 +299,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 1 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 8 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 10 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 10 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 83 },
+	    { "matchup": "W7M2", "winner": "PURDUE", "points": 1 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 8 },
+	    { "matchup": "W7M4", "winner": "PSU", "points": 8 }
 	]
       },
       { "user": "FLO",
@@ -248,7 +312,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 20 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 35 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 15 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 15 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 15 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 1 },
+	    { "matchup": "W7M3", "winner": "WISCONSIN", "points": 49 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 49 }
 	]
       },
       { "user": "ANDREW",
@@ -257,7 +325,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 23 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 40 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 35 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 35 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 10 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 35 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 10 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 45 }
 	]
       },
       { "user": "JIMMY",
@@ -266,7 +338,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 8 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 22 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 30 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 20 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 20 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 25 },
+	    { "matchup": "W7M2", "winner": "PURDUE", "points": 25 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 25 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 25 }
 	]
       },
       { "user": "JOE",
@@ -275,7 +351,11 @@
 	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 96 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 1 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 1 },
+	    { "matchup": "W7M1", "winner": "INDIANA", "points": 25 },
+	    { "matchup": "W7M2", "winner": "PURDUE", "points": 25 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 25 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 25 }
 	]
       },
       { "user": "AIR",
@@ -284,7 +364,11 @@
 	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 10 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 40 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 5 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 40 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 40 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 25 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 25 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 25 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 25 }
 	]
       },
       { "user": "RAMOS",
@@ -293,7 +377,11 @@
 	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 96 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 96 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 50 },
+	    { "matchup": "W7M3", "winner": "WISCONSIN", "points": 48 },
+	    { "matchup": "W7M4", "winner": "PSU", "points": 1 }
 	]
       },
       { "user": "VAL",
@@ -302,7 +390,11 @@
 	    { "matchup": "W6M2", "winner": "ILLINOIS", "points": 1 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 96 },
 	    { "matchup": "W6M4", "winner": "MINNESOTA", "points": 1 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 1 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 1 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 1 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 1 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 97 }
 	]
       },
       { "user": "GREG",
@@ -311,7 +403,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 10 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 10 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 70 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 5 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 5 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 97 },
+	    { "matchup": "W7M2", "winner": "PURDUE", "points": 1 },
+	    { "matchup": "W7M3", "winner": "WISCONSIN", "points": 1 },
+	    { "matchup": "W7M4", "winner": "PSU", "points": 1 }
 	]
       },
       { "user": "BOB",
@@ -320,7 +416,11 @@
 	    { "matchup": "W6M2", "winner": "NEB", "points": 1 },
 	    { "matchup": "W6M3", "winner": "PSU", "points": 1 },
 	    { "matchup": "W6M4", "winner": "MICH", "points": 1 },
-	    { "matchup": "W6M5", "winner": "OSU", "points": 96 }
+	    { "matchup": "W6M5", "winner": "OSU", "points": 96 },
+	    { "matchup": "W7M1", "winner": "MSU", "points": 1 },
+	    { "matchup": "W7M2", "winner": "NEB", "points": 1 },
+	    { "matchup": "W7M3", "winner": "NW", "points": 1 },
+	    { "matchup": "W7M4", "winner": "MICH", "points": 97 }
 	]
       }
   ]
