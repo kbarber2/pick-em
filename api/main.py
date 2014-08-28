@@ -512,9 +512,8 @@ class PicksHandler(webapp2.RequestHandler):
         picks['bets'] = []
 
         current_user = User.query(User.name == 'Keith').get()
-        active_users = week.active_users if not editable else [current_user.key]
         
-        for u in active_users:
+        for u in week.active_users:
             picks['users'].append(u.id())
             appendSideModel(out, u.get())
 
