@@ -260,11 +260,13 @@ App.ApplicationRoute = Ember.Route.extend({
 });
 
 App.ApplicationController = Ember.ObjectController.extend({
+    adminOn: false,
+    
     isAdmin: function() {
 	if (!this.get('user')) return false;
-	return this.get('user').get('admin');
-    }.property('user'),
-
+	return this.get('user.admin') && this.get('adminOn');
+    }.property('user', 'adminOn'),
+    
     isLoggedIn: function() {
 	return !Ember.isEmpty(this.get('user'));
     }.property('user'),
@@ -518,15 +520,13 @@ App.PicksEditController = Ember.ArrayController.extend({
     isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
     isLoggedIn: Ember.computed.alias('controllers.application.isLoggedIn'),
     _userOverride: null,
-    _showSaved: false,
 
-    showSavedDialog: function(key, value, previous) {
-	if (value) {
-	    this._showSaved = value;
-	} else {
-	    return this._showSaved;
-	}
-    }.property(),
+    canEdit: function() {
+	debugger;
+	var e = this.get('week').get('editable');
+	var a = this.get('isAdmin');
+	return e || a;
+    }.property('week.editable', 'isAdmin'),
     
     totalPoints: function() {
 	return this.get('model').reduce(function(prev, cur, idx, array) {
