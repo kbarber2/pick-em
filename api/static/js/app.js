@@ -279,7 +279,6 @@ App.ApplicationController = Ember.ObjectController.extend({
 	loadPicks: function(arg) {
 	    var self = this;
 	    this.store.find('pick', arg.id).then(function(picks) {
-		debugger;
 		self.transitionToRoute('picks.view', picks);
 	    });
 	}
@@ -440,7 +439,8 @@ App.ScoresEditController = Ember.ArrayController.extend({
 App.PicksBaseRoute = Ember.Route.extend({
     afterModel: function(picks, transition) {
 	var self = this;
-	if (picks.get('bets')) {
+	// TODO: find a less hackish way to deal with this transformed business 
+	if (picks.get('bets') && !picks.transformed) {
 	    var mapped = picks.get('bets').map(function(bet) {
 		bet.matchup = self.store.getById('matchup', bet.matchup);
 		bet.user = self.store.getById('user', bet.user);
@@ -448,6 +448,7 @@ App.PicksBaseRoute = Ember.Route.extend({
 		return App.Bet.create(bet);
 	    });
 	    picks.set('bets', mapped);
+	    picks.transformed = true;
 	}
     }
 });
