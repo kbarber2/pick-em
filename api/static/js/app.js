@@ -539,6 +539,10 @@ App.PicksEditController = Ember.ArrayController.extend({
 	if (value) {
 	    this._userOverride = value;
 	} else {
+	    if (!this._userOverride) {
+		this._userOverride = this.get('controllers.application.user');
+	    }
+
 	    return this._userOverride;
 	}
     }.property(),
@@ -856,16 +860,24 @@ App.TokensController = Ember.ObjectController.extend({
 App.AuthRoute = Ember.Route.extend({
     model: function(params) {
 	var self = this;
-	var post = { token: params.token };
-	var p = Ember.$.post('/api/login', post, function(response) {
-	    if (!response.error) {
-		self.transitionTo('picks');
-	    }
-	}).error(function(response) {
+
+	var errorHandler = function(response) {
 	    self.controllerFor('auth').set('message', response.responseText);
 	    self.transitionTo('loginError');
-	});
-	return p;
+	};
+
+	var post = { token: params.token };
+	return Ember.$.post('/api/login', post, function(response) {
+	    if (!response.error) {
+		var user = self.store.push('user', response.user);
+		var controller = self.controllerFor('application');
+		controller.set('user', user);
+
+		self.transitionTo('picks');
+	    } else {
+		errorHandler({ responseText: response.error });
+	    }
+	}).error(errorHandler);
     }
 });
 

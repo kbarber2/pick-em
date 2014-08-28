@@ -158,7 +158,7 @@ def appendSideModel(out, model):
 def serialize(out, model):
     serialized = SERIALIZERS[type(model)](out, model)
     key = EMBER_MODEL_NAMES[type(model)]
-    if key in out:
+    if key in out and type(out[key]) == list:
         out[key].append(serialized)
     else:
         out[key] = serialized
@@ -607,8 +607,8 @@ class AuthHandler(BaseHandler):
         out = { 'user': None, 'current': current }
 
         if 'user' in self.session and 'week' in self.session:
-            user = User.get_by_id(self.session['user'])
-            if user is not None: serialize({}, user)
+            user = User.get_by_id(long(self.session['user']))
+            if user is not None: serialize(out, user)
 
         weeks = WeeksHandler.indexSearch({})
 
@@ -658,10 +658,12 @@ class AuthHandler(BaseHandler):
 
         expiration = datetime.datetime.now() + datetime.timedelta(days=4)
 
+        self.session.clear()
         self.session['user'] = user_id
         self.session['week'] = week_id
         self.session['admin'] = user.admin
-        self.response.write('{}')
+
+        self.response.write(json.dumps(serialize({}, user)))
 
 class TokensHandler(webapp2.RequestHandler):
     def get(self, week_id):
