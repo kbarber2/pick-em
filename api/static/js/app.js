@@ -254,12 +254,7 @@ App.ApplicationRoute = Ember.Route.extend({
 	    model.weeks = resp.week;
 	});
 
-	var p2 = this.store.find('school');
-	p2.then(function(schools) {
-	    model.schools = schools;
-	});
-
-	return Ember.RSVP.all([p1, p2]).then(function(all) {
+	return Ember.RSVP.all([p1]).then(function(all) {
 	    return model;
 	});
     }
@@ -461,6 +456,15 @@ App.PicksViewCurrentRoute = App.PicksBaseRoute.extend({
 	return this.store.find('pick', 'current');
     },
 
+    afterModel: function(picks, transition) {
+	if (picks.get('editable')) {
+	    this.transitionTo('picks.edit', picks);
+	    return;
+	}
+
+	this._super.apply(this, arguments);
+    },
+
     setupController: function(controller, model) {
 	controller = this.controllerFor('picksView');
 	controller.set('model', model);
@@ -503,6 +507,9 @@ App.PicksEditRoute = App.PicksViewRoute.extend({
 		var bet = App.Bet.create({ matchup: matchup, winner: null, points: 0 });
 
 		if (lastBets.length > 0) {
+		    // TODO: this needs to use the current user, otherwise it will
+		    // fail on the first time
+		    bet.user = lastBets[0].user;
 		    bet.set('winner', lastBets[0].winner);
 		    bet.set('points', lastBets[0].points);
 		}
@@ -562,14 +569,9 @@ App.PicksEditController = Ember.ArrayController.extend({
 	    }
 
 	    var self = this;
-	    self.set('showSavedDialog', true);
 	    var p = model.save();
 	    p.then(function(args) {
-		self.set('showSavedDialog', true);
-
-		Ember.run.later(function() {
-		    self.set('showSavedDialog', false);
-		}, 5000);
+		self.transitionToRoute('picks.view', self.get('week'));
 	    });
 	}
     }
