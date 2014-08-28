@@ -546,7 +546,13 @@ class PicksHandler(webapp2.RequestHandler):
         self.response.write(json.dumps(out))
 
     def get_current_week(self):
-        return Week.query().get()
+        today = datetime.date.today()
+        q = Week.query().order(-Week.season, -Week.number)
+        for week in q.fetch(20):
+            if week.start_date <= today:
+                return week
+
+        return None
 
     def put(self, week_id):
         self.response.headers['Content-Type'] = 'application/json'
