@@ -90,6 +90,7 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="picks/edit">
+    {{#if isLoggedIn}}
     {{#if week.editable}}
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <table class="table">
@@ -133,6 +134,11 @@
     </form>
     {{else}}
     Picks can no longer be submitted.
+    {{/if}}
+    {{else}}
+    <p>Picks can only be edited if you are logged in. To log in, click on the link
+    in this week's login email. If you never received an email, contact Keith
+    at <a href="mailto:kbarber2@gmail.com">kbarber2@gmail.com</a>.</p>
     {{/if}}
   </script>
 

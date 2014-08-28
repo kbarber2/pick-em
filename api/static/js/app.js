@@ -432,7 +432,6 @@ App.ScoresEditController = Ember.ArrayController.extend({
 
 App.PicksBaseRoute = Ember.Route.extend({
     afterModel: function(picks, transition) {
-	debugger;
 	var self = this;
 	// TODO: find a less hackish way to deal with this transformed business 
 	if (picks.get('bets') && !picks.transformed) {
@@ -454,8 +453,6 @@ App.PicksRoute = App.PicksBaseRoute.extend({
     },
 
     afterModel: function(model, transition) {
-	debugger;
-	
 	if (model.get('editable')) {
 	    this.replaceWith('picks.edit', model);
 	} else {
@@ -487,7 +484,6 @@ App.PicksEditRoute = App.PicksViewRoute.extend({
     },
 
     setupController: function(controller, model) {
-	debugger;
 	controller.set('week', model);
 	controller.set('users', this.get('users'));
 	var bets = model.get('bets');
@@ -520,6 +516,7 @@ App.PicksEditRoute = App.PicksViewRoute.extend({
 App.PicksEditController = Ember.ArrayController.extend({
     needs: ['application'],
     isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
+    isLoggedIn: Ember.computed.alias('controllers.application.isLoggedIn'),
     _userOverride: null,
     _showSaved: false,
 
