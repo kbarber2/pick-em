@@ -223,8 +223,7 @@ App.Router.map(function() {
 	this.route('edit', { path: ':week_id/edit' });
     });
 
-    this.route('picks.viewCurrent', { path: 'picks/view' });
-    this.route('picks.editCurrent', { path: 'picks/edit' });
+    this.route('picks', { path: 'picks' });
     this.route('picks.view', { path: 'picks/:week_id/view' });
     this.route('picks.edit', { path: 'picks/:week_id/edit' });
 
@@ -433,6 +432,7 @@ App.ScoresEditController = Ember.ArrayController.extend({
 
 App.PicksBaseRoute = Ember.Route.extend({
     afterModel: function(picks, transition) {
+	debugger;
 	var self = this;
 	// TODO: find a less hackish way to deal with this transformed business 
 	if (picks.get('bets') && !picks.transformed) {
@@ -448,26 +448,19 @@ App.PicksBaseRoute = Ember.Route.extend({
     }
 });
 
-App.PicksViewCurrentRoute = App.PicksBaseRoute.extend({
-    controllerName: 'picksView',
-    templateName: 'picks.view',
-
+App.PicksRoute = App.PicksBaseRoute.extend({
     model: function() {
 	return this.store.find('pick', 'current');
     },
 
-    afterModel: function(picks, transition) {
-	if (picks.get('editable')) {
-	    this.transitionTo('picks.edit', picks);
-	    return;
+    afterModel: function(model, transition) {
+	debugger;
+	
+	if (model.get('editable')) {
+	    this.replaceWith('picks.edit', model);
+	} else {
+	    this.replaceWith('picks.view', model);
 	}
-
-	this._super.apply(this, arguments);
-    },
-
-    setupController: function(controller, model) {
-	controller = this.controllerFor('picksView');
-	controller.set('model', model);
     }
 });
 
@@ -494,6 +487,7 @@ App.PicksEditRoute = App.PicksViewRoute.extend({
     },
 
     setupController: function(controller, model) {
+	debugger;
 	controller.set('week', model);
 	controller.set('users', this.get('users'));
 	var bets = model.get('bets');
@@ -520,15 +514,6 @@ App.PicksEditRoute = App.PicksViewRoute.extend({
 
 	model.set('bets', bets);
 	controller.set('model', bets);
-    }
-});
-
-App.PicksEditCurrentRoute = App.PicksEditRoute.extend({
-    controllerName: 'picksEdit',
-    templateName: 'picks.edit',
-    
-    model: function() {
-	return this.store.find('pick', 'current');
     }
 });
 
@@ -877,7 +862,7 @@ App.AuthRoute = Ember.Route.extend({
 	var post = { token: params.token };
 	var p = Ember.$.post('/api/login', post, function(response) {
 	    if (!response.error) {
-		self.transitionTo('picks.editCurrent');
+		self.transitionTo('picks');
 	    }
 	}).error(function(response) {
 	    self.controllerFor('auth').set('message', response.responseText);
