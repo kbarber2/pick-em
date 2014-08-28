@@ -238,10 +238,16 @@ App.Router.map(function() {
 App.ApplicationRoute = Ember.Route.extend({
     model: function() {
 	var self = this;
-	var model = {user: null, schools: []};
+	var model = {user: null, weeks: [], schools: []};
 
-	var p1 = Ember.$.get(API_URI + 'current', '', function(user) {
-	    model.user = user.user ? self.store.push('user', user.user) : null;
+	var p1 = Ember.$.get(API_URI + 'current', '', function(resp) {
+	    model.user = resp.user ? self.store.push('user', resp.user) : null;
+	    
+	    var current = resp.current;
+	    model.currentSeason = current.season
+	    model.currentWeek = current.week
+
+	    model.weeks = resp.week;
 	});
 
 	var p2 = this.store.find('school');
@@ -263,7 +269,17 @@ App.ApplicationController = Ember.ObjectController.extend({
 
     isLoggedIn: function() {
 	return !Ember.isEmpty(this.get('user'));
-    }.property('user')
+    }.property('user'),
+
+    actions: {
+	loadPicks: function(arg) {
+	    var self = this;
+	    this.store.find('pick', arg.id).then(function(picks) {
+		debugger;
+		self.transitionToRoute('picks.view', picks);
+	    });
+	}
+    }
 });
 
 App.SchoolsRoute = Ember.Route.extend({

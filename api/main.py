@@ -247,13 +247,14 @@ class ReloadHandler(webapp2.RequestHandler):
             for inst in clz.query().fetch():
                 inst.key.delete()
 
-        time.sleep(1)
+            time.sleep(1)
         
         with open('bootstrap.json', 'r') as fp:
             data = json.loads(fp.read())
 
         users = {}
         for user in data['user']:
+            self.response.write('User ' + user['name'] + '\n')
             u = deserializeUser(None, user)
             u.put()
             users[user['id']] = u
@@ -295,13 +296,15 @@ class ReloadHandler(webapp2.RequestHandler):
         for p in data['pick']:
             user = users[p['user']]
             for b in p['bets']:
+                matchup = matchups[b['matchup']]
+                week = Week.query(Week.matchups.IN([matchup.key])).get()
+                
                 bet = Bet(winner = schools[b['winner']].key,
                           points = b['points'],
                           time_placed = datetime.datetime.now())
 
                 pick = Picks(week = week.key, user = user.key,
-                             matchup = matchups[b['matchup']].key,
-                             bets = [bet])
+                             matchup = matchup.key, bets = [bet])
                 pick.put()
             
 
@@ -395,6 +398,9 @@ class WeeksHandler(webapp2.RequestHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
+        if '/index' in self.request.path_url:
+            return self.index()
+
         if 'week_id' in kwargs:
             week_id = long(kwargs['week_id'])
             week = Week.get_by_id(week_id)
@@ -413,6 +419,30 @@ class WeeksHandler(webapp2.RequestHandler):
         out['week'] = [serializeEditableWeek(out, w) for w in query.fetch()]
         self.response.write(json.dumps(out))
 
+    def index(self):
+        search = { 'season': self.request.get('season') }
+        for k in search.keys():
+            if len(search[k]) == 0: del search[k]
+
+        out = { 'week': WeeksHandler.indexSearch(search) }
+        self.response.write(json.dumps(out))
+
+    @classmethod
+    def indexSearch(cls, search):
+        q = Week.query().order(-Week.season, Week.number)
+
+        today = datetime.date.today()
+        if 'season' in search:
+            q = q.filter(Week.season == str(search['season']))
+
+        out = []
+        for week in q.fetch():
+            if week.start_date > today: break
+            w = { 'id': week.key.id(), 'season': week.season, 'number': week.number }
+            out.append(w)
+
+        return out
+        
     def post(self):
         self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)
@@ -557,12 +587,36 @@ class AuthHandler(BaseHandler):
         self.response.headers['Content-Type'] = 'application/json'
 
         if '/current' in self.request.path_url:
-            if 'user' in self.session and 'week' in self.session:
-                user = User.get_by_id(self.session['user'])
-                self.response.write(json.dumps(serialize({}, user)))
-            else:
-                self.response.write(json.dumps({ "user": None }))
+            return self.get_current()
 
+    def get_current(self):
+        current = { 'season': None, 'week': None }
+        out = { 'user': None, 'current': current }
+
+        if 'user' in self.session and 'week' in self.session:
+            user = User.get_by_id(self.session['user'])
+            if user is not None: serialize({}, user)
+
+        weeks = WeeksHandler.indexSearch({})
+
+        season = ''
+        number = 0
+        now = datetime.date.today()
+        q = Week.query().order(-Week.season, -Week.number)
+
+        for week in weeks:
+            if len(season) == 0: season = week['season']
+            if week['season'] != season: break
+
+            number = week['number']
+            break    
+
+        current['season'] = season
+        current['week'] = number
+        out['week'] = filter(lambda w: w['season'] == season, weeks)
+
+        self.response.write(json.dumps(out))
+            
     def post(self):
         self.response.headers['Content-Type'] = 'application/json'
 
@@ -630,6 +684,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/picks/current', PicksHandler),
     webapp2.Route(r'/api/picks/<week_id:\d+>', PicksHandler),
     webapp2.Route(r'/api/weeks', WeeksHandler),
+    webapp2.Route(r'/api/weeks/index', WeeksHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeeksHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
