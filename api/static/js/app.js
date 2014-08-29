@@ -182,12 +182,8 @@ App.BetsForUser = Ember.Object.extend({
     user: null,
     bets: null,
     name: null,
-    _currentUser: false,
+    isCurrentUser: false,
     
-    isCurrentUser: function() {
-	return this._currentUser;
-    }.property(),
-
     gamesWon: function() {
 	return this.bets.reduce(function(prev, cur, idx, array) {
 	    if (!cur) return prev;
@@ -552,7 +548,6 @@ App.PicksViewController = Ember.ObjectController.extend({
     userBets: function() {
 	var self = this;
 	var users = this.get('users').toArray();
-	var current = 'Keith'; 	// TODO
 
 	users.sort(function(u1, u2) {
 	    var o1 = u1.get('order'),
@@ -566,7 +561,8 @@ App.PicksViewController = Ember.ObjectController.extend({
 	    return App.BetsForUser.create({
 		name: user.get('name'),
 		user: user,
-		bets: self.orderedBets(user)
+		bets: self.orderedBets(user),
+		isCurrentUser: user === self.get('controllers.application.user')
 	    });
 	});
     }.property('model.bets.@each'),

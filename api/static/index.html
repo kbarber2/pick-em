@@ -163,7 +163,7 @@
 
 	<tbody>
 	  {{#each userBets}}
-	  <tr>
+	  <tr {{bind-attr class="isCurrentUser"}}>
 	    <td>
 	    {{#if controller.isAdmin}}
 	    <a href="#" {{action 'editPicks' this}}>{{name}}</a>
