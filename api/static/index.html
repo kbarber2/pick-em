@@ -157,10 +157,12 @@
 	  <tr>
 	    <th>Name</th>
 	    {{#each matchups}}
-	    <th colspan="2">{{awayTeam.abbreviation}} vs. {{homeTeam.abbreviation}}<br/>{{line}}</th>
+	    <th>{{awayTeam.abbreviation}} vs. {{homeTeam.abbreviation}}</th>
+	    <th align="right">{{line}}</th>
 	    {{/each}}
-	    <th>Total<br/>Points</th>
-	    <th>Total<br/>Games</th>
+	    <th>Total Points</th>
+	    <th>Total Bet</th>
+	    <th>Total Games</th>
 	  <tr>
 	</thead>
 
@@ -179,6 +181,7 @@
 	    <td align="right" {{bind-attr style="colors"}}>{{points}}</td>
 	    {{/each}}
 	    <td align="right">{{totalPoints}}</td>
+	    <td align="right">{{totalPointsBet}}</td>
 	    <td align="right">{{gamesWon}}</td>
 	  </tr>
 	  {{/each}}

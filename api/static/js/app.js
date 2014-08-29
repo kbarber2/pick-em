@@ -200,6 +200,17 @@ App.BetsForUser = Ember.Object.extend({
 	    
 	    return betCovered(cur.matchup, cur.winner) ? prev + points : prev;
 	}, 0);
+    }.property('bets.@each.points', 'bets.@each.winner'),
+
+    totalPointsBet: function() {
+	return this.bets.reduce(function(prev, cur, idx, array) {
+	    if (!cur) return prev;
+
+	    var pointsStr = cur.points;
+	    var points = isNumber(pointsStr) ? parseInt(pointsStr, 10) : 0;
+	    
+	    return prev + points;
+	}, 0);
     }.property('bets.@each.points', 'bets.@each.winner')
 });
 
