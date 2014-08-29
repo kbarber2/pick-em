@@ -106,6 +106,13 @@
 	  </tr>
 	</thead>
 	<tbody>
+	  {{#if isAdmin}}
+	  <tr>
+	    <td>As user:</td>
+	    <td colspan="3">{{view Ember.Select content=users value=user id="userOverride"
+	      prompt="Select a user" optionLabelPath="content.name" class="form-control"}}</td>
+	  </tr>
+	  {{/if}}
 	  {{#each}}
 	  <tr>
 	    <td>{{matchup.awayTeam.abbreviation}} at {{matchup.homeTeam.abbreviation}}</td>
@@ -119,13 +126,6 @@
 	  <tr>
 	    <td></td><td></td><td></td><td align="right">Total: {{totalPoints}}</td>
 	  </tr>
-	  {{#if isAdmin}}
-	  <tr>
-	    <td>As user:</td>
-	    <td colspan="3">{{view Ember.Select content=users value=userOverride
-	      optionLabelPath="content.name" class="form-control"}}</td>
-	  </tr>
-	  {{/if}}
 	  <tr>
 	    <td colspan="4">
 	      <button type="submit" class="btn btn-default">Save</button>
@@ -164,7 +164,13 @@
 	<tbody>
 	  {{#each userBets}}
 	  <tr>
-	    <td {{bind-attr class="isCurrentUser"}}>{{name}}</td>
+	    <td>
+	    {{#if controller.isAdmin}}
+	    <a href="#" {{action 'editPicks' this}}>{{name}}</a>
+	    {{else}}
+	    {{name}}
+	    {{/if}}
+	    </td>
 	    {{#each bets}}
 	    <td {{bind-attr style="colors"}}>{{winner.abbreviation}}</td>
 	    <td align="right" {{bind-attr style="colors"}}>{{points}}</td>

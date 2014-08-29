@@ -79,15 +79,13 @@ App.PickSerializer = DS.RESTSerializer.extend({
     serialize: function(record, options) {
 	var bets = record.get('bets').map(function(bet) {
 	    return { matchup: bet.matchup.get('id'),
+		     user: bet.user.get('id'),
 		     points: bet.points,
 		     winner: bet.winner.get('id')
 	    };
 	});
-	var d = { bets: bets };
-	if (record.get('userOverride')) {
-	    d.user = record.get('userOverride').get('id');
-	}
-	return d;
+
+	return { bets: bets };
     }
 });
 
@@ -162,6 +160,7 @@ App.Pick = DS.Model.extend({
 });
 
 App.Bet = Ember.Object.extend({
+    user: null,
     matchup: null,
     winner: null,
     points: 0,
@@ -182,6 +181,7 @@ App.Bet = Ember.Object.extend({
 App.BetsForUser = Ember.Object.extend({
     user: null,
     bets: null,
+    name: null,
     _currentUser: false,
     
     isCurrentUser: function() {
@@ -470,48 +470,12 @@ App.PicksViewRoute = App.PicksBaseRoute.extend({
 });
 
 App.PicksEditRoute = App.PicksViewRoute.extend({
-    beforeModel: function() {
-	var self = this;
-	var promises = new Array;
-
-	if (this.controllerFor('picksEdit').get('isAdmin')) {
-	    var users = this.store.find('user');
-	    users.then(function(users) {
-		self.set('users', users);
-	    });
-	    promises.push(users);
-	}
-
-	return Ember.RSVP.all(promises);
-    },
-
     setupController: function(controller, model) {
 	controller.set('week', model);
-	controller.set('users', this.get('users'));
-	var bets = model.get('bets');
 
-	if (model.get('editable')) {
-	    bets = model.get('matchups').map(function(matchup) {
-		var lastBets = model.get('bets').filter(function(bet) {
-		    return bet.matchup === matchup;
-		});
-
-		var bet = App.Bet.create({ matchup: matchup, winner: null, points: 0 });
-
-		if (lastBets.length > 0) {
-		    // TODO: this needs to use the current user, otherwise it will
-		    // fail on the first time
-		    bet.user = lastBets[0].user;
-		    bet.set('winner', lastBets[0].winner);
-		    bet.set('points', lastBets[0].points);
-		}
-
-		return bet;
-	    });
-	}
-
-	model.set('bets', bets);
-	controller.set('model', bets);
+	var current = this.controllerFor('application').get('user');
+	controller.set('user', current);
+	controller.set('model', model.get('bets'));
     }
 });
 
@@ -519,12 +483,26 @@ App.PicksEditController = Ember.ArrayController.extend({
     needs: ['application'],
     isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
     isLoggedIn: Ember.computed.alias('controllers.application.isLoggedIn'),
-    _userOverride: null,
+    user: null,
+    users: Ember.ArrayProxy.create({ content: [] }),
 
     canEdit: function() {
-	debugger;
 	var e = this.get('week').get('editable');
 	var a = this.get('isAdmin');
+	var user = this.get('user');
+
+	if (a && this.get('users.length') === 0) {
+	    var self = this;
+	    this.store.find('user').then(function(users) {
+		self.get('users').set('content', users);
+
+		var select = Ember.$("#userOverride");
+		var emberId = select.closest('.ember-view').attr('id');
+		var view = Ember.View.views[emberId];
+		view.set('value', user);
+	    });
+	}
+	
 	return e || a;
     }.property('week.editable', 'isAdmin'),
     
@@ -535,24 +513,28 @@ App.PicksEditController = Ember.ArrayController.extend({
 	}, 0);
     }.property('@each.points'),
 
-    userOverride: function(key, value, previous) {
-	if (value) {
-	    this._userOverride = value;
-	} else {
-	    if (!this._userOverride) {
-		this._userOverride = this.get('controllers.application.user');
-	    }
+    userChanged: function() {
+	var user = this.get('user');
 
-	    return this._userOverride;
+	var bets = this.get('week.bets').filter(function(bet, idx, enumerable) {
+	    return bet.get('user') === user;
+	});
+
+	if (bets.length === 0) {
+	    bets = this.get('week.matchups').map(function(matchup) {
+		return App.Bet.create({
+		    user: user, matchup: matchup,
+		    winner: null, points: 0
+		});
+	    });
 	}
-    }.property(),
+
+	this.set('model', bets);
+    }.observes("user"),
     
     actions: {
 	save: function() {
 	    var model = this.get('week');
-	    if (this._userOverride) {
-		model.set('userOverride', this._userOverride);
-	    }
 
 	    var self = this;
 	    var p = model.save();
@@ -564,6 +546,9 @@ App.PicksEditController = Ember.ArrayController.extend({
 });
 
 App.PicksViewController = Ember.ObjectController.extend({
+    needs: ['application'],
+    isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
+    
     userBets: function() {
 	var self = this;
 	var users = this.get('users').toArray();
@@ -578,8 +563,11 @@ App.PicksViewController = Ember.ObjectController.extend({
 	});
 
 	return users.map(function(user) {
-	    var d = { name: user.get('name'), bets: self.orderedBets(user) };
-	    return App.BetsForUser.create(d);
+	    return App.BetsForUser.create({
+		name: user.get('name'),
+		user: user,
+		bets: self.orderedBets(user)
+	    });
 	});
     }.property('model.bets.@each'),
 
@@ -593,6 +581,14 @@ App.PicksViewController = Ember.ObjectController.extend({
 
 	    return f.length > 0 ? f.objectAt(0) : null;
 	});
+    },
+
+    actions: {
+	editPicks: function(userBets) {
+	    // TODO: need to make a more specific route like
+	    // /picks/:week_id/:user_id
+	    this.transitionToRoute('picks.edit', this.get('model'));
+	}
     }
 });
 
@@ -892,12 +888,11 @@ App.LoginErrorController = Ember.ObjectController.extend({
 App.LogoutRoute = Ember.Route.extend({
     model: function(params) {
 	var self = this;
-	var post = { token: params.token };
-	var p = Ember.$.get('/api/logout', post, function(response) {
-	    self.transitionTo('logout');
-	}).error(function(response) {
+
+	return new Ember.RSVP.Promise(function(resolve, reject) {
+	    $.post('/api/logout', '', resolve).fail(reject);
+	}).then(function() {
 	    self.transitionTo('logout');
 	});
-	return p;
     }
 });

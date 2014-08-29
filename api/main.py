@@ -203,6 +203,11 @@ class BaseHandler(webapp2.RequestHandler):
     def dispatch(self):
         self.session_store = sessions.get_store(request=self.request)
 
+        perms = self.requires_user()
+        if len(perms) > 0 and self.current_user is None and self.request.method in perms:
+            self.resonse.status = 401
+            return
+
         try:
             webapp2.RequestHandler.dispatch(self)
         finally:
@@ -212,6 +217,18 @@ class BaseHandler(webapp2.RequestHandler):
     def session(self):
         return self.session_store.get_session()
 
+    @webapp2.cached_property
+    def current_user(self):
+        if 'user' not in self.session: return None
+        return User.get_by_id(long(self.session['user']))
+
+    def requires_user(self):
+        return []
+
+    def write_error(self, code, msg):
+        self.response.status = code
+        self.response.write(json.dumps({ 'error': msg }))
+        
 class UsersHandler(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'application/json'
@@ -486,10 +503,13 @@ class WeeksHandler(webapp2.RequestHandler):
         out['week'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
 
-class PicksHandler(webapp2.RequestHandler):
+class PicksHandler(BaseHandler):
     def past_deadline(self, week):
         return True
         return datetime.datetime.now() >= week.deadline
+
+    def requires_user(self):
+        return ['PUT']
 
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
@@ -554,38 +574,69 @@ class PicksHandler(webapp2.RequestHandler):
 
         return None
 
+    def validate(self, week, bets):
+        matchups = dict((m.key.id(), m) for m in week.matchups)
+            
+        for bet in bets:
+            if long(bet['user']) != self.current_user.key.id() and not self.current_user.admin:
+                logging.warn("Unauthorized attempt by %s to modify %s's scores" % \
+                             (self.current_user.name, bad.name))
+                self.write_error(403, "Forbidden")
+                return False
+                
+            if long(bet['matchup']) not in matchups:
+                self.write_error(422, "Matchup not in week")
+                return False
+
+            winner = ndb.Key(School, long(bet['winner']))
+            matchup = matchups[long(bet['matchup'])]
+            if winner not in [matchup.away_team, matchup.home_team]:
+                self.write_error(422, 'Invalid winner for matchup')
+                return False
+
+            try:
+                points = int(bet['points'])
+                if points < 0 or points > 100:
+                    self.write_error(422, 'All bets must be between 0 and 100')
+                    return False
+            except ValueError:
+                self.write_error(422, 'All bets must be integers between 0 and 100')
+                return False
+                
+        return True
+
     def put(self, week_id):
         self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)['pick']
-        current_user = User.query(User.name == 'Keith').get()
-
-        if 'user' in data:
-            current_user = User.get_by_id(long(data['user']))
-            logging.info('Overriding user to ' + current_user.name)
             
         week = Week.get_by_id(long(week_id))
-        if self.past_deadline(week):
-            self.response.status = 422
+        if week is None:
+            self.write_error(404, 'Invalid week id')
             return
-
-        # TODO: validate that the matchups are in that week
-
+        
+        if self.past_deadline(week) and not self.current_user.admin:
+            self.write_error(403, 'Cannot submit picks past the deadline')
+            return
+                
         for bet in data['bets']:
+            user = ndb.Key(User, long(bet['user']))
             matchup = ndb.Key(Matchup, long(bet['matchup']))
             winner = ndb.Key(School, long(bet['winner']))
             points = int(bet['points'])
 
             picksQ = Picks.query(ndb.AND(Picks.matchup == matchup,
-                                         Picks.user == current_user.key))
+                                         Picks.user == user))
             picks = picksQ.get()
             if picks is None:
-                picks = Picks(week = week.key, user = current_user.key,
+                picks = Picks(week = week.key, user = user,
                               matchup = matchup, bets = [])
             else:
                 old = picks.bets[-1]
                 if old.winner == winner and old.points == points:
                     continue
 
+            logging.info('New pick %i for %s for %s' % (points, user.get().name, winner.get().name))
+                    
             betRecord = Bet(winner = winner, points = points,
                             time_placed = datetime.datetime.now())
 
