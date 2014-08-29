@@ -256,9 +256,11 @@ App.ApplicationRoute = Ember.Route.extend({
 });
 
 App.ApplicationController = Ember.ObjectController.extend({
+    user: null,
     adminOn: false,
     
     isAdmin: function() {
+	debugger;
 	if (!this.get('user')) return false;
 	return this.get('user.admin') && this.get('adminOn');
     }.property('user', 'adminOn'),
@@ -888,6 +890,7 @@ App.LogoutRoute = Ember.Route.extend({
 	return new Ember.RSVP.Promise(function(resolve, reject) {
 	    $.post('/api/logout', '', resolve).fail(reject);
 	}).then(function() {
+	    self.controllerFor('application').set('user', null);
 	    self.transitionTo('logout');
 	});
     }

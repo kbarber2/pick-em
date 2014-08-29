@@ -31,6 +31,9 @@
 	  </div>
 
 	  <div class="navbar-header pull-right">
+	    {{#if isLoggedIn}}
+	    <p class="navbar-right navbar-text">{{#link-to 'logout'}}Logout{{/link-to}}</p>
+	    {{/if}}
 	    <p class="navbar-right navbar-text">{{user.name}}</p>
 	  </div>
 
