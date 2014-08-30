@@ -625,10 +625,15 @@ class PicksHandler(BaseHandler):
         if week is None:
             self.write_error(404, 'Invalid week id')
             return
-        
-        if self.past_deadline(week) and not self.current_user.admin:
-            self.write_error(403, 'Cannot submit picks past the deadline')
-            return
+
+        if not self.current_user.admin:
+            if self.past_deadline(week):
+                self.write_error(403, 'Cannot submit picks past the deadline')
+                return
+
+            if 'week' not in self.session or long(self.session['week']) != long(week_id):
+                self.write_error(403, "The current login URL is not valid for week " + week.number)
+                return
                 
         for bet in data['bets']:
             user = ndb.Key(User, long(bet['user']))
