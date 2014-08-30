@@ -576,31 +576,43 @@ class PicksHandler(BaseHandler):
 
     def validate(self, week, bets):
         matchups = dict((m.key.id(), m) for m in week.matchups)
-            
-        for bet in bets:
-            if long(bet['user']) != self.current_user.key.id() and not self.current_user.admin:
-                logging.warn("Unauthorized attempt by %s to modify %s's scores" % \
-                             (self.current_user.name, bad.name))
-                self.write_error(403, "Forbidden")
-                return False
-                
-            if long(bet['matchup']) not in matchups:
-                self.write_error(422, "Matchup not in week")
-                return False
+        totals = dict((m.key.id(), 0) for m in week.matchups)
 
-            winner = ndb.Key(School, long(bet['winner']))
-            matchup = matchups[long(bet['matchup'])]
-            if winner not in [matchup.away_team, matchup.home_team]:
-                self.write_error(422, 'Invalid winner for matchup')
-                return False
-
-            try:
-                points = int(bet['points'])
-                if points < 0 or points > 100:
-                    self.write_error(422, 'All bets must be between 0 and 100')
+        try:
+            for bet in bets:
+                if long(bet['user']) != self.current_user.key.id() and not self.current_user.admin:
+                    logging.warn("Unauthorized attempt by %s to modify %s's scores" % \
+                                 (self.current_user.name, bad.name))
+                    self.write_error(403, "Forbidden")
                     return False
-            except ValueError:
-                self.write_error(422, 'All bets must be integers between 0 and 100')
+
+                matchupId = long(bet['matchup'])
+                winnerId = long(bet['winner'])
+
+                if matchupId not in matchups:
+                    self.write_error(422, "Matchup not in week")
+                    return False
+
+                winner = ndb.Key(School, winnerId)
+                matchup = matchups[matchupId]
+                if winner not in [matchup.away_team, matchup.home_team]:
+                    self.write_error(422, 'Invalid winner for matchup')
+                    return False
+
+                points = int(bet['points'])
+
+                if points < 1:
+                    self.write_error(422, 'All bets must be between 1 and 100')
+                    return False
+
+                totals[matchupId] += points
+        except ValueError:
+            self.write_error(422, 'Invalid value for integer field')
+            return False
+
+        for m in totals:
+            if totals[m] > 100:
+                self.write_error(422, 'Total points cannot exceed 100')
                 return False
                 
         return True

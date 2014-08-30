@@ -1,5 +1,4 @@
 // TODO
-// - Client-side pick validation
 // - Endpoint security, especially token
 // - Login for admin
 // - Deploy
@@ -225,6 +224,27 @@ App.BetsForUser = Ember.Object.extend({
 	    return prev + points;
 	}, 0);
     }.property('bets.@each.points', 'bets.@each.winner')
+});
+
+// TODO: the <div> wrapper should be part of this component
+App.PointsInputComponent = Ember.TextField.extend({
+    valueCheck: function() {
+	var eid = this.get('elementId');
+	var j = Ember.$("#" + eid);
+	var p = j.closest('div');
+	p.removeClass('has-error');
+
+	if (!isNumber(this.get('value'))) {
+	    p.addClass('has-error');
+	    return;
+	}
+
+	var n = parseInt(this.get('value'), 10);
+	if (n < 1 || n > 100) {
+	    p.addClass('has-error');
+	    return;
+	}
+    }.observes('value')
 });
 
 App.Router.map(function() {
@@ -555,6 +575,45 @@ App.PicksEditController = Ember.ArrayController.extend({
     
     actions: {
 	save: function() {
+	    var total = 0;
+	    var error = '';
+	    var max = 101 - this.get('model.length');
+
+	    this.get('model').forEach(function(bet) {
+		if (error.length != 0) return;
+
+		var m = bet.get('matchup');
+		var matchup = m.get('awayTeam.name') + ' vs ' + m.get('homeTeam.name');
+
+		if (!isNumber(bet.get('points'))) {
+		    error = matchup + ': only numbers are allowed';
+		    return;
+		}
+
+		var p = parseInt(bet.get('points'), 10);
+
+		if (p < 1 || p > max) {
+		    error = matchup + ': points must be between 1 and ' + max;
+		    return;
+		}
+
+		if (!bet.get('winner')) {
+		    error = matchup + ': missing winner';
+		    return;
+		}
+
+		total += p;
+	    });
+
+	    if (error.length == 0 && total > 100) {
+		error = 'Total points cannot exceed 100';
+	    }
+
+	    if (error.length != 0) {
+		alert(error);
+		return;
+	    }
+
 	    var model = this.get('week');
 
 	    var self = this;
