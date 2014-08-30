@@ -6,8 +6,10 @@ from webapp2_extras import sessions
 from google.appengine.ext import ndb
 from Crypto.Cipher import AES
 from Crypto import Random
+from Crypto.Protocol.KDF import PBKDF2
 
 KEY = 'secretkey1234567'
+SALT = '\x16@a1\xed\xc7.\x80\xde\x0f\xdf\xb0\xa9\xb25\xe9\xe1\xf3s-s[[\xaccS\xc8\xc3N\x109\xe0'
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 def format_time(obj):
@@ -23,6 +25,7 @@ class User(ndb.Model):
     active = ndb.BooleanProperty()
     admin = ndb.BooleanProperty()
     order = ndb.IntegerProperty()
+    password = ndb.StringProperty()
 
 class School(ndb.Model):
     name = ndb.StringProperty()
@@ -697,13 +700,47 @@ class AuthHandler(BaseHandler):
         out['week'] = filter(lambda w: w['season'] == season, weeks)
 
         self.response.write(json.dumps(out))
-            
+
+    def login_with_password(self):
+        userId = self.request.get('userId')
+        plain = self.request.get('password').encode('ascii')
+        hashed = PBKDF2(plain, SALT, count=10000)
+        password = base64.b64encode(hashed)
+
+        try:
+            user = User.get_by_id(long(userId))
+            if user is None:
+                self.write_error(401, "Invalid user ID or password")
+                return
+        except ValueError:
+            self.write_error(401, "Invalid user ID or password")
+            return
+
+        if user.password != password:
+            self.write_error(401, "Invalid user ID or password")
+            return
+
+        self.auth_ok(user, None)
+
+    def auth_ok(self, user, week):
+        self.session.clear()
+        self.session['user'] = user.key.id()
+        self.session['week'] = week.key.id() if week is not None else None
+        self.session['admin'] = user.admin
+
+        self.response.write(json.dumps(serialize({}, user)))
+
     def post(self):
         self.response.headers['Content-Type'] = 'application/json'
 
         if '/logout' in self.request.path_url:
             self.session.clear()
             self.response.write('{}')
+            return
+
+        if self.request.path_url.endswith('/login'):
+            logging.info("Use password")
+            self.login_with_password()
             return
 
         encoded = self.request.get('token').encode('ascii')
@@ -724,14 +761,8 @@ class AuthHandler(BaseHandler):
             self.response.write('Invalid login URL.')
             return
 
-        expiration = datetime.datetime.now() + datetime.timedelta(days=4)
+        self.auth_ok(user, week)
 
-        self.session.clear()
-        self.session['user'] = user_id
-        self.session['week'] = week_id
-        self.session['admin'] = user.admin
-
-        self.response.write(json.dumps(serialize({}, user)))
 
 class TokensHandler(webapp2.RequestHandler):
     def get(self, week_id):

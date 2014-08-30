@@ -544,6 +544,28 @@
     </form>
   </script>
 
+  <script type="text/x-handlebars" data-template-name="login">
+    {{#if loginFailed}}
+    <div class="alert">Invalid username or password.</div>
+    {{/if}}
+
+    <form class="form-horizontal" role="form" {{action login on="submit"}}>
+      <div class="form-group">
+	<label for="userId" class="control-label col-xs-2">User ID</label>
+	<div class="col-xs-10">{{input type="text" class="form-control" id="userId" placeholder="User ID" value=userId}}</div>
+      </div>
+      <div class="form-group">
+	<label for="password" class="control-label col-xs-2">Password</label>
+	<div class="col-xs-10">{{input type="password" class="form-control" id="password" placeholder="Password" value=password}}</div>
+      </div>
+      <div class="form-group">
+        <div class="col-xs-offset-2 col-xs-10">
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+      </div>
+    </form>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="tokens">
     <h2>{{season}} Week {{number}}</h2>
     <table class="table table-striped">

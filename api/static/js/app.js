@@ -276,6 +276,7 @@ App.Router.map(function() {
 
     this.resource('users', { path: 'users' });
 
+    this.route('login', { path: 'login' });
     this.route('auth', { path: 'login/:token' });
     this.route('tokens', { path: 'tokens/:week_id/create' });
     this.route('loginError', { path: 'login/error' });
@@ -305,6 +306,7 @@ App.ApplicationRoute = Ember.Route.extend({
 });
 
 App.ApplicationController = Ember.ObjectController.extend({
+    content: {},
     adminOn: false,
     
     isAdmin: function() {
@@ -979,5 +981,31 @@ App.LogoutRoute = Ember.Route.extend({
 	    self.controllerFor('application').set('user', null);
 	    self.transitionTo('logout');
 	});
+    }
+});
+
+App.LoginController = Ember.ObjectController.extend({
+    needs: ['application'],
+    loginFailed: false,
+    userId: null,
+    password: null,
+    
+    actions: {
+	login: function() {
+	    this.set('loginFailed', false);
+	    
+	    var data = { userId: this.get('userId'),
+			 password: this.get('password') };
+
+	    var self = this;
+
+	    $.post('/api/login', data).then(function(response) {
+		var user = self.store.push('user', response.user);
+		self.set('controllers.application.user', user);
+		self.transitionToRoute('picks');
+	    }, function(response) {
+		self.set('loginFailed', true);
+	    });
+	}
     }
 });
