@@ -147,7 +147,11 @@ App.Matchup = DS.Model.extend({
 	}
 	
 	return '';
-    }.property('homeScore', 'awayScore')
+    }.property('homeScore', 'awayScore'),
+
+    lineSign: function() {
+	return (parseInt(this.get('line'), 10) > 0) ? '+' : '';
+    }.property('line')
 });
 
 App.Week = DS.Model.extend({
