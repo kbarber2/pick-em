@@ -714,7 +714,7 @@ class AuthHandler(BaseHandler):
         cipher = AES.new(KEY, AES.MODE_CFB, nonce)
         packed = cipher.decrypt(encrypted)
 
-        (user_id, week_id, exp) = struct.unpack('!QQi', packed)
+        (user_id, week_id) = struct.unpack('!QQ', packed)
 
         user = User.get_by_id(user_id)
         week = Week.get_by_id(week_id)
@@ -741,8 +741,9 @@ class TokensHandler(webapp2.RequestHandler):
         tokens = []
         for user in week.active_users:
             nonce = Random.new().read(16)
-            packed = struct.pack('!QQi', user.id(), week.key.id(), 0)
+            packed = struct.pack('!QQ', user.id(), week.key.id())
 
+            # TODO: this doesn't need to be encrypted; signing is good enough
             cipher = AES.new(KEY, AES.MODE_CFB, nonce)
             encrypted = cipher.encrypt(packed) + nonce
             encoded = base64.urlsafe_b64encode(encrypted)
