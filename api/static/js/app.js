@@ -1,3 +1,16 @@
+// TODO
+// - Client-side pick validation
+// - Endpoint security, especially token
+// - Login for admin
+// - Deploy
+// - Email test
+// - Reload/server push for score updates
+// - Automatic score updates
+// - Importer
+// - Leaderboard
+// - Mobile testing
+// - Sort matchups by kickoff time
+
 App = Ember.Application.create();
 var API_URI = '/api/';
 
@@ -248,9 +261,12 @@ App.Router.map(function() {
 App.ApplicationRoute = Ember.Route.extend({
     model: function() {
 	var self = this;
-	var model = {user: null, weeks: [], schools: []};
 
-	var p1 = Ember.$.get(API_URI + 'current', '', function(resp) {
+	return new Ember.RSVP.Promise(function(resolve, reject) {
+	    Ember.$.get(API_URI + 'current', '', resolve).fail(reject);
+	}).then(function(resp) {
+	    var model = {user: null, weeks: [], schools: []};
+
 	    model.user = resp.user ? self.store.push('user', resp.user) : null;
 	    
 	    var current = resp.current;
@@ -258,20 +274,16 @@ App.ApplicationRoute = Ember.Route.extend({
 	    model.currentWeek = current.week
 
 	    model.weeks = resp.week;
-	});
 
-	return Ember.RSVP.all([p1]).then(function(all) {
 	    return model;
 	});
     }
 });
 
 App.ApplicationController = Ember.ObjectController.extend({
-    user: null,
     adminOn: false,
     
     isAdmin: function() {
-	debugger;
 	if (!this.get('user')) return false;
 	return this.get('user.admin') && this.get('adminOn');
     }.property('user', 'adminOn'),
