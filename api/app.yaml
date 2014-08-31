@@ -1,4 +1,4 @@
-application: api
+application: ageless-arcanum-555
 version: 1
 runtime: python27
 api_version: 1
@@ -9,11 +9,23 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
-- url: /admin
+- url: /
+  static_files: static/index.html
+  upload: static/index.html
+
+- url: /index.html
+  static_files: static/index.html
+  upload: static/index.html
+
+- url: /static
   static_dir: static
 
 - url: /api/.*
   script: main.app
+
+- url: /.*
+  static_files: static/index.html
+  upload: static/index.html
 
 libraries:
 - name: webapp2

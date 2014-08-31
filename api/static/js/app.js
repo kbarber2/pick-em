@@ -102,7 +102,6 @@ App.PickSerializer = DS.RESTSerializer.extend({
 });
 
 App.ApplicationAdapter = DS.RESTAdapter.extend({
-    host: 'http://localhost:8080',
     namespace: 'api',
 
     headers: function() {
@@ -282,6 +281,10 @@ App.Router.map(function() {
     this.route('loginToken', { path: 'login/:token' });
     this.route('loginError', { path: 'login/error' });
     this.route('logout', { path: 'logout' });
+});
+
+App.Router.reopen({
+    location: 'history'
 });
 
 App.ApplicationRoute = Ember.Route.extend({
@@ -938,7 +941,7 @@ App.TokensController = Ember.ObjectController.extend({
 		    }
 		});
 	    };
-	    var p = Ember.$.get('/api/tokens/' + this.get('id'), '', callback);
+	    var p = Ember.$.get(API_URI + 'tokens/' + this.get('id'), '', callback);
 	},
 
 	sendEmails: function() {
@@ -957,7 +960,7 @@ App.LoginTokenRoute = Ember.Route.extend({
 	var self = this;
 
 	var post = { token: params.token };
-	return $.post('/api/login', post).then(function(response) {
+	return $.post(API_URI + 'login', post).then(function(response) {
 	    debugger;
 	    var user = self.store.push('user', response.user);
 	    var controller = self.controllerFor('application');
@@ -966,7 +969,7 @@ App.LoginTokenRoute = Ember.Route.extend({
 	    self.transitionTo('picks');
 	}, function(response) {
 	    self.controllerFor('loginError').set('message', response.responseJSON.error);
-	    //self.transitionTo('loginError');
+	    self.transitionTo('loginError');
 	});
     }
 });
@@ -986,7 +989,7 @@ App.LoginController = Ember.ObjectController.extend({
 
 	    var self = this;
 
-	    $.post('/api/login', data).then(function(response) {
+	    $.post(API_URI + 'login', data).then(function(response) {
 		var user = self.store.push('user', response.user);
 		self.set('controllers.application.user', user);
 		self.transitionToRoute('picks');
@@ -1006,7 +1009,7 @@ App.LogoutRoute = Ember.Route.extend({
 	var self = this;
 
 	return new Ember.RSVP.Promise(function(resolve, reject) {
-	    $.post('/api/logout', '', resolve).fail(reject);
+	    $.post(API_URI + 'logout', '', resolve).fail(reject);
 	}).then(function() {
 	    self.controllerFor('application').set('user', null);
 	    self.transitionTo('logout');
