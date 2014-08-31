@@ -581,7 +581,7 @@
 	  <td>{{email}}</td>
 	  <td>
 	    {{#if token}}
-	    {{#link-to 'auth' token}}{{token}}{{/link-to}}
+	    {{#link-to 'loginToken' token}}{{token}}{{/link-to}}
 	    {{else}}
 	    ****************
 	    {{/if}}
@@ -595,7 +595,7 @@
   </script>
   
   <script type="text/x-handlebars" data-template-name="loginError">
-    {{controllers.auth.message}}
+    <p class="alert">{{message}}</p>
     <p>If you are having trouble submitting your picks, email them to the
       commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
     <p>Report problems with the BSC site to Keith at <a href="mailto:kbarber2@gmail.com">kbarber2@gmail.com</a>.</p>

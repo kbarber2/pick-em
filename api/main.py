@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import json, datetime, logging, time, struct, base64, random
+import json, datetime, logging, time, struct, base64, random, time
 import webapp2
 from webapp2_extras import sessions
 from google.appengine.ext import ndb
@@ -11,6 +11,9 @@ from Crypto.Protocol.KDF import PBKDF2
 KEY = 'secretkey1234567'
 SALT = '\x16@a1\xed\xc7.\x80\xde\x0f\xdf\xb0\xa9\xb25\xe9\xe1\xf3s-s[[\xaccS\xc8\xc3N\x109\xe0'
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
+AUTH_TOKEN = 1
+AUTH_PASSWORD = 2
 
 def format_time(obj):
     return obj.isoformat()
@@ -634,7 +637,7 @@ class PicksHandler(BaseHandler):
                 self.write_error(403, 'Cannot submit picks past the deadline')
                 return
 
-            if 'week' not in self.session or long(self.session['week']) != long(week_id):
+            if self.session['auth_type'] != AUTH_PASSWORD and long(self.session['week']) != long(week_id):
                 self.write_error(403, "The current login URL is not valid for week " + week.number)
                 return
                 
@@ -701,10 +704,45 @@ class AuthHandler(BaseHandler):
 
         self.response.write(json.dumps(out))
 
-    def login_with_password(self):
-        userId = self.request.get('userId')
-        plain = self.request.get('password').encode('ascii')
-        hashed = PBKDF2(plain, SALT, count=10000)
+    def post(self):
+        self.response.headers['Content-Type'] = 'application/json'
+
+        if '/logout' in self.request.path_url:
+            self.end_session()
+            return
+
+        if self.request.get('password') is not None and len(self.request.get('password')) > 0:
+            logging.info('password auth')
+            userId = self.request.get('userId')
+            password = self.request.get('password').encode('ascii')
+            self.login_with_password(userId, password)
+        else:
+            logging.info('token auth')
+            token = self.request.get('token').encode('ascii')
+            self.login_with_token(token)
+
+    def login_with_token(self, encoded):
+        encrypted = base64.urlsafe_b64decode(encoded)
+        nonce = encrypted[-16:]
+        encrypted = encrypted[:-16]
+
+        cipher = AES.new(KEY, AES.MODE_CFB, nonce)
+        packed = cipher.decrypt(encrypted)
+
+        (user_id, week_id) = struct.unpack('!QQ', packed)
+
+        user = User.get_by_id(user_id)
+        week = Week.get_by_id(week_id)
+
+        if user is None or week is None:
+            self.response.status = 400
+            self.response.write('Invalid login URL')
+            return
+
+        self.begin_session(user, week, AUTH_TOKEN)
+
+    def login_with_password(self, userId, passwordPlain):
+        hashed = PBKDF2(passwordPlain, SALT, count=10000)
         password = base64.b64encode(hashed)
 
         try:
@@ -720,49 +758,21 @@ class AuthHandler(BaseHandler):
             self.write_error(401, "Invalid user ID or password")
             return
 
-        self.auth_ok(user, None)
+        self.begin_session(user, None, AUTH_PASSWORD)
 
-    def auth_ok(self, user, week):
+    def begin_session(self, user, week, method):
         self.session.clear()
         self.session['user'] = user.key.id()
         self.session['week'] = week.key.id() if week is not None else None
         self.session['admin'] = user.admin
+        self.session['auth_type'] = method
+        self.session['created'] = int(time.time())
 
         self.response.write(json.dumps(serialize({}, user)))
 
-    def post(self):
-        self.response.headers['Content-Type'] = 'application/json'
-
-        if '/logout' in self.request.path_url:
-            self.session.clear()
-            self.response.write('{}')
-            return
-
-        if self.request.path_url.endswith('/login'):
-            logging.info("Use password")
-            self.login_with_password()
-            return
-
-        encoded = self.request.get('token').encode('ascii')
-        encrypted = base64.urlsafe_b64decode(encoded)
-        nonce = encrypted[-16:]
-        encrypted = encrypted[:-16]
-
-        cipher = AES.new(KEY, AES.MODE_CFB, nonce)
-        packed = cipher.decrypt(encrypted)
-
-        (user_id, week_id) = struct.unpack('!QQ', packed)
-
-        user = User.get_by_id(user_id)
-        week = Week.get_by_id(week_id)
-
-        if user is None or week is None:
-            self.response.status = 400
-            self.response.write('Invalid login URL.')
-            return
-
-        self.auth_ok(user, week)
-
+    def end_session(self):
+        self.session.clear()
+        self.response.write('{}')
 
 class TokensHandler(webapp2.RequestHandler):
     def get(self, week_id):

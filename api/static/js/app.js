@@ -276,9 +276,10 @@ App.Router.map(function() {
 
     this.resource('users', { path: 'users' });
 
-    this.route('login', { path: 'login' });
-    this.route('auth', { path: 'login/:token' });
     this.route('tokens', { path: 'tokens/:week_id/create' });
+
+    this.route('login', { path: 'login' });
+    this.route('loginToken', { path: 'login/:token' });
     this.route('loginError', { path: 'login/error' });
     this.route('logout', { path: 'logout' });
 });
@@ -939,47 +940,21 @@ App.TokensController = Ember.ObjectController.extend({
     }
 });
 
-App.AuthRoute = Ember.Route.extend({
+App.LoginTokenRoute = Ember.Route.extend({
     model: function(params) {
 	var self = this;
-
-	var errorHandler = function(response) {
-	    self.controllerFor('auth').set('message', response.responseText);
-	    self.transitionTo('loginError');
-	};
 
 	var post = { token: params.token };
-	return Ember.$.post('/api/login', post, function(response) {
-	    if (!response.error) {
-		var user = self.store.push('user', response.user);
-		var controller = self.controllerFor('application');
-		controller.set('user', user);
+	return $.post('/api/login', post).then(function(response) {
+	    debugger;
+	    var user = self.store.push('user', response.user);
+	    var controller = self.controllerFor('application');
 
-		self.transitionTo('picks');
-	    } else {
-		errorHandler({ responseText: response.error });
-	    }
-	}).error(errorHandler);
-    }
-});
-
-App.AuthController = Ember.ObjectController.extend({
-    content: {}
-});
-
-App.LoginErrorController = Ember.ObjectController.extend({
-    needs: ['auth']
-});
-
-App.LogoutRoute = Ember.Route.extend({
-    model: function(params) {
-	var self = this;
-
-	return new Ember.RSVP.Promise(function(resolve, reject) {
-	    $.post('/api/logout', '', resolve).fail(reject);
-	}).then(function() {
-	    self.controllerFor('application').set('user', null);
-	    self.transitionTo('logout');
+	    controller.set('user', user);
+	    self.transitionTo('picks');
+	}, function(response) {
+	    self.controllerFor('loginError').set('message', response.responseJSON.error);
+	    //self.transitionTo('loginError');
 	});
     }
 });
@@ -1007,5 +982,22 @@ App.LoginController = Ember.ObjectController.extend({
 		self.set('loginFailed', true);
 	    });
 	}
+    }
+});
+
+App.LoginErrorController = Ember.ObjectController.extend({
+    message: null
+});
+
+App.LogoutRoute = Ember.Route.extend({
+    model: function(params) {
+	var self = this;
+
+	return new Ember.RSVP.Promise(function(resolve, reject) {
+	    $.post('/api/logout', '', resolve).fail(reject);
+	}).then(function() {
+	    self.controllerFor('application').set('user', null);
+	    self.transitionTo('logout');
+	});
     }
 });
