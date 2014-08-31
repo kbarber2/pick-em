@@ -276,7 +276,7 @@ App.Router.map(function() {
 
     this.resource('users', { path: 'users' });
 
-    this.route('tokens', { path: 'tokens/:week_id/create' });
+    this.route('tokens', { path: 'tokens/:week_id' });
 
     this.route('login', { path: 'login' });
     this.route('loginToken', { path: 'login/:token' });
@@ -921,6 +921,9 @@ App.TokensRoute = Ember.Route.extend({
 });
 
 App.TokensController = Ember.ObjectController.extend({
+    needs: ['application'],
+    isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
+
     actions: {
 	fetchTokens: function() {
 	    var self = this;
@@ -936,6 +939,15 @@ App.TokensController = Ember.ObjectController.extend({
 		});
 	    };
 	    var p = Ember.$.get('/api/tokens/' + this.get('id'), '', callback);
+	},
+
+	sendEmails: function() {
+	    var addr = API_URI + 'tokens/' + this.get('id') + '/email';
+	    $.post(addr, '').then(function(response) {
+		debugger;
+	    }, function(response) {
+		debugger;
+	    });
 	}
     }
 });

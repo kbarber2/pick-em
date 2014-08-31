@@ -214,6 +214,11 @@ class BaseHandler(webapp2.RequestHandler):
             self.resonse.status = 401
             return
 
+        logging.info("Checking admin: " + str(self.requires_admin()))
+        if self.requires_admin() and (self.current_user is None or not self.current_user.admin):
+            self.response.status = 401
+            return
+            
         try:
             webapp2.RequestHandler.dispatch(self)
         finally:
@@ -231,6 +236,9 @@ class BaseHandler(webapp2.RequestHandler):
     def requires_user(self):
         return []
 
+    def requires_admin(self):
+        return False
+        
     def write_error(self, code, msg):
         self.response.status = code
         self.response.write(json.dumps({ 'error': msg }))
@@ -774,7 +782,10 @@ class AuthHandler(BaseHandler):
         self.session.clear()
         self.response.write('{}')
 
-class TokensHandler(webapp2.RequestHandler):
+class TokensHandler(BaseHandler):
+    def requires_admin(self):
+        return True
+    
     def get(self, week_id):
         self.response.headers['Content-Type'] = 'application/json'
         week = Week.get_by_id(long(week_id))
@@ -792,6 +803,11 @@ class TokensHandler(webapp2.RequestHandler):
 
         self.response.write(json.dumps(tokens))
 
+    def post(self, week_id):
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.write('{}')
+        pass
+        
 config = {}
 config['webapp2_extras.sessions'] = {
     'secret_key': 'my-super-secret-key',
@@ -803,6 +819,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/logout', AuthHandler),
     webapp2.Route(r'/api/current', AuthHandler),
     webapp2.Route(r'/api/tokens/<week_id:\d+>', TokensHandler),
+    webapp2.Route(r'/api/tokens/<week_id:\d+>/email', TokensHandler),
     webapp2.Route(r'/api/users', UsersHandler),
     webapp2.Route(r'/api/users/<user_id:\d+>', UsersHandler),
     webapp2.Route(r'/api/picks', PicksHandler),

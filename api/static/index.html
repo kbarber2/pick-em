@@ -567,9 +567,10 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="tokens">
+    {{#if isAdmin}}
     <h2>{{season}} Week {{number}}</h2>
     <table class="table table-striped">
-      <thead>
+xb      <thead>
 	<th>User</th>
 	<th>Email</th>
 	<th>Token</th>
@@ -591,7 +592,11 @@
       </tbody>
     </table>
 
-    <button class="btn btn-default" {{action 'fetchTokens'}}>Fetch tokens</button>
+    <button class="btn btn-default" {{action 'fetchTokens'}}>Show tokens</button>
+    <button class="btn btn-default" {{action 'sendEmails'}}>Send emails</button>
+    {{else}}
+    You are not authorized to view this page.
+    {{/if}}
   </script>
   
   <script type="text/x-handlebars" data-template-name="loginError">
