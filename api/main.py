@@ -147,8 +147,8 @@ def serializeEditableWeek(out, week):
     w['number'] = week.number
 
     return w
-    
-    
+
+
 EMBER_MODEL_NAMES = { User: 'user', School: 'school', Matchup: 'matchup',
                       Bet: 'bet', Week: 'week' }
 
@@ -222,6 +222,7 @@ class BaseHandler(webapp2.RequestHandler):
             return
 
         try:
+            self.response.headers['Content-Type'] = 'application/json'
             webapp2.RequestHandler.dispatch(self)
         finally:
             self.session_store.save_sessions(self.response)
@@ -247,8 +248,6 @@ class BaseHandler(webapp2.RequestHandler):
         
 class UsersHandler(BaseHandler):
     def get(self):
-        self.response.headers['Content-Type'] = 'application/json'
-
         out = { 'user': [] }
         for user in User.query().fetch():
             serialize(out, user);
@@ -256,14 +255,12 @@ class UsersHandler(BaseHandler):
         self.response.write(json.dumps(out))
 
     def post(self):
-        self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)['user']
         user = deserializeUser(None, data)
         user.put()
         self.response.write(json.dumps(serialize({}, user)))
 
     def put(self, user_id):
-        self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)['user']
         user = deserializeUser(User.get_by_id(long(user_id)), data)
         user.put()
@@ -369,7 +366,6 @@ class SchoolHandler(BaseHandler):
         self.response.write(json.dumps(out))
 
     def get(self, school_id=None):
-        self.response.headers['Content-Type'] = 'application/json'
         if school_id is None:
             return self.getAll()
 
@@ -393,7 +389,6 @@ class SchoolHandler(BaseHandler):
 
 class MatchupHandler(BaseHandler):
     def get(self, **kwargs):
-        self.response.headers['Content-Type'] = 'application/json'
         if 'matchup_id' in kwargs:
             m = Matchup.get_by_id(long(kwargs['matchup_id']))
             self.response.write(json.dumps(serialize({}, m)))
@@ -440,8 +435,6 @@ class MatchupHandler(BaseHandler):
 
 class WeeksHandler(BaseHandler):
     def get(self, **kwargs):
-        self.response.headers['Content-Type'] = 'application/json'
-
         if '/index' in self.request.path_url:
             return self.index()
 
@@ -488,7 +481,6 @@ class WeeksHandler(BaseHandler):
         return out
         
     def post(self):
-        self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)
         data = data['week']
 
@@ -509,7 +501,6 @@ class WeeksHandler(BaseHandler):
         self.response.write(json.dumps(out))
 
     def put(self, week_id):
-        self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)
         data = data['week']
 
@@ -535,8 +526,6 @@ class WeeksHandler(BaseHandler):
 
 class PicksHandler(BaseHandler):
     def get(self, **kwargs):
-        self.response.headers['Content-Type'] = 'application/json'
-
         if 'week_id' in kwargs:
             week = Week.get_by_id(long(kwargs['week_id']))
         elif '/current' in self.request.path_url:
@@ -641,7 +630,6 @@ class PicksHandler(BaseHandler):
         return True
 
     def put(self, week_id):
-        self.response.headers['Content-Type'] = 'application/json'
         data = json.loads(self.request.body)['pick']
             
         week = Week.get_by_id(long(week_id))
@@ -694,8 +682,6 @@ class PicksHandler(BaseHandler):
 
 class AuthHandler(BaseHandler):
     def get(self, **kwargs):
-        self.response.headers['Content-Type'] = 'application/json'
-
         if '/current' in self.request.path_url:
             return self.get_current()
 
@@ -728,8 +714,6 @@ class AuthHandler(BaseHandler):
         self.response.write(json.dumps(out))
 
     def post(self):
-        self.response.headers['Content-Type'] = 'application/json'
-
         if '/logout' in self.request.path_url:
             self.end_session()
             return
@@ -799,7 +783,6 @@ class AuthHandler(BaseHandler):
 
 class TokensHandler(BaseHandler):
     def get(self, week_id):
-        self.response.headers['Content-Type'] = 'application/json'
         week = Week.get_by_id(long(week_id))
 
         tokens = []
@@ -819,7 +802,6 @@ class TokensHandler(BaseHandler):
         return base64.urlsafe_b64encode(encrypted)
 
     def post(self, week_id):
-        self.response.headers['Content-Type'] = 'application/json'
         week = Week.get_by_id(long(week_id))
 
         recipients = []
