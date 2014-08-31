@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import json, datetime, logging, time, struct, base64, random, time
+from urlparse import urlparse
 import webapp2
 from webapp2_extras import sessions
 from google.appengine.ext import ndb
+from google.appengine.api import mail
 from Crypto.Cipher import AES
 from Crypto import Random
 from Crypto.Protocol.KDF import PBKDF2
@@ -214,7 +216,6 @@ class BaseHandler(webapp2.RequestHandler):
             self.resonse.status = 401
             return
 
-        logging.info("Checking admin: " + str(self.requires_admin()))
         if self.requires_admin() and (self.current_user is None or not self.current_user.admin):
             self.response.status = 401
             return
@@ -792,21 +793,64 @@ class TokensHandler(BaseHandler):
 
         tokens = []
         for user in week.active_users:
-            nonce = Random.new().read(16)
-            packed = struct.pack('!QQ', user.id(), week.key.id())
-
-            # TODO: this doesn't need to be encrypted; signing is good enough
-            cipher = AES.new(KEY, AES.MODE_CFB, nonce)
-            encrypted = cipher.encrypt(packed) + nonce
-            encoded = base64.urlsafe_b64encode(encrypted)
+            encoded = self.create_token(user.id(), week.key.id())
             tokens.append({'user': user.id(), 'token': encoded})
 
         self.response.write(json.dumps(tokens))
 
+    def create_token(self, userId, weekId):
+        nonce = Random.new().read(16)
+        packed = struct.pack('!QQ', userId, weekId)
+
+        # TODO: this doesn't need to be encrypted; signing is good enough
+        cipher = AES.new(KEY, AES.MODE_CFB, nonce)
+        encrypted = cipher.encrypt(packed) + nonce
+        return base64.urlsafe_b64encode(encrypted)
+
     def post(self, week_id):
         self.response.headers['Content-Type'] = 'application/json'
-        self.response.write('{}')
-        pass
+        week = Week.get_by_id(long(week_id))
+
+        recipients = []
+
+        for userKey in week.active_users:
+            user = userKey.get()
+            if user.name != 'Keith': continue
+            url = urlparse(self.request.url)
+            token = self.create_token(userKey.id(), week.key.id())
+            tokenUrl = 'http://%s/login/%s' % (url.hostname, token)
+
+            SENDER = 'BSC Admin <kbarber2@gmail.com>'
+            msg = mail.EmailMessage(sender = SENDER,
+                                    to = user.email,
+                                    subject = "BSC %s Week %d" % (week.season, week.number))
+            
+            msg.body = """
+Hello %s,
+
+You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).
+
+In order to submit your picks, click on the following link:
+
+%s
+
+If you are unable to submit your picks on the BSC website, email or text them to the commissioner at askingmsu@gmail.com.
+""" % (user.name, week.number, 'time at date', tokenUrl)
+
+            msg.html = """
+<html><head></head><body>
+Hello %s,
+
+<p>You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).</p>
+<p>In order to submit your picks, click on the following link: 
+<a href="%s">%s</a></p>
+<p>If you are unable to submit your picks on the BSC website, email or text them to the commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
+""" % (user.name, week.number, 'time at date', tokenUrl, tokenUrl)
+
+            msg.send()
+            recipients.append({ 'name': user.name })
+            
+        self.response.write(json.dumps({ 'recipients': recipients }))
         
 config = {}
 config['webapp2_extras.sessions'] = {

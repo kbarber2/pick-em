@@ -944,9 +944,9 @@ App.TokensController = Ember.ObjectController.extend({
 	sendEmails: function() {
 	    var addr = API_URI + 'tokens/' + this.get('id') + '/email';
 	    $.post(addr, '').then(function(response) {
-		debugger;
+		alert('Emails sent to ' + response.recipients.length + ' users');
 	    }, function(response) {
-		debugger;
+		alert('Error: ' + response.responseText);
 	    });
 	}
     }
