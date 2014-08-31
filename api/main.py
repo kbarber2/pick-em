@@ -216,10 +216,11 @@ class BaseHandler(webapp2.RequestHandler):
             self.resonse.status = 401
             return
 
-        if self.requires_admin() and (self.current_user is None or not self.current_user.admin):
+        perms = self.requires_admin()
+        if len(perms) > 0 and (self.current_user is None or not self.current_user.admin) and self.request.method in perms:
             self.response.status = 401
             return
-            
+
         try:
             webapp2.RequestHandler.dispatch(self)
         finally:
@@ -238,13 +239,13 @@ class BaseHandler(webapp2.RequestHandler):
         return []
 
     def requires_admin(self):
-        return False
+        return []
         
     def write_error(self, code, msg):
         self.response.status = code
         self.response.write(json.dumps({ 'error': msg }))
         
-class UsersHandler(webapp2.RequestHandler):
+class UsersHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'application/json'
 
@@ -267,9 +268,14 @@ class UsersHandler(webapp2.RequestHandler):
         user = deserializeUser(User.get_by_id(long(user_id)), data)
         user.put()
         self.response.write(json.dumps(serialize({}, user)))
-        
 
-class ReloadHandler(webapp2.RequestHandler):
+    def requires_admin(self):
+        return ['PUT', 'POST']
+
+class ReloadHandler(BaseHandler):
+    def requires_admin(self):
+        return ['GET']
+
     def get(self):
         self.response.headers['Content-type'] = 'text/plain';
 
@@ -356,7 +362,7 @@ class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Hello world!')
 
-class SchoolHandler(webapp2.RequestHandler):
+class SchoolHandler(BaseHandler):
     def getAll(self):
         out = { "school": [] }
         for s in School.query().fetch(): serialize(out, s)
@@ -382,7 +388,10 @@ class SchoolHandler(webapp2.RequestHandler):
         deserializeSchool(school, d).put()
         self.response.write(json.dumps(serialize({}, school)))
 
-class MatchupHandler(webapp2.RequestHandler):
+    def requires_admin(self):
+        return ['PUT', 'POST']
+
+class MatchupHandler(BaseHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
         if 'matchup_id' in kwargs:
@@ -426,7 +435,10 @@ class MatchupHandler(webapp2.RequestHandler):
 
         self.response.write(json.dumps(serialize({}, matchup)))
 
-class WeeksHandler(webapp2.RequestHandler):
+    def requires_admin(self):
+        return ['PUT', 'POST']
+
+class WeeksHandler(BaseHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
@@ -518,14 +530,10 @@ class WeeksHandler(webapp2.RequestHandler):
         out['week'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
 
+    def requires_admin(self):
+        return ['PUT', 'POST']
+
 class PicksHandler(BaseHandler):
-    def past_deadline(self, week):
-        return True
-        return datetime.datetime.now() >= week.deadline
-
-    def requires_user(self):
-        return ['PUT']
-
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
 
@@ -678,6 +686,12 @@ class PicksHandler(BaseHandler):
         self.response.status = 200
         self.response.write('{}')
 
+    def past_deadline(self, week):
+        return datetime.datetime.now() >= week.deadline
+
+    def requires_user(self):
+        return ['PUT']
+
 class AuthHandler(BaseHandler):
     def get(self, **kwargs):
         self.response.headers['Content-Type'] = 'application/json'
@@ -784,9 +798,6 @@ class AuthHandler(BaseHandler):
         self.response.write('{}')
 
 class TokensHandler(BaseHandler):
-    def requires_admin(self):
-        return True
-    
     def get(self, week_id):
         self.response.headers['Content-Type'] = 'application/json'
         week = Week.get_by_id(long(week_id))
@@ -816,6 +827,7 @@ class TokensHandler(BaseHandler):
         for userKey in week.active_users:
             user = userKey.get()
             if user.name != 'Keith': continue
+
             url = urlparse(self.request.url)
             token = self.create_token(userKey.id(), week.key.id())
             tokenUrl = 'http://%s/login/%s' % (url.hostname, token)
@@ -851,6 +863,9 @@ Hello %s,
             recipients.append({ 'name': user.name })
             
         self.response.write(json.dumps({ 'recipients': recipients }))
+
+    def requires_admin(self):
+        return ['GET', 'PUT', 'POST']
         
 config = {}
 config['webapp2_extras.sessions'] = {
