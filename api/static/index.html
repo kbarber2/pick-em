@@ -178,8 +178,8 @@
 	    {{/if}}
 	    </td>
 	    {{#each bets}}
-	    <td {{bind-attr style="colors"}}>{{winner.abbreviation}}</td>
-	    <td align="right" {{bind-attr class="isWrongPick" style="colors"}}>{{points}}</td>
+	    <td {{bind-attr style="winner.colors"}}>{{winner.abbreviation}}</td>
+	    <td align="right" {{bind-attr class="isWrongPick" style="winner.colors"}}>{{points}}</td>
 	    {{/each}}
 	    <td align="right">{{totalPoints}}</td>
 	    <td align="right">{{totalPointsBet}}</td>
@@ -444,7 +444,7 @@
 	{{#each}}
 	<tr>
 	  <td>{{#link-to 'schools.edit' this}}{{name}}{{/link-to}}</td>
-	  <td>{{abbreviation}}</td>
+	  <td {{bind-attr style="colors"}}>{{abbreviation}}</td>
 	  <td>{{mascot}}</td>
 	</tr>
 	{{/each}}

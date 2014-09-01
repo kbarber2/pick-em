@@ -130,7 +130,19 @@ App.School = DS.Model.extend({
     abbreviation: DS.attr('string'),
     mascot: DS.attr('string'),
     primaryColor: DS.attr('string'),
-    secondaryColor: DS.attr('string')
+    secondaryColor: DS.attr('string'),
+
+    colors: function() {
+	var c1 = this.get('primaryColor');
+	var c2 = this.get('secondaryColor');
+	return 'color:' + c1 + ';background-color:' + c2 + ';';
+    }.property('primaryColor', 'secondaryColor'),
+
+    invertedColors: function() {
+	var c2 = this.get('primaryColor');
+	var c1 = this.get('secondaryColor');
+	return 'color:' + c1 + ';background-color:' + c2 + ';';
+    }.property('primaryColor', 'secondaryColor')
 });
 
 App.User = DS.Model.extend({
@@ -206,13 +218,6 @@ App.Bet = Ember.Object.extend({
 	var matchup = this.get('matchup');
 	return [matchup.get('awayTeam'), matchup.get('homeTeam')];
     }.property('matchup'),
-
-    colors: function() {
-	var w = this.get('winner');
-	var c1 = w.get('primaryColor');
-	var c2 = w.get('secondaryColor');
-	return 'color:' + c1 + ';background-color:' + c2 + ';';
-    }.property('winner'),
 
     isWrongPick: function() {
 	var awayScore = this.get('matchup.awayScore');
