@@ -1,8 +1,5 @@
 // TODO
 // - Endpoint security, especially token
-// - Login for admin
-// - Deploy
-// - Email test
 // - Reload/server push for score updates
 // - Automatic score updates
 // - Importer
@@ -13,6 +10,9 @@
 App = Ember.Application.create();
 
 var API_URI = '/api/';
+
+var DEFAULT_DATE_FORMAT = 'MM/DD/YYYY';
+var DEFAULT_DATETIME_FORMAT = 'MM/DD/YYYY hh:mm a';
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -57,21 +57,12 @@ App.DateTimePickerView = Ember.TextField.extend({
     }
 });
 
-Ember.Handlebars.registerBoundHelper('display-datetime', function(value, dateOnly) {
-    var m = moment.tz(value, 'MM/DD/YYYY hh:mm a', 'America/New_York');
-    var fmt = 'MM/DD/YYYY';
-    if (!dateOnly) {
-	fmt += ' hh:mm a';
-    }
-    return m.format(fmt);
-});
-
-App.MdateTransform = DS.Transform.extend({
+App.MomentTransform = DS.Transform.extend({
     deserialize: function(serialized) {
 	if (serialized) {
 	    var m = moment(serialized);
 	    m = m.tz('America/New_York');
-	    serialized = m.format('MM/DD/YYYY hh:mm a');
+	    return m;
 	}
 	
 	return serialized;
@@ -79,14 +70,35 @@ App.MdateTransform = DS.Transform.extend({
 
     serialize: function(deserialized) {
 	if (deserialized) {
-	    var m = parseDate(deserialized);
-	    var m2 = m.tz('UTC');
-	    deserialized = m.tz('UTC').format();
+	    var utc = deserialized.tz('UTC');
+	    var e = utc.valueOf();
+	    return e;
 	}
 
 	return deserialized;
     }
 });
+
+function momentProperty(property, format) {
+    if (typeof(format) === 'undefined') format = DEFAULT_DATETIME_FORMAT;
+    
+    return function(key, value, previous) {
+	if (typeof(value) === 'undefined') {
+	    var m = this.get(property);
+	    if (!moment.isMoment(m)) return '';
+	    var f = m.format(format);
+	    return f;
+	} else {
+	    if (!value) {
+		this.set(property, null);
+	    } else {
+		var m = moment.tz(value, format, "America/New_York");
+		this.set(property, m);
+	    }
+	    return value;
+	}
+    }.property(property);
+}
 
 App.PickSerializer = DS.RESTSerializer.extend({
     serialize: function(record, options) {
@@ -133,9 +145,11 @@ App.Matchup = DS.Model.extend({
     homeTeam: DS.belongsTo('school'),
     awayTeam: DS.belongsTo('school'),
     line: DS.attr('number'),
-    kickoff: DS.attr('mdate'),
+    kickoff: DS.attr('moment'),
     homeScore: DS.attr('number'),
     awayScore: DS.attr('number'),
+
+    kickoffString: momentProperty('kickoff', DEFAULT_DATETIME_FORMAT),
 
     coveredColor: function() {
 	if (this.get('homeScore') || this.get('awayScore')) {
@@ -157,12 +171,16 @@ App.Matchup = DS.Model.extend({
 App.Week = DS.Model.extend({
     matchups: DS.hasMany('matchup'),
     users: DS.hasMany('user'),
-    startDate: DS.attr('mdate'),
-    endDate: DS.attr('mdate'),
+    startDate: DS.attr('moment'),
+    endDate: DS.attr('moment'),
     season: DS.attr('number'),
     number: DS.attr('number'),
-    deadline: DS.attr('mdate'),
-    active: DS.attr('boolean')
+    deadline: DS.attr('moment'),
+    active: DS.attr('boolean'),
+
+    startDateString: momentProperty('startDate', DEFAULT_DATE_FORMAT),
+    endDateString: momentProperty('endDate', DEFAULT_DATE_FORMAT),
+    deadlineString: momentProperty('deadline')
 });
 
 App.Pick = DS.Model.extend({
@@ -171,9 +189,12 @@ App.Pick = DS.Model.extend({
     editable: DS.attr('boolean'),
     weekNumber: DS.attr('number'),
     weekSeason: DS.attr('string'),
-    weekStart: DS.attr('mdate'),
-    weekEnd: DS.attr('mdate'),
-    bets: DS.attr()
+    weekStart: DS.attr('moment'),
+    weekEnd: DS.attr('moment'),
+    bets: DS.attr(),
+
+    weekStartString: momentProperty('weekStart', DEFAULT_DATE_FORMAT),
+    weekEndString: momentProperty('weekEnd', DEFAULT_DATE_FORMAT)
 });
 
 App.Bet = Ember.Object.extend({
@@ -807,12 +828,13 @@ App.WeeksEditController = Ember.ObjectController.extend({
 
     actions: {
 	newMatchup: function() {
-	    var kickoff = '';
-	    
+	    var kickoff = null;
+
 	    if (this.get('startDate')) {
-		var m = parseDate(this.get('startDate') + " 12:00 pm");
-		m.day(6);
-		kickoff = m.format('MM/DD/YYYY hh:mm a');
+		kickoff = this.get('startDate').clone();
+		kickoff.day(6);
+		kickoff.hour(12);
+		kickoff.minute(0);
 	    }
 
 	    var newM = this.store.createRecord('matchup', { kickoff: kickoff });
@@ -832,13 +854,13 @@ App.WeeksEditController = Ember.ObjectController.extend({
 	    // default the deadline to the first kickoff time
 	    if (!model.get('deadline')) {
 		var first = model.get('matchups').reduce(function(prev, cur, idx, array) {
-		    var kickoff = parseDate(cur.get('kickoff'));
+		    var kickoff = cur.get('kickoff');
 		    if (!prev) return kickoff;
 		    return kickoff.isBefore(prev) ? kickoff : prev;
 		});
 
 		if (first) {
-		    model.set('deadline', first.format('MM/DD/YYYY hh:mm a'));
+		    model.set('deadline', first);
 		}
 	    }
 	    

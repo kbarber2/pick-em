@@ -12,16 +12,25 @@ from Crypto import Random
 from Crypto.Protocol.KDF import PBKDF2
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+EPOCH_TS = datetime.datetime.utcfromtimestamp(0)
+EPOCH_DATE = EPOCH_TS.date()
 
+def format_date(obj):
+    if isinstance(obj, datetime.datetime):
+        delta = obj - EPOCH_TS
+    else:
+        delta = obj - EPOCH_DATE
+
+    return long(delta.total_seconds() * 1000.0)
+
+def parse_datetime(epoch):
+    return datetime.datetime.utcfromtimestamp(epoch / 1000.0)
+
+def parse_date(epoch):
+    return parse_datetime(epoch).date()
+    
 AUTH_TOKEN = 1
 AUTH_PASSWORD = 2
-
-def format_time(obj):
-    return obj.isoformat()
-
-def parse_time(formatted):
-    formatted = formatted[:-6]
-    return datetime.datetime.strptime(formatted, DATE_FORMAT)
 
 def create_token(userId, weekId):
     nonce = Random.new().read(16)
@@ -103,7 +112,7 @@ def serializeMatchup(out, matchup):
     m = {}
     m['id'] = matchup.key.id()
     m['line'] = matchup.line
-    m['kickoff'] = format_time(matchup.kickoff_time)
+    m['kickoff'] = format_date(matchup.kickoff_time)
 
     m['homeTeam'] = matchup.home_team.id()
     m['awayTeam'] = matchup.away_team.id()
@@ -150,9 +159,9 @@ def serializeWeek(out, week):
 def serializeEditableWeek(out, week):
     w = serializeWeek(out, week)
 
-    w['startDate'] = format_time(week.start_date)
-    w['endDate'] = format_time(week.end_date)
-    w['deadline'] = format_time(week.deadline)
+    w['startDate'] = format_date(week.start_date)
+    w['endDate'] = format_date(week.end_date)
+    w['deadline'] = format_date(week.deadline)
     w['season'] = week.season
     w['number'] = week.number
 
@@ -319,7 +328,7 @@ class ReloadHandler(BaseHandler):
         for m in data['matchup']:
             matchup = Matchup(away_team = schools[m['awayTeam']].key,
                               home_team = schools[m['homeTeam']].key,
-                              kickoff_time = parse_time(m['kickoff']),
+                              kickoff_time = parse_datetime(m['kickoff']),
                               line = m['line'],
                               away_score = m['awayScore'],
                               home_score = m['homeScore'])
@@ -334,7 +343,7 @@ class ReloadHandler(BaseHandler):
                         start_date = datetime.datetime.strptime(w['startDate'], '%Y-%m-%d'),
                         end_date = datetime.datetime.strptime(w['endDate'], '%Y-%m-%d'),
                         season = w['season'], number = w['number'],
-                        deadline = parse_time(w['deadline']), active=True)
+                        deadline = parse_datetime(w['deadline']), active=True)
             week.put()
 
         time.sleep(1)
@@ -430,7 +439,7 @@ class MatchupHandler(BaseHandler):
         data = json.loads(self.request.body)['matchup']
 
         matchup.line = float(data['line'])
-        matchup.kickoff_time = parse_time(data['kickoff'])
+        matchup.kickoff_time = parse_datetime(data['kickoff'])
         matchup.away_team = ndb.Key(School, long(data['awayTeam']))
         matchup.home_team = ndb.Key(School, long(data['homeTeam']))
 
@@ -507,9 +516,9 @@ class WeeksHandler(BaseHandler):
         users = [u.key for u in User.query(User.active == True).fetch()]
         matchups = [Matchup.get_by_id(long(mid)).key for mid in data['matchups']]
         
-        week = Week(start_date = parse_time(data['startDate']),
-                    end_date = parse_time(data['endDate']),
-                    deadline = parse_time(data['deadline']),
+        week = Week(start_date = parse_date(data['startDate']),
+                    end_date = parse_date(data['endDate']),
+                    deadline = parse_datetime(data['deadline']),
                     season = str(data['season']),
                     number = int(data['number']),
                     matchups = matchups,
@@ -535,9 +544,9 @@ class WeeksHandler(BaseHandler):
         data = json.loads(self.request.body)
         data = data['week']
 
-        week.start_date = parse_time(data['startDate'])
-        week.end_date = parse_time(data['endDate'])
-        week.deadline = parse_time(data['deadline'])
+        week.start_date = parse_date(data['startDate'])
+        week.end_date = parse_date(data['endDate'])
+        week.deadline = parse_datetime(data['deadline'])
         week.season = str(data['season'])
         week.number = int(data['number'])
         week.active_users = [ndb.Key(User, long(uid)) for uid in data['users']]
@@ -658,8 +667,8 @@ class PicksHandler(BaseHandler):
         picks['bets'] = []
         picks['weekNumber'] = week.number
         picks['weekSeason'] = week.season
-        picks['weekStart'] = format_time(week.start_date)
-        picks['weekEnd'] = format_time(week.end_date)
+        picks['weekStart'] = format_date(week.start_date)
+        picks['weekEnd'] = format_date(week.end_date)
 
         current_user = User.query(User.name == 'Keith').get()
         
