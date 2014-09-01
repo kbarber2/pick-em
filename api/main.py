@@ -57,6 +57,7 @@ class Week(ndb.Model):
     season = ndb.StringProperty()
     number = ndb.IntegerProperty()
     deadline = ndb.DateTimeProperty()
+    active = ndb.BooleanProperty()
 
 class Bet(ndb.Model):
     winner = ndb.KeyProperty(kind=School)
@@ -324,7 +325,7 @@ class ReloadHandler(BaseHandler):
                         start_date = datetime.datetime.strptime(w['startDate'], '%Y-%m-%d'),
                         end_date = datetime.datetime.strptime(w['endDate'], '%Y-%m-%d'),
                         season = w['season'], number = w['number'],
-                        deadline = parse_time(w['deadline']))
+                        deadline = parse_time(w['deadline']), active=True)
             week.put()
 
         time.sleep(1)
@@ -448,17 +449,23 @@ class WeeksHandler(BaseHandler):
             return
 
         query = None
-        if 'season' in self.request.GET:
-            query = Week.season == str(self.request.GET['season'])
+        if self.current_user is None or not self.current_user.admin:
+            query = Week.active == True
 
-        query = Week.query(query) if query is not None else Week.query()
-            
+        if 'season' in self.request.GET:
+            s = Week.season == str(self.request.GET['season'])
+            query = ndb.AND(query, s) if query is not None else s
+
+        query = Week.query(query)
+
         out = {}
         out['week'] = [serializeEditableWeek(out, w) for w in query.fetch()]
         self.response.write(json.dumps(out))
 
     def index(self):
-        search = { 'season': self.request.get('season') }
+        admin = self.current_user.admin if self.current_user is not None else False
+
+        search = { 'season': self.request.get('season'), 'admin': admin }
         for k in search.keys():
             if len(search[k]) == 0: del search[k]
 
@@ -467,15 +474,18 @@ class WeeksHandler(BaseHandler):
 
     @classmethod
     def indexSearch(cls, search):
-        q = Week.query().order(-Week.season, Week.number)
+        if 'admin' not in search or not search['admin']:
+            q = Week.query(Week.active == True)
+        else:
+            q = Week.query()
 
-        today = datetime.date.today()
+        q = q.order(-Week.season, Week.number)
+
         if 'season' in search:
             q = q.filter(Week.season == str(search['season']))
 
         out = []
         for week in q.fetch():
-            if week.start_date > today: break
             w = { 'id': week.key.id(), 'season': week.season, 'number': week.number }
             out.append(w)
 
@@ -582,7 +592,7 @@ class PicksHandler(BaseHandler):
         today = datetime.date.today()
         q = Week.query().order(-Week.season, -Week.number)
         for week in q.fetch(20):
-            if week.start_date <= today:
+            if week.active and week.start_date <= today:
                 return week
 
         return None
