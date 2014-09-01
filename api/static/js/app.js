@@ -11,6 +11,7 @@
 // - Sort matchups by kickoff time
 
 App = Ember.Application.create();
+
 var API_URI = '/api/';
 
 function isNumber(n) {
@@ -175,7 +176,6 @@ App.Pick = DS.Model.extend({
 });
 
 App.Bet = Ember.Object.extend({
-    user: null,
     matchup: null,
     winner: null,
     points: 0,
@@ -290,10 +290,8 @@ App.Router.reopen({
 App.ApplicationRoute = Ember.Route.extend({
     model: function() {
 	var self = this;
-
-	return new Ember.RSVP.Promise(function(resolve, reject) {
-	    Ember.$.get(API_URI + 'current', '', resolve).fail(reject);
-	}).then(function(resp) {
+	
+	return $.get(API_URI + 'current').then(function(resp) {
 	    var model = {user: null, weeks: [], schools: []};
 
 	    model.user = resp.user ? self.store.push('user', resp.user) : null;
@@ -306,6 +304,21 @@ App.ApplicationRoute = Ember.Route.extend({
 
 	    return model;
 	});
+    },
+
+    setupController: function(c, m) {
+	// for some reason, we get the following interleaving when loading the page
+	// for the fist time from a login URL:
+	// 1) AppRoute.model
+	// 2) AppRoute.model callback
+	// 3) LoginTokenRoute.model
+	// 4) LoginTokenRoute.model callback
+	// 5) AppRoute.setupController
+	// this interleaving causes us to lose the "user" attribute when we set the
+	// model here
+	var loggedIn = c.get('user');
+	if (loggedIn) m.user = loggedIn;
+	c.set('model', m);
     }
 });
 
@@ -319,6 +332,7 @@ App.ApplicationController = Ember.ObjectController.extend({
     }.property('user', 'adminOn'),
     
     isLoggedIn: function() {
+	var u = this.get('user');
 	return !Ember.isEmpty(this.get('user'));
     }.property('user'),
 
@@ -961,15 +975,14 @@ App.LoginTokenRoute = Ember.Route.extend({
 
 	var post = { token: params.token };
 	return $.post(API_URI + 'login', post).then(function(response) {
-	    debugger;
 	    var user = self.store.push('user', response.user);
 	    var controller = self.controllerFor('application');
 
 	    controller.set('user', user);
-	    self.transitionTo('picks');
+	    self.replaceWith('picks');
 	}, function(response) {
 	    self.controllerFor('loginError').set('message', response.responseJSON.error);
-	    self.transitionTo('loginError');
+	    self.replaceWith('loginError');
 	});
     }
 });

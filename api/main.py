@@ -179,7 +179,8 @@ def deserializeUser(user, serialized):
                     email = serialized['email'],
                     active = serialized['active'],
                     order = serialized['order'],
-                    admin = serialized['admin'])
+                    admin = serialized['admin'],
+                    password = '')
     else:
         user.name = serialized['name']
         user.email = serialized['email']
