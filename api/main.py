@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import json, datetime, logging, time, struct, base64, random, time
+import bsc_crypto
 from urlparse import urlparse
 import webapp2
 from webapp2_extras import sessions
@@ -10,8 +11,6 @@ from Crypto.Cipher import AES
 from Crypto import Random
 from Crypto.Protocol.KDF import PBKDF2
 
-KEY = 'secretkey1234567'
-SALT = '\x16@a1\xed\xc7.\x80\xde\x0f\xdf\xb0\xa9\xb25\xe9\xe1\xf3s-s[[\xaccS\xc8\xc3N\x109\xe0'
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 AUTH_TOKEN = 1
@@ -29,7 +28,7 @@ def create_token(userId, weekId):
     packed = struct.pack('!QQ', userId, weekId)
 
     # TODO: this doesn't need to be encrypted; signing is good enough
-    cipher = AES.new(KEY, AES.MODE_CFB, nonce)
+    cipher = AES.new(bsc_crypto.TOKEN_KEY, AES.MODE_CFB, nonce)
     encrypted = cipher.encrypt(packed) + nonce
     return base64.urlsafe_b64encode(encrypted)
     
@@ -844,7 +843,7 @@ class AuthHandler(BaseHandler):
         nonce = encrypted[-16:]
         encrypted = encrypted[:-16]
 
-        cipher = AES.new(KEY, AES.MODE_CFB, nonce)
+        cipher = AES.new(bsc_crypto.TOKEN_KEY, AES.MODE_CFB, nonce)
         packed = cipher.decrypt(encrypted)
 
         (user_id, week_id) = struct.unpack('!QQ', packed)
@@ -860,7 +859,7 @@ class AuthHandler(BaseHandler):
         self.begin_session(user, week, AUTH_TOKEN)
 
     def login_with_password(self, userId, passwordPlain):
-        hashed = PBKDF2(passwordPlain, SALT, count=10000)
+        hashed = PBKDF2(passwordPlain, bsc_crypto.PASSWORD_SALT, count=10000)
         password = base64.b64encode(hashed)
 
         try:
@@ -908,7 +907,7 @@ class TokensHandler(BaseHandler):
         
 config = {}
 config['webapp2_extras.sessions'] = {
-    'secret_key': 'my-super-secret-key',
+    'secret_key': bsc_crypto.SESSION_KEY
 }
 
 app = webapp2.WSGIApplication([
