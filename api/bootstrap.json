@@ -14,7 +14,8 @@
     { "id": "RAMOS", "name": "Ramos", "email": "", "active": true, "admin": false, "order": 13 },
     { "id": "VAL", "name": "Val", "email": "", "active": true, "admin": false, "order": 14 },
     { "id": "GREG", "name": "Greg", "email": "", "active": true, "admin": false, "order": 15 },
-    { "id": "BOB", "name": "Bob", "email": "", "active": true, "admin": false, "order": 16 }
+    { "id": "BOB", "name": "Bob", "email": "", "active": true, "admin": false, "order": 16 },
+    { "id": "TOINCOSS", "name": "Toin Coss", "email": "", "active": true, "admin": false, "order": 17 }
   ],
 
   "school": [

@@ -556,6 +556,8 @@ class WeeksHandler(BaseHandler):
         if week.active:
             logging.warn('Week %d is already active, resending emails' % (week.number))
 
+        self.activate_toin_coss(week)
+            
         recipients = []
         for userKey in week.active_users:
             user = userKey.get()
@@ -602,6 +604,34 @@ Hello %s,
 
         self.response.write(json.dumps({ 'recipients': recipients }))
 
+    def activate_toin_coss(self, week):
+        toin_coss = User.query(User.name == "Toin Coss").get()
+        picks = Picks.query(ndb.AND(Picks.user == toin_coss.key,
+                                    Picks.week == week.key)).get()
+
+        if picks is not None: return
+
+        per_matchup_points = 100 / len(week.matchups)
+        points = dict((m, per_matchup_points) for m in week.matchups)
+        remaining = 100 - (per_matchup_points * len(week.matchups))
+        while remaining > 0:
+            m = random.choice(week.matchups)
+            points[m] += 1
+            remaining -= 1
+
+        for mkey in week.matchups:
+            matchup = mkey.get()
+            prob = random.random()
+            logging.info("Toin coss pick for season %d, week %d, matchup %d: %.5f" % \
+                         (int(week.season), week.number, mkey.id(), prob))
+            winner = matchup.home_team if prob > 0.5 else matchup.away_team
+
+            bet = Bet(winner = winner, points = points[mkey],
+                      time_placed = datetime.datetime.now())
+
+            picks = Picks(week = week.key, user = toin_coss.key, matchup = mkey, bets = [bet])
+            picks.put()
+            
     def requires_admin(self):
         return ['PUT', 'POST']
 
