@@ -161,7 +161,8 @@ App.Week = DS.Model.extend({
     endDate: DS.attr('mdate'),
     season: DS.attr('number'),
     number: DS.attr('number'),
-    deadline: DS.attr('mdate')
+    deadline: DS.attr('mdate'),
+    active: DS.attr('boolean')
 });
 
 App.Pick = DS.Model.extend({
@@ -851,6 +852,18 @@ App.WeeksEditController = Ember.ObjectController.extend({
 		    self.transitionToRoute('weeks.index');
 		});
 	    });
+	},
+
+	activate: function() {
+	    var self = this;
+
+	    $.ajax({ url: API_URI + 'weeks/' + this.get('id') + '/activate',
+		     type: 'PUT' }).then(function(response) {
+			 alert('Emails sent to ' + response.recipients.length + ' users');
+			 self.transitionToRoute('picks');
+		     }, function(response) {
+			 alert('Error: ' + response.responseText);
+		     });
 	}
     }
 });

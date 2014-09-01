@@ -1,5 +1,5 @@
 { "user": [
-    { "id": "KEITH", "name": "Keith", "email": "", "active": true, "admin": true,  "order": 3 },
+    { "id": "KEITH", "name": "Keith", "email": "kbarber2@gmail.com", "active": true, "admin": true,  "order": 3 },
     { "id": "AARON", "name": "Aaron", "email": "", "active": true, "admin": false, "order": 1 },
     { "id": "FRANK", "name": "Frank", "email": "", "active": true, "admin": false, "order": 2 },
     { "id": "JASON", "name": "Jason", "email": "", "active": true, "admin": false, "order": 4 },

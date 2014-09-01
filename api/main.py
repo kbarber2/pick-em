@@ -24,6 +24,15 @@ def parse_time(formatted):
     formatted = formatted[:-6]
     return datetime.datetime.strptime(formatted, DATE_FORMAT)
 
+def create_token(userId, weekId):
+    nonce = Random.new().read(16)
+    packed = struct.pack('!QQ', userId, weekId)
+
+    # TODO: this doesn't need to be encrypted; signing is good enough
+    cipher = AES.new(KEY, AES.MODE_CFB, nonce)
+    encrypted = cipher.encrypt(packed) + nonce
+    return base64.urlsafe_b64encode(encrypted)
+    
 class User(ndb.Model):
     name = ndb.StringProperty()
     email = ndb.StringProperty()
@@ -127,6 +136,7 @@ def serializeWeek(out, week):
     w['editable'] = True
     w['users'] = []
     w['matchups'] = []
+    w['active'] = week.active
 
     for u in week.active_users:
         w['users'].append(u.id())
@@ -504,7 +514,8 @@ class WeeksHandler(BaseHandler):
                     season = str(data['season']),
                     number = int(data['number']),
                     matchups = matchups,
-                    active_users = users)
+                    active_users = users,
+                    active = False)
         week.put()
 
         out = {}
@@ -512,10 +523,19 @@ class WeeksHandler(BaseHandler):
         self.response.write(json.dumps(out))
 
     def put(self, week_id):
+        week = Week.get_by_id(long(week_id))
+
+        if week is None:
+            self.response.status = 404
+            return
+
+        if self.request.path_url.endswith('/activate'):
+            self.activate(week)
+            return
+
         data = json.loads(self.request.body)
         data = data['week']
 
-        week = Week.get_by_id(long(week_id))
         week.start_date = parse_time(data['startDate'])
         week.end_date = parse_time(data['endDate'])
         week.deadline = parse_time(data['deadline'])
@@ -531,6 +551,56 @@ class WeeksHandler(BaseHandler):
         out = {}
         out['week'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
+
+    def activate(self, week):
+        if week.active:
+            logging.warn('Week %d is already active, resending emails' % (week.number))
+
+        recipients = []
+        for userKey in week.active_users:
+            user = userKey.get()
+            if user.email.find('@') == -1:
+                logging.warn('No email for %s, skipping' % (user.name))
+                continue
+
+            url = urlparse(self.request.url)
+            token = create_token(userKey.id(), week.key.id())
+            tokenUrl = 'http://%s/login/%s' % (url.hostname, token)
+
+            SENDER = 'BSC Admin <kbarber2@gmail.com>'
+            msg = mail.EmailMessage(sender = SENDER,
+                                    to = user.email,
+                                    subject = "BSC %s Week %d" % (week.season, week.number))
+
+            msg.body = """
+Hello %s,
+
+You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).
+
+In order to submit your picks, click on the following link:
+
+%s
+
+If you are unable to submit your picks on the BSC website, email or text them to the commissioner at askingmsu@gmail.com.
+""" % (user.name, week.number, 'time at date', tokenUrl)
+
+            msg.html = """
+<html><head></head><body>
+Hello %s,
+
+<p>You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).</p>
+<p>In order to submit your picks, click on the following link: 
+<a href="%s">%s</a></p>
+<p>If you are unable to submit your picks on the BSC website, email or text them to the commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
+""" % (user.name, week.number, 'time at date', tokenUrl, tokenUrl)
+
+            msg.send()
+            recipients.append({ 'name': user.name })
+
+        week.active = True
+        week.put()
+
+        self.response.write(json.dumps({ 'recipients': recipients }))
 
     def requires_admin(self):
         return ['PUT', 'POST']
@@ -798,64 +868,10 @@ class TokensHandler(BaseHandler):
 
         tokens = []
         for user in week.active_users:
-            encoded = self.create_token(user.id(), week.key.id())
+            encoded = create_token(user.id(), week.key.id())
             tokens.append({'user': user.id(), 'token': encoded})
 
         self.response.write(json.dumps(tokens))
-
-    def create_token(self, userId, weekId):
-        nonce = Random.new().read(16)
-        packed = struct.pack('!QQ', userId, weekId)
-
-        # TODO: this doesn't need to be encrypted; signing is good enough
-        cipher = AES.new(KEY, AES.MODE_CFB, nonce)
-        encrypted = cipher.encrypt(packed) + nonce
-        return base64.urlsafe_b64encode(encrypted)
-
-    def post(self, week_id):
-        week = Week.get_by_id(long(week_id))
-
-        recipients = []
-
-        for userKey in week.active_users:
-            user = userKey.get()
-            if user.name != 'Keith': continue
-
-            url = urlparse(self.request.url)
-            token = self.create_token(userKey.id(), week.key.id())
-            tokenUrl = 'http://%s/login/%s' % (url.hostname, token)
-
-            SENDER = 'BSC Admin <kbarber2@gmail.com>'
-            msg = mail.EmailMessage(sender = SENDER,
-                                    to = user.email,
-                                    subject = "BSC %s Week %d" % (week.season, week.number))
-            
-            msg.body = """
-Hello %s,
-
-You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).
-
-In order to submit your picks, click on the following link:
-
-%s
-
-If you are unable to submit your picks on the BSC website, email or text them to the commissioner at askingmsu@gmail.com.
-""" % (user.name, week.number, 'time at date', tokenUrl)
-
-            msg.html = """
-<html><head></head><body>
-Hello %s,
-
-<p>You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).</p>
-<p>In order to submit your picks, click on the following link: 
-<a href="%s">%s</a></p>
-<p>If you are unable to submit your picks on the BSC website, email or text them to the commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
-""" % (user.name, week.number, 'time at date', tokenUrl, tokenUrl)
-
-            msg.send()
-            recipients.append({ 'name': user.name })
-            
-        self.response.write(json.dumps({ 'recipients': recipients }))
 
     def requires_admin(self):
         return ['GET', 'PUT', 'POST']
@@ -880,6 +896,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/weeks', WeeksHandler),
     webapp2.Route(r'/api/weeks/index', WeeksHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeeksHandler),
+    webapp2.Route(r'/api/weeks/<week_id:\d+>/activate', WeeksHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
     webapp2.Route(r'/api/schools/<school_id:\d+>', SchoolHandler),
     webapp2.Route(r'/api/matchups', MatchupHandler),
