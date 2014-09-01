@@ -13,6 +13,7 @@
       overflow: auto;
       }
       .is-current-user { font-weight: bold; }
+      .is-wrong-pick { border-style: solid; border-color: red; border-top-width: 3px !important; border-top-color: red !important; }
     </style>
   </head>
   <body>
@@ -178,7 +179,7 @@
 	    </td>
 	    {{#each bets}}
 	    <td {{bind-attr style="colors"}}>{{winner.abbreviation}}</td>
-	    <td align="right" {{bind-attr style="colors"}}>{{points}}</td>
+	    <td align="right" {{bind-attr class="isWrongPick" style="colors"}}>{{points}}</td>
 	    {{/each}}
 	    <td align="right">{{totalPoints}}</td>
 	    <td align="right">{{totalPointsBet}}</td>

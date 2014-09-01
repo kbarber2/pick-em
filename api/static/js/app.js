@@ -189,7 +189,16 @@ App.Bet = Ember.Object.extend({
 	var w = this.get('winner');
 	var c1 = w.get('primaryColor');
 	var c2 = w.get('secondaryColor');
-	return 'color:' + c1 + ';background-color:' + c2;
+	return 'color:' + c1 + ';background-color:' + c2 + ';';
+    }.property('winner'),
+
+    isWrongPick: function() {
+	var awayScore = this.get('matchup.awayScore');
+	var homeScore = this.get('matchup.homeScore');
+	if (awayScore || homeScore) {
+	    return !betCovered(this.get('matchup'), this.get('winner'));
+	}
+	return false;
     }.property('winner')
 });
 
