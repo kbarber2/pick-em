@@ -577,7 +577,7 @@ class WeeksHandler(BaseHandler):
             token = create_token(userKey.id(), week.key.id())
             tokenUrl = 'http://%s/login/%s' % (url.hostname, token)
 
-            SENDER = 'BSC Admin <kbarber2@gmail.com>'
+            SENDER = 'BSC <kbarber2@gmail.com>'
             msg = mail.EmailMessage(sender = SENDER,
                                     to = user.email,
                                     subject = "BSC %s Week %d" % (week.season, week.number))
