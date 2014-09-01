@@ -324,11 +324,15 @@ class ReloadHandler(BaseHandler):
 
         time.sleep(1)
 
+        def parse_timestr(formatted):
+            formatted = formatted[:-6]
+            return datetime.datetime.strptime(formatted, DATE_FORMAT)
+        
         matchups = {}
         for m in data['matchup']:
             matchup = Matchup(away_team = schools[m['awayTeam']].key,
                               home_team = schools[m['homeTeam']].key,
-                              kickoff_time = parse_datetime(m['kickoff']),
+                              kickoff_time = parse_timestr(m['kickoff']),
                               line = m['line'],
                               away_score = m['awayScore'],
                               home_score = m['homeScore'])
@@ -343,7 +347,7 @@ class ReloadHandler(BaseHandler):
                         start_date = datetime.datetime.strptime(w['startDate'], '%Y-%m-%d'),
                         end_date = datetime.datetime.strptime(w['endDate'], '%Y-%m-%d'),
                         season = w['season'], number = w['number'],
-                        deadline = parse_datetime(w['deadline']), active=True)
+                        deadline = parse_timestr(w['deadline']), active=True)
             week.put()
 
         time.sleep(1)
