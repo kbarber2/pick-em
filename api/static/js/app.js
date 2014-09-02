@@ -567,12 +567,20 @@ App.PicksBaseRoute = Ember.Route.extend({
     afterModel: function(picks, transition) {
 	var self = this;
 	// TODO: find a less hackish way to deal with this transformed business 
-	if (picks.get('bets') && !picks.transformed) {
+	if (picks.get('bets.length') && !picks.transformed) {
 	    var mapped = picks.get('bets').map(function(bet) {
 		bet.matchup = self.store.getById('matchup', bet.matchup);
 		bet.user = self.store.getById('user', bet.user);
 		bet.winner = self.store.getById('school', bet.winner);
 		return App.Bet.create(bet);
+	    });
+	    picks.set('bets', mapped);
+	    picks.transformed = true;
+	} else if (!picks.get('bets.length')) {
+	    var user = this.controllerFor('application').get('user');
+
+	    var mapped = picks.get('matchups').map(function(matchup) {
+		return App.Bet.create({ matchup: matchup, user: user });
 	    });
 	    picks.set('bets', mapped);
 	    picks.transformed = true;
@@ -668,10 +676,13 @@ App.PicksEditController = Ember.ArrayController.extend({
 	    var total = 0;
 	    var error = '';
 	    var max = 101 - this.get('model.length');
+	    var self = this;
 
 	    this.get('model').forEach(function(bet) {
 		if (error.length != 0) return;
 
+		if (!bet.get('user')) bet.set('user', self.get('user'));
+		
 		var m = bet.get('matchup');
 		var matchup = m.get('awayTeam.name') + ' vs ' + m.get('homeTeam.name');
 
