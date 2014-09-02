@@ -14,8 +14,8 @@ var API_URI = '/api/';
 var DEFAULT_DATE_FORMAT = 'MM/DD/YYYY';
 var DEFAULT_DATETIME_FORMAT = 'MM/DD/YYYY hh:mm a';
 
-var CONFERENCES = [ 'Big Ten', 'Mid-American Conference', 'Conference USA',
-		    'Pac-12', 'ACC', 'SEC', 'Big East' ];
+var CONFERENCES = [ 'Big Ten', 'Mid-American', 'USA', 'Pac-12', 'ACC', 'SEC',
+		    'Big East', 'American Athletic', 'Sun Belt' ];
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -26,6 +26,8 @@ function parseDate(date) {
 }
 
 function betCovered(matchup, winner) {
+    if (!matchup || !winner) return false;
+
     var awayScore = matchup.get('awayScore');
     var homeScore = matchup.get('homeScore');
 	    
@@ -727,7 +729,7 @@ App.PicksViewController = Ember.ObjectController.extend({
 		return (bet.user === user && bet.matchup === matchup);
 	    });
 
-	    return f.length > 0 ? f.objectAt(0) : null;
+	    return f.length > 0 ? f.objectAt(0) : Ember.Object.create();
 	});
     },
 
