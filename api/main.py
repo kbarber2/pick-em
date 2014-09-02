@@ -436,7 +436,7 @@ class MatchupHandler(BaseHandler):
         home = ndb.Key(School, long(matchup['homeTeam']))
         
         line = float(matchup['line'])
-        kickoff = datetime.datetime.now()
+        kickoff = parse_datetime(matchup['kickoff'])
         new = Matchup(home_team=home, away_team=away, line=line, kickoff_time=kickoff,
                       home_score=0, away_score=0)
         key = new.put()
@@ -678,8 +678,6 @@ class PicksHandler(BaseHandler):
         picks['weekStart'] = format_date(week.start_date)
         picks['weekEnd'] = format_date(week.end_date)
 
-        current_user = User.query(User.name == 'Keith').get()
-        
         for u in week.active_users:
             picks['users'].append(u.id())
             appendSideModel(out, u.get())
