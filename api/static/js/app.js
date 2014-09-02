@@ -14,6 +14,9 @@ var API_URI = '/api/';
 var DEFAULT_DATE_FORMAT = 'MM/DD/YYYY';
 var DEFAULT_DATETIME_FORMAT = 'MM/DD/YYYY hh:mm a';
 
+var CONFERENCES = [ 'Big Ten', 'Mid-American Conference', 'Conference USA',
+		    'Pac-12', 'ACC', 'SEC', 'Big East' ];
+
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
@@ -129,6 +132,7 @@ App.School = DS.Model.extend({
     fullName: DS.attr('string'),
     abbreviation: DS.attr('string'),
     mascot: DS.attr('string'),
+    conference: DS.attr('string'),
     primaryColor: DS.attr('string'),
     secondaryColor: DS.attr('string'),
 
@@ -422,6 +426,10 @@ App.SchoolsIndexController = Ember.ArrayController.extend({
 });
 
 App.SchoolsEditController = Ember.ObjectController.extend({
+    conferences: function() {
+	return CONFERENCES;
+    }.property(),
+    
     actions: {
 	save: function() {
 	    var self = this;

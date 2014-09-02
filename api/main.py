@@ -54,6 +54,7 @@ class School(ndb.Model):
     full_name = ndb.StringProperty()
     abbreviation = ndb.StringProperty()
     mascot = ndb.StringProperty()
+    conference = ndb.StringProperty()
     primary_color = ndb.StringProperty()
     secondary_color = ndb.StringProperty()
 
@@ -94,6 +95,7 @@ def serializeSchool(out, school):
     s['fullName'] = school.full_name
     s['abbreviation'] = school.abbreviation
     s['mascot'] = school.mascot
+    s['conference'] = school.conference
     s['primaryColor'] = school.primary_color
     s['secondaryColor'] = school.secondary_color
     return s
@@ -215,6 +217,7 @@ def deserializeSchool(school, data):
                         full_name=data['fullName'],
                         abbreviation=data['abbreviation'],
                         mascot=data['mascot'],
+                        conference=data['conference'],
                         primary_color=data['primaryColor'],
                         secondary_color=data['secondaryColor'])
     else:
@@ -222,6 +225,7 @@ def deserializeSchool(school, data):
         school.full_name = data['fullName']
         school.abbreviation = data['abbreviation']
         school.mascot = data['mascot']
+        school.conference=data['conference']
         school.primary_color = data['primaryColor']
         school.secondary_color = data['secondaryColor']
 
