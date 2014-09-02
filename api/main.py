@@ -700,18 +700,21 @@ class PicksHandler(BaseHandler):
             appendSideModel(out, m.get())
 
         query = Picks.week == week.key
-        if editable:
-            query = ndb.AND(query, Picks.user == current_user.key)
-        
-        for p in Picks.query(query):
-            if len(p.bets) == 0: continue
+        if editable and self.current_user is not None:
+            query = ndb.AND(query, Picks.user == self.current_user.key)
+        elif editable:
+            query = None
+
+        if query is not None:
+            for p in Picks.query(query):
+                if len(p.bets) == 0: continue
             
-            b = p.bets[-1]
-            bet = { 'user': p.user.id(),
-                    'matchup': p.matchup.id(),
-                    'winner': b.winner.id(),
-                    'points': b.points }
-            picks['bets'].append(bet)
+                b = p.bets[-1]
+                bet = { 'user': p.user.id(),
+                        'matchup': p.matchup.id(),
+                        'winner': b.winner.id(),
+                        'points': b.points }
+                picks['bets'].append(bet)
 
         self.response.write(json.dumps(out))
 
