@@ -84,6 +84,26 @@ App.MomentTransform = DS.Transform.extend({
     }
 });
 
+App.MomentDateTransform = DS.Transform.extend({
+    deserialize: function(serialized) {
+	if (serialized) {
+	    var m = moment(serialized).tz('UTC');
+	    return m;
+	}
+	
+	return serialized;
+    },
+
+    serialize: function(deserialized) {
+	if (deserialized) {
+	    var e = deserialized.valueOf();
+	    return e;
+	}
+
+	return deserialized;
+    }
+});
+
 function momentProperty(property, format) {
     if (typeof(format) === 'undefined') format = DEFAULT_DATETIME_FORMAT;
     
@@ -189,8 +209,8 @@ App.Matchup = DS.Model.extend({
 App.Week = DS.Model.extend({
     matchups: DS.hasMany('matchup'),
     users: DS.hasMany('user'),
-    startDate: DS.attr('moment'),
-    endDate: DS.attr('moment'),
+    startDate: DS.attr('moment_date'),
+    endDate: DS.attr('moment_date'),
     season: DS.attr('number'),
     number: DS.attr('number'),
     deadline: DS.attr('moment'),
@@ -207,8 +227,8 @@ App.Pick = DS.Model.extend({
     editable: DS.attr('boolean'),
     weekNumber: DS.attr('number'),
     weekSeason: DS.attr('string'),
-    weekStart: DS.attr('moment'),
-    weekEnd: DS.attr('moment'),
+    weekStart: DS.attr('moment_date'),
+    weekEnd: DS.attr('moment_date'),
     bets: DS.attr(),
 
     weekStartString: momentProperty('weekStart', DEFAULT_DATE_FORMAT),
