@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import json, datetime, logging, time, struct, base64, random, time
+import json, datetime, logging, time, struct, base64, random, time, copy
 import bsc_crypto
 from urlparse import urlparse
 import webapp2
@@ -28,7 +28,17 @@ def parse_datetime(epoch):
 
 def parse_date(epoch):
     return parse_datetime(epoch).date()
+
+def convert_to_eastern(dt):
+    dt = copy.copy(dt)
     
+    offset = 4
+    if dt < datetime.datetime(dt.year, 3, 9, 2, 0, 0) or \
+       dt > datetime.datetime(dt.year, 11, 2, 2, 0, 0):
+       offset += 1
+    
+    return dt - datetime.timedelta(hours = offset)
+
 AUTH_TOKEN = 1
 AUTH_PASSWORD = 2
 
@@ -573,6 +583,9 @@ class WeeksHandler(BaseHandler):
             logging.warn('Week %d is already active, resending emails' % (week.number))
 
         self.activate_toin_coss(week)
+
+        deadline = convert_to_eastern(week.deadline)
+        deadline = deadline.strftime('%m/%d/%Y at %I:%M %p')
             
         recipients = []
         for userKey in week.active_users:
@@ -600,7 +613,7 @@ In order to submit your picks, click on the following link:
 %s
 
 If you are unable to submit your picks on the BSC website, email or text them to the commissioner at askingmsu@gmail.com.
-""" % (user.name, week.number, 'time at date', tokenUrl)
+""" % (user.name, week.number, deadline, tokenUrl)
 
             msg.html = """
 <html><head></head><body>
@@ -610,7 +623,7 @@ Hello %s,
 <p>In order to submit your picks, click on the following link: 
 <a href="%s">%s</a></p>
 <p>If you are unable to submit your picks on the BSC website, email or text them to the commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
-""" % (user.name, week.number, 'time at date', tokenUrl, tokenUrl)
+""" % (user.name, week.number, deadline, tokenUrl, tokenUrl)
 
             msg.send()
             recipients.append({ 'name': user.name })
