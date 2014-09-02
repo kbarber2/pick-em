@@ -797,8 +797,18 @@ App.WeeksNewRoute = Ember.Route.extend({
 	controller = this.controllerFor('weeksEdit');
 	controller.set('model', model);
 
-	controller.set('schools', this.get('schools'));
-	controller.set('allUsers', this.get('users'));
+	var schools = Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
+	    content: this.get('schools'),
+	    sortProperties: ['conference', 'name']
+	});
+
+	var users = Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
+	    content: this.get('users'),
+	    sortProperties: ['name']
+	});
+
+	controller.set('schools', schools);
+	controller.set('allUsers', users);
     },
 
     renderTemplate: function() {
