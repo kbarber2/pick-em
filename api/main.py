@@ -665,24 +665,13 @@ Hello %s,
         return ['PUT', 'POST']
 
 class PicksHandler(BaseHandler):
-    def get(self, **kwargs):
-        if 'week_id' in kwargs:
-            week = Week.get_by_id(long(kwargs['week_id']))
-        elif '/current' in self.request.path_url:
-            week = self.get_current_week()
-        else:
-            return
-
-        if week is None:
-            self.response.status = 404
-            return
-
-        editable = not self.past_deadline(week)
+    def serialize(self, week, bets):
+        out = {}
         picks = {}
-        out = { 'picks': picks }
+        out['picks'] = picks
 
         picks['id'] = week.key.id()
-        picks['editable'] = editable
+        picks['editable'] = not self.past_deadline(week)
         picks['users'] = []
         picks['matchups'] = []
         picks['bets'] = []
@@ -699,11 +688,30 @@ class PicksHandler(BaseHandler):
             picks['matchups'].append(m.id())
             appendSideModel(out, m.get())
 
+        picks['bets'] = bets
+        return out
+
+    def get(self, **kwargs):
+        if 'week_id' in kwargs:
+            week = Week.get_by_id(long(kwargs['week_id']))
+        elif '/current' in self.request.path_url:
+            week = self.get_current_week()
+        else:
+            return
+
+        if week is None:
+            self.response.status = 404
+            return
+
+        editable = not self.past_deadline(week)
+
         query = Picks.week == week.key
         if editable and self.current_user is not None:
             query = ndb.AND(query, Picks.user == self.current_user.key)
         elif editable:
             query = None
+
+        bets = []
 
         if query is not None:
             for p in Picks.query(query):
@@ -714,9 +722,9 @@ class PicksHandler(BaseHandler):
                         'matchup': p.matchup.id(),
                         'winner': b.winner.id(),
                         'points': b.points }
-                picks['bets'].append(bet)
+                bets.append(bet)
 
-        self.response.write(json.dumps(out))
+        self.response.write(json.dumps(self.serialize(week, bets)))
 
     def get_current_week(self):
         today = datetime.date.today()
@@ -786,7 +794,7 @@ class PicksHandler(BaseHandler):
             if self.session['auth_type'] != AUTH_PASSWORD and long(self.session['week']) != long(week_id):
                 self.write_error(403, "The current login URL is not valid for week " + week.number)
                 return
-                
+
         for bet in data['bets']:
             user = ndb.Key(User, long(bet['user']))
             matchup = ndb.Key(Matchup, long(bet['matchup']))
@@ -805,7 +813,7 @@ class PicksHandler(BaseHandler):
                     continue
 
             logging.info('New pick %i for %s for %s' % (points, user.get().name, winner.get().name))
-                    
+
             betRecord = Bet(winner = winner, points = points,
                             time_placed = datetime.datetime.now())
 
@@ -813,7 +821,7 @@ class PicksHandler(BaseHandler):
             picks.put()
 
         self.response.status = 200
-        self.response.write('{}')
+        self.response.write(json.dumps(self.serialize(week, data['bets'])))
 
     def past_deadline(self, week):
         return datetime.datetime.now() >= week.deadline
