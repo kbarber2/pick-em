@@ -823,11 +823,22 @@ class PicksHandler(BaseHandler):
         self.response.status = 200
         self.response.write(json.dumps(self.serialize(week, data['bets'])))
 
+    def delete(self, week_id):
+        week = ndb.Key(Week, long(week_id))
+
+        for pick in Picks.query(Picks.week == week).fetch():
+            pick.key.delete()
+
+        self.get(week_id=week_id)
+        
     def past_deadline(self, week):
         return datetime.datetime.now() >= week.deadline
 
     def requires_user(self):
         return ['PUT']
+
+    def requires_admin(self):
+        return ['DELETE']
 
 class AuthHandler(BaseHandler):
     def get(self, **kwargs):

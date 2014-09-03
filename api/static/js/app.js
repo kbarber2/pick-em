@@ -952,6 +952,20 @@ App.WeeksEditController = Ember.ObjectController.extend({
 		     }, function(response) {
 			 alert('Error: ' + response.responseText);
 		     });
+	},
+
+	clearPicks: function() {
+	    var self = this;
+
+	    if (confirm("Are you sure want to clear all picks for this week?")) {
+		$.ajax({ url: API_URI + 'picks/' + this.get('id'),
+			 type: 'DELETE' })
+		    .then(function(response) {
+			self.transitionToRoute('picks.view', self.get('id'));
+		    }, function(response) {
+			alert('Error: ' + response.responseText);
+		    });
+	    }
 	}
     }
 });
