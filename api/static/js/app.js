@@ -224,7 +224,15 @@ App.Matchup = DS.Model.extend({
 
     lineSign: function() {
 	return (parseInt(this.get('line'), 10) > 0) ? '+' : '';
-    }.property('line')
+    }.property('line'),
+
+    abbreviated: function() {
+	return this.get('awayTeam.abbreviation') + ' vs. ' + this.get('homeTeam.abbreviation');
+    }.property('awayTeam', 'homeTeam'),    
+    
+    unabbreviated: function() {
+	return this.get('awayTeam.name') + ' vs. ' + this.get('homeTeam.name');
+    }.property('awayTeam', 'homeTeam')
 });
 
 App.Week = DS.Model.extend({

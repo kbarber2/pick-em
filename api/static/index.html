@@ -158,7 +158,7 @@
 	  <tr>
 	    <th>Name</th>
 	    {{#each matchups}}
-	    <th>{{awayTeam.abbreviation}} vs. {{homeTeam.abbreviation}}</th>
+	    <th><div {{bind-attr title="unabbreviated"}}>{{abbreviated}}</div></th>
 	    <th align="right">{{lineSign}}{{line}}</th>
 	    {{/each}}
 	    <th>Total Points</th>
