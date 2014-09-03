@@ -26,7 +26,8 @@
 	"abbreviation": "Illinois",
 	"mascot": "Illini",
 	"primaryColor": "#003C7D",
-	"secondaryColor": "#F47F24"
+	"secondaryColor": "#F47F24",
+	"conference": "Big Ten"
     },
     {
 	"id": "INDIANA",
@@ -35,7 +36,8 @@
 	"abbreviation": "IU",
 	"mascot": "Hoosiers",
 	"secondaryColor": "#7D110C",
-	"primaryColor": "#E1D8B7"
+	"primaryColor": "#E1D8B7",
+	"conference": "Big Ten"
     },
     {
 	"id": "IOWA",
@@ -44,7 +46,8 @@
 	"abbreviation": "Iowa",
 	"mascot": "Hawkeyes",
 	"primaryColor": "#FFE100",
-	"secondaryColor": "#000000"
+	"secondaryColor": "#000000",
+	"conference": "Big Ten"
     },
     {
 	"id": "MICH",
@@ -53,7 +56,8 @@
 	"abbreviation": "UMich",
 	"mascot": "Wolverines",
 	"primaryColor": "#ffcb05",
-	"secondaryColor": "#00274c"
+	"secondaryColor": "#00274c",
+	"conference": "Big Ten"
     },
     {
 	"id": "MSU",
@@ -62,7 +66,8 @@
 	"abbreviation": "MSU",
 	"mascot": "Spartans",
 	"secondaryColor": "#18453B",
-	"primaryColor": "#FFFFFF"
+	"primaryColor": "#FFFFFF",
+	"conference": "Big Ten"
     },
     {
 	"id": "MINNESOTA",
@@ -71,7 +76,8 @@
 	"abbreviation": "UMinn",
 	"mascot": "Golden Gopher",
 	"primaryColor": "#FFCC33",
-	"secondaryColor": "#7A0019"
+	"secondaryColor": "#7A0019",
+	"conference": "Big Ten"
     },
     {
 	"id": "NEB",
@@ -80,7 +86,8 @@
 	"abbreviation": "NEB",
 	"mascot": "Cornhuskers",
 	"primaryColor": "#CC0000",
-	"secondaryColor": "#F5F3EB"
+	"secondaryColor": "#F5F3EB",
+	"conference": "Big Ten"
     },
     {
 	"id": "NW",
@@ -89,7 +96,8 @@
 	"abbreviation": "NW",
 	"mascot": "Wildcats",
 	"secondaryColor": "#520063",
-	"primaryColor": "#FFFFFF"
+	"primaryColor": "#FFFFFF",
+	"conference": "Big Ten"
     },
     {
 	"id": "OSU",
@@ -98,7 +106,8 @@
 	"abbreviation": "OSU",
 	"mascot": "Buckeyes",
 	"primaryColor": "#BB0000",
-	"secondaryColor": "rgba(102,102,102, 0.5)"
+	"secondaryColor": "rgba(102,102,102, 0.5)",
+	"conference": "Big Ten"
     },
     {
 	"id": "PSU",
@@ -107,7 +116,8 @@
 	"abbreviation": "PSU",
 	"mascot": "Nittany Lions",
 	"primaryColor": "#003893",
-	"secondaryColor": "#FFFFFF"
+	"secondaryColor": "#FFFFFF",
+	"conference": "Big Ten"
     },
     {
 	"id": "PURDUE",
@@ -116,7 +126,8 @@
 	"abbreviation": "Purdue",
 	"mascot": "Boilermakers",
 	"primaryColor": "#BF910C",
-	"secondaryColor": "#000000"
+	"secondaryColor": "#000000",
+	"conference": "Big Ten"
     },
     {
 	"id": "WISCONSIN",
@@ -125,7 +136,8 @@
 	"abbreviation": "WI",
 	"mascot": "Badgers",
 	"secondaryColor": "#C41E3A",
-	"primaryColor": "#FFFFFF"
+	"primaryColor": "#FFFFFF",
+	"conference": "Big Ten"
     }
   ],
 
