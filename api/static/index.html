@@ -209,18 +209,18 @@
 	  <th>End Date</th>
 	  <th>Deadline</th>
 	  <th>Matchups</th>
-	  <th></th>
+	  <th>Picks</th>
 	<tr>
       </thead>
       <tbody>
 	{{#each}}
 	<tr>
-	  <td>{{number}}</td>
+	  <td><button class="btn btn-default" {{action "editWeek" this}}>{{number}}</button></td>
 	  <td>{{startDateString}}</td>
 	  <td>{{endDateString}}</td>
 	  <td>{{deadlineString}}</td>
 	  <td>{{matchups.length}}</td>
-	  <td><button class="btn btn-default" {{action "editWeek" this}}>Edit</button></td>
+	  <td><button class="btn btn-default" {{action "editPicks" this}}>Picks</button></td>
 	</tr>
 	{{/each}}
       </tbody>

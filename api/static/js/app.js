@@ -978,6 +978,10 @@ App.WeeksIndexController = Ember.ArrayController.extend({
 
 	newWeek: function() {
 	    this.transitionToRoute('weeks.new');
+	},
+
+	editPicks: function(week) {
+	    this.transitionToRoute('picks.edit', week.get('id'));
 	}
     }
 });
