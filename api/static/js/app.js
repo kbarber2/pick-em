@@ -126,6 +126,27 @@ function momentProperty(property, format) {
 }
 
 App.PickSerializer = DS.RESTSerializer.extend({
+    extractSingle: function(store, type, payload, id) {
+	if (payload.school) store.pushMany('school', payload.school);
+	if (payload.matchup) store.pushMany('matchup', payload.matchup);
+	if (payload.user) store.pushMany('user', payload.user);
+
+	if (payload.picks) {
+	    payload.picks.bets = payload.picks.bets.map(function(bet) {
+		var m = store.getById('matchup', bet.matchup);
+
+		return App.Bet.create({
+		    user: store.getById('user', bet.user),
+		    matchup: store.getById('matchup', bet.matchup),
+		    winner: store.getById('school', bet.winner),
+		    points: bet.points
+		});
+	    });
+	}
+
+	return this._super(store, type, payload, id);
+    },
+
     serialize: function(record, options) {
 	var bets = record.get('bets').map(function(bet) {
 	    return { matchup: bet.matchup.get('id'),
@@ -563,32 +584,7 @@ App.ScoresEditController = Ember.ArrayController.extend({
     }
 });
 
-App.PicksBaseRoute = Ember.Route.extend({
-    afterModel: function(picks, transition) {
-	var self = this;
-	// TODO: find a less hackish way to deal with this transformed business 
-	if (picks.get('bets.length') && !picks.transformed) {
-	    var mapped = picks.get('bets').map(function(bet) {
-		bet.matchup = self.store.getById('matchup', bet.matchup);
-		bet.user = self.store.getById('user', bet.user);
-		bet.winner = self.store.getById('school', bet.winner);
-		return App.Bet.create(bet);
-	    });
-	    picks.set('bets', mapped);
-	    picks.transformed = true;
-	} else if (!picks.get('bets.length')) {
-	    var user = this.controllerFor('application').get('user');
-
-	    var mapped = picks.get('matchups').map(function(matchup) {
-		return App.Bet.create({ matchup: matchup, user: user });
-	    });
-	    picks.set('bets', mapped);
-	    picks.transformed = true;
-	}
-    }
-});
-
-App.PicksRoute = App.PicksBaseRoute.extend({
+App.PicksRoute = Ember.Route.extend({
     model: function() {
 	return this.store.find('pick', 'current');
     },
@@ -602,13 +598,24 @@ App.PicksRoute = App.PicksBaseRoute.extend({
     }
 });
 
-App.PicksViewRoute = App.PicksBaseRoute.extend({
+App.PicksViewRoute = Ember.Route.extend({
     model: function(params) {
 	return this.store.find('pick', params.week_id);
     }
 });
 
 App.PicksEditRoute = App.PicksViewRoute.extend({
+    afterModel: function(model, transition) {
+	var user = this.controllerFor('application').get('user');
+
+	if (!model.get('bets.length')) {
+	    model.set('bets', model.get('matchups').map(function(matchup) {
+		return App.Bet.create({ matchup: matchup, points: 0,
+					winner: null, user: user });
+	    }));
+	}
+    },
+
     setupController: function(controller, model) {
 	controller.set('week', model);
 
@@ -681,6 +688,9 @@ App.PicksEditController = Ember.ArrayController.extend({
 	    this.get('model').forEach(function(bet) {
 		if (error.length != 0) return;
 
+		// we should be able to rely on setupController() for this, but
+		// we can't since ApplicationController might not be fully
+		// configured yet
 		if (!bet.get('user')) bet.set('user', self.get('user'));
 		
 		var m = bet.get('matchup');
