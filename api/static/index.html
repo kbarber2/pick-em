@@ -119,7 +119,7 @@
 	  {{/if}}
 	  {{#each}}
 	  <tr>
-	    <td>{{matchup.awayTeam.abbreviation}} at {{matchup.homeTeam.abbreviation}}</td>
+	    <td>{{matchup.awayTeam.name}} at {{matchup.homeTeam.name}}</td>
 	    <td align="right">{{matchup.lineSign}}{{matchup.line}}
 	    <td>{{view Ember.Select content=teams value=winner
 	      prompt="Choose a winner" optionLabelPath="content.name"
@@ -624,7 +624,7 @@
   <script src="/static/js/libs/moment.js"></script>
   <script src="/static/js/libs/moment-timezone-with-data-2010-2020.js"></script>
   <script src="/static/js/libs/handlebars-1.1.2.js"></script>
-  <script src="/static/js/libs/ember-1.6.1.js"></script>
+  <script src="/static/js/libs/ember.min.js"></script>
   <script src="/static/js/libs/ember-data.js"></script>
   <script src="/static/js/libs/bootstrap.js"></script>
   <script src="/static/js/libs/jquery.datetimepicker.js"></script>
