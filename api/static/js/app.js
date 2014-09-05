@@ -609,7 +609,17 @@ App.PicksRoute = Ember.Route.extend({
 App.PicksViewRoute = Ember.Route.extend({
     model: function(params) {
 	return this.store.find('pick', params.week_id);
-    }
+    },
+
+    setupController: function(controller, model) {
+	controller.set('model', model);
+
+	controller.set('sortedMatchups', Ember.ArrayProxy.createWithMixins(
+	    Ember.SortableMixin, {
+		content: model.get('matchups'),
+		sortProperties: ['kickoff, line']
+	    }));
+    },
 });
 
 App.PicksEditRoute = App.PicksViewRoute.extend({
@@ -635,6 +645,8 @@ App.PicksEditRoute = App.PicksViewRoute.extend({
 
 App.PicksEditController = Ember.ArrayController.extend({
     needs: ['application'],
+    sortProperties: ['matchup.kickoff', 'matchup.line'],
+    sortAscending: true,
     isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
     isLoggedIn: Ember.computed.alias('controllers.application.isLoggedIn'),
     user: null,
@@ -773,7 +785,7 @@ App.PicksViewController = Ember.ObjectController.extend({
     orderedBets: function(user) {
 	var bets = this.get('bets');
 	var uname = user.get('name');
-	return this.get('matchups').map(function(matchup) {
+	return this.get('sortedMatchups').map(function(matchup) {
 	    var f = bets.filter(function(bet) {
 		return (bet.user === user && bet.matchup === matchup);
 	    });
