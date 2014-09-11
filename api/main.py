@@ -15,6 +15,9 @@ DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 EPOCH_TS = datetime.datetime.utcfromtimestamp(0)
 EPOCH_DATE = EPOCH_TS.date()
 
+WEEKDAYS = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+             'Friday', 'Saturday', 'Sunday' ]
+
 def format_date(obj):
     if isinstance(obj, datetime.datetime):
         delta = obj - EPOCH_TS
@@ -585,7 +588,9 @@ class WeeksHandler(BaseHandler):
         self.activate_toin_coss(week)
 
         deadline = convert_to_eastern(week.deadline)
-        deadline = deadline.strftime('%m/%d/%Y at %I:%M %p')
+        deadlineTime = deadline.strftime('%I:%M %p')
+        deadlineDate = deadline.strftime('%m/%d/%Y')
+        deadlineDay  = WEEKDAYS[deadline.weekday()]
             
         recipients = []
         for userKey in week.active_users:
@@ -606,7 +611,7 @@ class WeeksHandler(BaseHandler):
             msg.body = """
 Hello %s,
 
-You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).
+You may now submit your picks for week %d. Picks must be submitted by %s on %s, %s (Eastern).
 
 In order to submit your picks, click on the following link:
 
@@ -623,7 +628,7 @@ Hello %s,
 <p>In order to submit your picks, click on the following link: 
 <a href="%s">%s</a></p>
 <p>If you are unable to submit your picks on the BSC website, email or text them to the commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
-""" % (user.name, week.number, deadline, tokenUrl, tokenUrl)
+""" % (user.name, week.number, deadlineTime, deadlineDay, deadlineDate, tokenUrl, tokenUrl)
 
             msg.send()
             recipients.append({ 'name': user.name })
