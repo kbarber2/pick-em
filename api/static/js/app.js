@@ -360,6 +360,7 @@ App.Router.map(function() {
     this.route('picks', { path: 'picks' });
     this.route('picks.view', { path: 'picks/:week_id/view' });
     this.route('picks.edit', { path: 'picks/:week_id/edit' });
+    this.route('picks.summary', { path: 'picks/:week_id/summary' });
 
     this.route('scores.editCurrent', { path: 'scores/edit' });
     this.route('scores.edit', { path: 'scores/:week_id/edit' });    
@@ -801,6 +802,48 @@ App.PicksViewController = Ember.ObjectController.extend({
 	    this.transitionToRoute('picks.edit', this.get('model'));
 	}
     }
+});
+
+App.PicksSummary = Ember.Object.extend({
+    week: null,
+    user: null,
+    picks: null,
+
+    isComplete: function() {
+	return this.picks === this.week.get('matchups.length');
+    }.property('week.matchups.length', 'picks')
+});
+
+App.PicksSummaryRoute = Ember.Route.extend({
+    model: function(params) {
+	var self = this;
+	return Ember.$.get(API_URI + 'picks/' + params.week_id + '/summary')
+	    .then(function(response) {
+		// TODO: why doesn't pushPayload work?
+		self.store.push('week', response.week);
+		self.store.pushMany('user', response.user);
+		self.store.pushMany('matchup', response.matchup);
+		return response;
+	    });
+    },
+
+    setupController: function(controller, model) {
+	var self = this;
+	var week = this.store.getById('week', model.week.id);
+
+	controller.set('week', week);
+	controller.set('model', model.submissions.map(function(entry) {
+	    return App.PicksSummary.create({
+		user: self.store.getById('user', entry.user),
+		picks: entry.picks,
+		week: week });
+	}));
+    }
+});
+
+App.PicksSummaryController = Ember.ArrayController.extend({
+    sortProperties: ['user.order'],
+    sortAscending: true,
 });
 
 App.WeeksRoute = Ember.Route.extend({

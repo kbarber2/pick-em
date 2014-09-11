@@ -382,20 +382,7 @@ class ReloadHandler(BaseHandler):
                 pick = Picks(week = week.key, user = user.key,
                              matchup = matchup.key, bets = [bet])
                 pick.put()
-            
 
-class Bet(ndb.Model):
-    winner = ndb.KeyProperty(kind=School)
-    points = ndb.IntegerProperty()
-    time_placed = ndb.DateTimeProperty()
-
-class Picks(ndb.Model):
-    week = ndb.KeyProperty(kind=Week)
-    user = ndb.KeyProperty(kind=User)
-    matchup = ndb.KeyProperty(kind=Matchup)
-    bets = ndb.StructuredProperty(Bet, repeated=True)
-            
-            
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         self.response.write('Hello world!')
@@ -479,26 +466,31 @@ class WeeksHandler(BaseHandler):
         if '/index' in self.request.path_url:
             return self.index()
 
+        week = None
+        out = {}
+
         if 'week_id' in kwargs:
             week_id = long(kwargs['week_id'])
             week = Week.get_by_id(week_id)
+            if week is None:
+                self.response.status = 404
+                return
+
+        if week is not None:
             out = {}
             out['week'] = serializeEditableWeek(out, week)
-            self.response.write(json.dumps(out))
-            return
+        else:
+            query = None
+            if self.current_user is None or not self.current_user.admin:
+                query = Week.active == True
 
-        query = None
-        if self.current_user is None or not self.current_user.admin:
-            query = Week.active == True
+            if 'season' in self.request.GET:
+                s = Week.season == str(self.request.GET['season'])
+                query = ndb.AND(query, s) if query is not None else s
 
-        if 'season' in self.request.GET:
-            s = Week.season == str(self.request.GET['season'])
-            query = ndb.AND(query, s) if query is not None else s
+            query = Week.query(query)
+            out['week'] = [serializeEditableWeek(out, w) for w in query.fetch()]
 
-        query = Week.query(query)
-
-        out = {}
-        out['week'] = [serializeEditableWeek(out, w) for w in query.fetch()]
         self.response.write(json.dumps(out))
 
     def index(self):
@@ -708,6 +700,10 @@ class PicksHandler(BaseHandler):
             self.response.status = 404
             return
 
+        if self.request.path_url.endswith('/summary'):
+            self.get_summary(week)
+            return
+            
         editable = not self.past_deadline(week)
 
         query = Picks.week == week.key
@@ -731,6 +727,17 @@ class PicksHandler(BaseHandler):
 
         self.response.write(json.dumps(self.serialize(week, bets)))
 
+    def get_summary(self, week):
+        out = {}
+        out['week'] = serializeEditableWeek(out, week)
+        users = dict((u.id(), 0) for u in week.active_users)
+
+        for picks in Picks.query(Picks.week == week.key).fetch():
+            users[picks.user.id()] += 1
+
+        out['submissions'] = [{'user': uid, 'picks': count} for (uid, count) in users.iteritems()]
+        self.response.write(json.dumps(out))
+        
     def get_current_week(self):
         today = datetime.date.today()
         q = Week.query().order(-Week.season, -Week.number)
@@ -977,6 +984,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/picks', PicksHandler),
     webapp2.Route(r'/api/picks/current', PicksHandler),
     webapp2.Route(r'/api/picks/<week_id:\d+>', PicksHandler),
+    webapp2.Route(r'/api/picks/<week_id:\d+>/summary', PicksHandler),
     webapp2.Route(r'/api/weeks', WeeksHandler),
     webapp2.Route(r'/api/weeks/index', WeeksHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeeksHandler),

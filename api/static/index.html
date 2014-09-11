@@ -191,6 +191,29 @@
     </div>
   </script>
 
+  <script type="text/x-handlebars" data-template-name="picks/summary">
+    <h3>Week {{week.number}}, {{week.season}}</h3>
+    <!--<p>{{week.startDateString}} - {{week.endDateString}}</p>-->
+    <div class="table-responsive">
+      <table class="table table-striped">
+	<thead>
+	  <tr>
+	    <th>Name</th>
+	    <th>Picks submitted</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  {{#each}}
+	  <tr>
+	    <td>{{user.name}}</td>
+	    <td {{bind-attr class="isComplete:success:warning"}} align="right">{{picks}} / {{controller.week.matchups.length}}</td>
+	  </tr>
+	  {{/each}}
+	</tbody>
+      </table>
+    </div>
+  </script>
+  
   <script type="text/x-handlebars" data-template-name="weeks">
     <form class="form-search" role="form" {{action search on="submit"}}>
       {{input value=query id="search-search" class="input-medium search-query" placeholder="Season"}}
