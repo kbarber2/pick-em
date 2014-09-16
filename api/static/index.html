@@ -150,8 +150,13 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="picks/view">
+    <div class="container">
     <h3>Week {{weekNumber}}, {{weekSeason}}</h3>
     <p>{{weekStartString}} - {{weekEndString}}</p>
+    <ul class="nav nav-pills">
+      {{#link-li}}{{#link-to 'picks.view' this}}Picks{{/link-to}}{{/link-li}}
+      {{#link-li}}{{#link-to 'picks.leader' id}}Leaderboard{{/link-to}}{{/link-li}}
+    </ul>
     <div class="table-responsive">
       <table class="table table-striped">
 	<thead>
@@ -184,6 +189,43 @@
 	    <td align="right">{{totalPoints}}</td>
 	    <td align="right">{{totalPointsBet}}</td>
 	    <td align="right">{{gamesWon}}</td>
+	  </tr>
+	  {{/each}}
+	</tbody>
+      </table>
+    </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="picks/leader">
+    <div class="container">
+      <h3>Week {{week.weekNumber}}, {{week.weekSeason}}</h3>
+      <p>{{week.weekStartString}} - {{week.weekEndString}}</p>
+      <ul class="nav nav-pills">
+	{{#link-li}}{{#link-to 'picks.view' week.id}}Picks{{/link-to}}{{/link-li}}
+	{{#link-li}}{{#link-to 'picks.leader' week}}Leaderboard{{/link-to}}{{/link-li}}
+      </ul>
+      <table class="table table-striped">
+	<thead>
+	  <tr>
+	    <th {{action 'sortBy' 'user.name'}}>Name</th>
+	    <th {{action 'sortBy' 'points'}}>Total points</th>
+	    <th {{action 'sortBy' 'games'}}>Total games</th>
+	  </tr>
+	</thead>
+	<tfoot>
+	  <tr>
+	    <th>Total</th>
+	    <td align="right">{{week.totalPoints}}</td>
+	    <td align="right">{{week.totalGames}}</td>
+	  </tr>
+	</tfoot>
+	<tbody>
+	  {{#each}}
+	  <tr>
+	    <td>{{user.name}}</td>
+	    <td align="right">{{points}}</td>
+	    <td align="right">{{games}}</td>
 	  </tr>
 	  {{/each}}
 	</tbody>

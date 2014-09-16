@@ -104,6 +104,15 @@ App.MomentDateTransform = DS.Transform.extend({
     }
 });
 
+// http://discuss.emberjs.com/t/bootstrap-active-links-and-lis/5018
+App.LinkLiComponent = Em.Component.extend({
+    tagName: 'li',
+    classNameBindings: ['active'],
+    active: function() {
+	return this.get('childViews').anyBy('active');
+    }.property('childViews.@each.active')
+});
+
 function momentProperty(property, format) {
     if (typeof(format) === 'undefined') format = DEFAULT_DATETIME_FORMAT;
     
@@ -157,6 +166,22 @@ App.PickSerializer = DS.RESTSerializer.extend({
 	});
 
 	return { bets: bets };
+    }
+});
+
+App.LeaderboardSerializer = DS.RESTSerializer.extend({
+    extractSingle: function(store, type, payload, id) {
+	if (payload.user) store.pushMany('user', payload.user);
+
+	if (payload.leaderboard && payload.leaderboard.rankings) {
+	    l = payload.leaderboard;
+	    l.rankings = l.rankings.map(function(ranking) {
+		ranking.user = store.getById('user', ranking.user);
+		return Ember.Object.create(ranking);
+	    });
+	}
+
+	return this._super(store, type, payload, id);
     }
 });
 
@@ -264,6 +289,19 @@ App.Pick = DS.Model.extend({
     weekEndString: momentProperty('weekEnd', DEFAULT_DATE_FORMAT)
 });
 
+App.Leaderboard = DS.Model.extend({
+    weekNumber: DS.attr('number'),
+    weekSeason: DS.attr('string'),
+    weekStart: DS.attr('moment_date'),
+    weekEnd: DS.attr('moment_date'),
+    totalPoints: DS.attr('number'),
+    totalGames: DS.attr('number'),
+    rankings: DS.attr(),
+
+    weekStartString: momentProperty('weekStart', DEFAULT_DATE_FORMAT),
+    weekEndString: momentProperty('weekEnd', DEFAULT_DATE_FORMAT)
+});
+
 App.Bet = Ember.Object.extend({
     matchup: null,
     winner: null,
@@ -361,6 +399,7 @@ App.Router.map(function() {
     this.route('picks.view', { path: 'picks/:week_id/view' });
     this.route('picks.edit', { path: 'picks/:week_id/edit' });
     this.route('picks.summary', { path: 'picks/:week_id/summary' });
+    this.route('picks.leader', { path: 'picks/:week_id/leaderboard' });
 
     this.route('scores.editCurrent', { path: 'scores/edit' });
     this.route('scores.edit', { path: 'scores/:week_id/edit' });    
@@ -795,6 +834,16 @@ App.PicksViewController = Ember.ObjectController.extend({
 	});
     },
 
+    isPicksActive: function() {
+	var p = this.get('currentPath');
+	debugger;
+	return this.get('currentPath').indexOf('/view') > -1;
+    }.property('currentPath'),
+
+    isLeaderboardActive: function() {
+	return false;
+    }.property('currentPath'),
+
     actions: {
 	editPicks: function(userBets) {
 	    // TODO: need to make a more specific route like
@@ -844,6 +893,34 @@ App.PicksSummaryRoute = Ember.Route.extend({
 App.PicksSummaryController = Ember.ArrayController.extend({
     sortProperties: ['user.order'],
     sortAscending: true,
+});
+
+App.PicksLeaderRoute = Ember.Route.extend({
+    model: function(params) {
+	return this.store.find('leaderboard', params.week_id);
+    },
+
+    setupController: function(c, m) {
+	c.set('week', m);
+	c.set('model', m.get('rankings'));
+    }
+});
+
+App.PicksLeaderController = Ember.ArrayController.extend({
+    sortAscending: false,
+    sortProperties: [ 'points' ],
+    
+    actions: {
+	sortBy: function(arg) {
+	    var current = this.get('sortProperties');
+	    if (current.objectAt(0) === arg) {
+		this.set('sortAscending', !this.get('sortAscending'));
+	    } else {
+		this.set('sortAscending', arg === 'user.name');
+		this.set('sortProperties', [arg]);
+	    }
+	}
+    }
 });
 
 App.WeeksRoute = Ember.Route.extend({

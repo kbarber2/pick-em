@@ -42,6 +42,11 @@ def convert_to_eastern(dt):
     
     return dt - datetime.timedelta(hours = offset)
 
+def betCovered(matchup, winner):
+    covered = matchup.home_score + matchup.line > matchup.away_score
+    return (covered and winner == matchup.home_team) or \
+        (not covered and winner == matchup.away_team)
+
 AUTH_TOKEN = 1
 AUTH_PASSWORD = 2
 
@@ -308,7 +313,8 @@ class UsersHandler(BaseHandler):
 
 class ReloadHandler(BaseHandler):
     def requires_admin(self):
-        return ['GET']
+        #return ['GET']
+        return []
 
     def get(self):
         self.response.headers['Content-type'] = 'text/plain';
@@ -852,6 +858,62 @@ class PicksHandler(BaseHandler):
     def requires_admin(self):
         return ['DELETE']
 
+class LeaderboardHandler(BaseHandler):
+    def get(self, **kwargs):
+        if 'week_id' not in kwargs:
+            self.response.status = 404
+            return
+
+        week_id = long(kwargs['week_id'])
+        last_week = Week.get_by_id(week_id)
+        if last_week is None:
+            self.response.status = 404
+            return
+
+        users = {}
+        total_points = 0
+        total_games = 0
+
+        for number in range(1, last_week.number + 1):
+            week = Week.query(ndb.AND(Week.season == last_week.season,
+                                      Week.number == number)).get()
+            if week is None: continue
+
+            total_points += 100
+            total_games += len(week.matchups)
+
+            for user in week.active_users:
+                if user not in users:
+                    users[user] = { 'user': user.id(), 'points': 0, 'games': 0 }
+
+                for mkey in week.matchups:
+                    picks = Picks.query(ndb.AND(Picks.user == user,
+                                                Picks.matchup == mkey)).get()
+                    if picks is None or len(picks.bets) < 1: continue
+                    bet = picks.bets[-1]
+
+                    if betCovered(mkey.get(), bet.winner):
+                        users[user]['points'] += bet.points
+                        users[user]['games'] += 1
+
+        rankings = []
+        out = { 'user': [] }
+        for user in users:
+            rankings.append(users[user])
+            out['user'].append(serializeUser(out, user.get()))
+
+        out['leaderboard'] = { 'id': last_week.key.id(),
+                               'weekNumber': last_week.number,
+                               'weekSeason': last_week.season,
+                               'weekStart': format_date(last_week.start_date),
+                               'weekEnd': format_date(last_week.end_date),
+                               'totalGames': total_games,
+                               'totalPoints': total_points,
+                               'rankings': rankings
+        }
+            
+        self.response.write(json.dumps(out))
+
 class AuthHandler(BaseHandler):
     def get(self, **kwargs):
         if '/current' in self.request.path_url:
@@ -985,6 +1047,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/picks/current', PicksHandler),
     webapp2.Route(r'/api/picks/<week_id:\d+>', PicksHandler),
     webapp2.Route(r'/api/picks/<week_id:\d+>/summary', PicksHandler),
+    webapp2.Route(r'/api/leaderboards/<week_id:\d+>', LeaderboardHandler),
     webapp2.Route(r'/api/weeks', WeeksHandler),
     webapp2.Route(r'/api/weeks/index', WeeksHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeeksHandler),
