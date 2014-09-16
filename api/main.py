@@ -616,13 +616,13 @@ In order to submit your picks, click on the following link:
 %s
 
 If you are unable to submit your picks on the BSC website, email or text them to the commissioner at askingmsu@gmail.com.
-""" % (user.name, week.number, deadline, tokenUrl)
+""" % (user.name, week.number, deadlineTime, deadlineDay, deadlineDate, tokenUrl)
 
             msg.html = """
 <html><head></head><body>
 Hello %s,
 
-<p>You may now submit your picks for week %d. Picks must be submitted by %s (Eastern).</p>
+<p>You may now submit your picks for week %d. Picks must be submitted by %s on %s, %s (Eastern).</p>
 <p>In order to submit your picks, click on the following link: 
 <a href="%s">%s</a></p>
 <p>If you are unable to submit your picks on the BSC website, email or text them to the commissioner at <a href="mailto:askingmsu@gmail.com">askingmsu@gmail.com</a>.</p>
