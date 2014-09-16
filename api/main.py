@@ -892,7 +892,11 @@ class LeaderboardHandler(BaseHandler):
                     if picks is None or len(picks.bets) < 1: continue
                     bet = picks.bets[-1]
 
-                    if betCovered(mkey.get(), bet.winner):
+                    matchup = mkey.get()
+                    if matchup.home_score == 0 and matchup.away_score == 0:
+                        continue
+                    
+                    if betCovered(matchup, bet.winner):
                         users[user]['points'] += bet.points
                         users[user]['games'] += 1
 
