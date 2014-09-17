@@ -657,9 +657,15 @@ App.PicksViewRoute = Ember.Route.extend({
 	controller.set('sortedMatchups', Ember.ArrayProxy.createWithMixins(
 	    Ember.SortableMixin, {
 		content: model.get('matchups'),
-		sortProperties: ['kickoff', 'line']
+		sortProperties: ['kickoff', 'line'],
+	        sortAscending: true,
+		sortFunction: function(l, r) {
+		    if (l < r) return -1;
+		    if (l > r) return 1;
+		    return 0;
+		}
 	    }));
-    },
+    }
 });
 
 App.PicksEditRoute = App.PicksViewRoute.extend({
