@@ -465,16 +465,7 @@ App.ApplicationController = Ember.ObjectController.extend({
     isLoggedIn: function() {
 	var u = this.get('user');
 	return !Ember.isEmpty(this.get('user'));
-    }.property('user'),
-
-    actions: {
-	loadPicks: function(arg) {
-	    var self = this;
-	    this.store.find('pick', arg.id).then(function(picks) {
-		self.transitionToRoute('picks.view', picks);
-	    });
-	}
-    }
+    }.property('user')
 });
 
 App.SchoolsRoute = Ember.Route.extend({
