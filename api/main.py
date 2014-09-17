@@ -878,6 +878,7 @@ class LeaderboardHandler(BaseHandler):
             week = Week.query(ndb.AND(Week.season == last_week.season,
                                       Week.number == number)).get()
             if week is None: continue
+            if week.deadline >= datetime.datetime.now(): continue
 
             total_points += 100
             total_games += len(week.matchups)
