@@ -171,6 +171,9 @@
     <ul class="nav nav-pills">
       {{#link-li}}{{#link-to 'picks.view' this}}Picks{{/link-to}}{{/link-li}}
       {{#link-li}}{{#link-to 'picks.leader' id}}Leaderboard{{/link-to}}{{/link-li}}
+      {{#if editable}}
+      <li><button class="btn btn-default" {{action 'editPicks' this}}>Edit</button></li>
+      {{/if}}
     </ul>
     <div class="table-responsive">
       <table class="table table-striped">
