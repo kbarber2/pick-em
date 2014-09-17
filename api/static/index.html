@@ -178,8 +178,8 @@
 	  <tr>
 	    <th>Name</th>
 	    {{#each sortedMatchups}}
-	    <th><div {{bind-attr title="unabbreviated"}}>{{abbreviated}}</div></th>
-	    <th align="right">{{lineSign}}{{line}}</th>
+	    <th {{bind-attr style="coveredColor"}}><div {{bind-attr title="unabbreviated"}}>{{abbreviated}}</div></th>
+	    <th {{bind-attr style="coveredColor"}} align="right">{{lineSign}}{{line}}</th>
 	    {{/each}}
 	    <th>Total Points</th>
 	    <th>Total Bet</th>
@@ -198,8 +198,8 @@
 	    {{/if}}
 	    </td>
 	    {{#each bets}}
-	    <td {{bind-attr style="winner.colors"}}>{{winner.abbreviation}}</td>
-	    <td align="right" {{bind-attr class="isWrongPick" style="winner.colors"}}>{{points}}</td>
+	    <td {{bind-attr class="isGoodPick"}}>{{winner.abbreviation}}</td>
+	    <td align="right" {{bind-attr class="isGoodPick"}}>{{points}}</td>
 	    {{/each}}
 	    <td align="right">{{totalPoints}}</td>
 	    <td align="right">{{totalPointsBet}}</td>
@@ -434,7 +434,7 @@
 	    <td>{{input class="form-control" value=awayScore}}</td>
 	    <td>{{homeTeam.name}}</td>
 	    <td>{{input class="form-control" value=homeScore}}</td>
-	    <td {{bind-attr class="coveredColor"}}>{{lineSign}}{{line}}</td>
+	    <td>{{lineSign}}{{line}}</td>
 	  </tr>
 	  {{/each}}
 	</tbody>

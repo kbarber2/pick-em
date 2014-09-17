@@ -236,16 +236,16 @@ App.Matchup = DS.Model.extend({
     kickoffString: momentProperty('kickoff', DEFAULT_DATETIME_FORMAT),
 
     coveredColor: function() {
-	if (this.get('homeScore') || this.get('awayScore')) {
-	    var away = parseInt(this.get('awayScore'), 10);
-	    var home = parseInt(this.get('homeScore'), 10);
-	    var line = parseFloat(this.get('line'), 10);
+	var away = this.get('awayScore');
+	var home = this.get('homeScore');
 
-	    return home + line > away ? 'success' : 'danger';
+	if (away || home) {
+	    var covered = home + this.get('line') > away;
+	    return this.get((covered ? 'homeTeam' : 'awayTeam') + '.colors');
 	}
-	
+
 	return '';
-    }.property('homeScore', 'awayScore'),
+    }.property('homeScore', 'awayScore', 'homeTeam', 'awayTeam'),
 
     lineSign: function() {
 	return (parseInt(this.get('line'), 10) > 0) ? '+' : '';
@@ -312,13 +312,17 @@ App.Bet = Ember.Object.extend({
 	return [matchup.get('awayTeam'), matchup.get('homeTeam')];
     }.property('matchup'),
 
-    isWrongPick: function() {
+    isGoodPick: function() {
 	var awayScore = this.get('matchup.awayScore');
 	var homeScore = this.get('matchup.homeScore');
 	if (awayScore || homeScore) {
-	    return !betCovered(this.get('matchup'), this.get('winner'));
+	    if (betCovered(this.get('matchup'), this.get('winner'))) {
+		return 'success';
+	    } else {
+		return 'danger';
+	    }
 	}
-	return false;
+	return '';
     }.property('winner')
 });
 
