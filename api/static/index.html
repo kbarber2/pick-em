@@ -312,45 +312,47 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="weeks/_form">
+    <div class="container">
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
       <div class="form-group">
 	<label for="season" class="col-sm-2 control-label">Season</label>
-	<div class="col-sm-10">
+	<div class="col-sm-2">
 	  {{input value=season id="season" class="form-control"}}
 	</div>
       </div>
       <div class="form-group">
 	<label for="number" class="col-sm-2 control-label">Week Number</label>
-	<div class="col-sm-10">
+	<div class="col-sm-2">
 	  {{input value=number id="number" class="form-control"}}
 	</div>
       </div>
       <div class="form-group">
 	<label for="startDate" class="col-sm-2 control-label">Start Date</label>
-	<div class="col-sm-10">
+	<div class="col-sm-2">
 	  {{view "datePicker" value=startDateString id="startDate" class="form-control"}}
 	</div>
       </div>
       <div class="form-group">
 	<label for="endDate" class="col-sm-2 control-label">End Date</label>
-	<div class="col-sm-10">
+	<div class="col-sm-2">
 	  {{view "datePicker" value=endDateString id="endDate" class="form-control"}}
 	</div>
       </div>
       <div class="form-group">
 	<label for="deadline" class="col-sm-2 control-label">Deadline</label>
-	<div class="col-sm-10">
-	  {{view "dateTimePicker" value=deadlineString id="deadline" class="form-control"}}
+	<div class="col-sm-4">
+	  {{view "dateTimePicker" value=deadlineString id="deadline" class="form-control" placeholder="First kickoff time if unspecified"}}
 	</div>
       </div>
 
       <table class="table table-striped">
 	<thead>
 	  <tr>
-	    <th>Away Team</th>
-	    <th>Home Team</th>
-	    <th>Line</th>
-	    <th>Kickoff</th>
+	    <th class="col-sm-3">Away Team</th>
+	    <th class="col-sm-3">Home Team</th>
+	    <th class="col-sm-1">Line</th>
+	    <th class="col-sm-2">Kickoff Time</th>
+	    <th class="col-sm-2">Kickoff Date</th>
 	    <th></th>
 	</thead>
 	<tbody>
@@ -358,7 +360,7 @@
 	  {{render "matchupEditor" this}}
 	  {{/each}}
 	  <tr>
-	    <td colspan="5">
+	    <td colspan="6">
 	      <button class="btn btn-default" {{action "newMatchup"}}>+</button>
 	    </td>
 	  </tr>
@@ -381,38 +383,32 @@
 	</div>
       </div>
     </form>
+    </div>
   </script>
 
   <script type="text/x-handlebars" data-template-name="matchupEditor">
     <tr>
       <td>
-	<div class="col-sm-10">
-	  {{view Ember.Select value=awayTeam content=controller.schools
-	  optionValuePath="content" optionLabelPath="content.name"
-	  prompt="Choose away team" class="form-control"}}
-	</div>
+	{{view Ember.Select value=awayTeam content=schools
+	optionValuePath="content" optionLabelPath="content.name"
+	prompt="Choose away team" class="form-control"}}
       </td>
       <td>
-	<div class="col-sm-10">
-	  {{view Ember.Select value=homeTeam content=controller.schools
-	  optionValuePath="content" optionLabelPath="content.name"
-	  prompt="Choose home team" class="form-control"}}
-	</div>
+	{{view Ember.Select value=homeTeam content=schools
+	optionValuePath="content" optionLabelPath="content.name"
+	prompt="Choose home team" class="form-control"}}
       </td>
       <td>
-	<div class="col-sm-10">
-	  {{input value=line class="form-control"}}
-	</div>
+	{{input value=line class="form-control"}}
       </td>
       <td>
-	<div class="col-sm-10">
-	  {{view "dateTimePicker" value=kickoffString class="form-control"}}
-	</div>
+	{{input value=kickoffTime class="form-control"}}
       </td>
       <td>
-	<div class="col-sm-10">
-	  <button class="btn btn-default" {{action "removeMatchup" this}}>-</button>
-	</div>
+	{{view "datePicker" value=kickoffDate class="form-control"}}
+      </td>
+      <td>
+	<button class="btn btn-default" {{action "removeMatchup" this}}>-</button>
       </td>
     </tr>
   </script>

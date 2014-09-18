@@ -1028,7 +1028,35 @@ App.ToggleableUser = Ember.Object.extend({
 
 App.MatchupEditorController = Ember.ObjectController.extend({
     needs: ['weeksEdit'],
-    schools: Ember.computed.alias('controllers.weeksEdit.schools')
+    schools: Ember.computed.alias('controllers.weeksEdit.schools'),
+
+    kickoffTime: function(key, value, previous) {
+	var kickoff = this.get('kickoff');
+
+	if (typeof(value) != 'undefined') {
+	    debugger;
+	    var m = moment(value, "h:mm a");
+	    if (m.isValid()) {
+		kickoff.hour(m.hour()).minute(m.minute())
+	    }
+	}
+	
+	return kickoff.format('h:mm a');
+    }.property('kickoff'),
+
+    kickoffDate: function(key, value, previous) {
+	var kickoff = this.get('kickoff');
+
+	if (typeof(value) != 'undefined') {
+	    debugger;
+	    var m = moment(value, "MM/DD/YYYY");
+	    if (m.isValid()) {
+		kickoff.month(m.month()).date(m.date()).year(m.year());
+	    }
+	}
+
+	return kickoff.format('MM/DD/YYYY');
+    }.property('kickoff')
 });
 
 App.WeeksEditController = Ember.ObjectController.extend({
@@ -1047,14 +1075,12 @@ App.WeeksEditController = Ember.ObjectController.extend({
 
     actions: {
 	newMatchup: function() {
-	    var kickoff = null;
+	    var kickoff = this.get('startDate');
+	    if (!kickoff) kickoff = moment.tz('America/New_York');
 
-	    if (this.get('startDate')) {
-		kickoff = this.get('startDate').clone();
-		kickoff.day(6);
-		kickoff.hour(12);
-		kickoff.minute(0);
-	    }
+	    kickoff.day(6);
+	    kickoff.hour(12);
+	    kickoff.minute(0);
 
 	    var newM = this.store.createRecord('matchup', { kickoff: kickoff });
 	    var m = this.get('matchups');
