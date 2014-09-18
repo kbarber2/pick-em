@@ -354,7 +354,9 @@
 	    <th></th>
 	</thead>
 	<tbody>
-	  {{view Ember.CollectionView itemViewClass="App.MatchupEditor" content=matchups}}
+	  {{#each matchups}}
+	  {{partial "_matchup-editor"}}
+	  {{/each}}
 	  <tr>
 	    <td colspan="5">
 	      <button class="btn btn-default" {{action "newMatchup"}}>+</button>
@@ -381,35 +383,35 @@
     </form>
   </script>
 
-  <script type="text/x-handlebars" data-template-name="matchup-editor">
+  <script type="text/x-handlebars" data-template-name="_matchup-editor">
     <tr>
       <td>
 	<div class="col-sm-10">
-	  {{view Ember.Select value=view.content.awayTeam content=schools
+	  {{view Ember.Select value=awayTeam content=controller.schools
 	  optionValuePath="content" optionLabelPath="content.name"
 	  prompt="Choose away team" class="form-control"}}
 	</div>
       </td>
       <td>
 	<div class="col-sm-10">
-	  {{view Ember.Select value=view.content.homeTeam content=schools
+	  {{view Ember.Select value=homeTeam content=controller.schools
 	  optionValuePath="content" optionLabelPath="content.name"
 	  prompt="Choose home team" class="form-control"}}
 	</div>
       </td>
       <td>
 	<div class="col-sm-10">
-	  {{input value=view.content.line class="form-control"}}
+	  {{input value=line class="form-control"}}
 	</div>
       </td>
       <td>
 	<div class="col-sm-10">
-	  {{view "dateTimePicker" value=view.content.kickoffString class="form-control"}}
+	  {{view "dateTimePicker" value=kickoffString class="form-control"}}
 	</div>
       </td>
       <td>
 	<div class="col-sm-10">
-	  <button class="btn btn-default" {{action "removeMatchup" view.content}}>-</button>
+	  <button class="btn btn-default" {{action "removeMatchup" this}}>-</button>
 	</div>
       </td>
     </tr>
@@ -707,7 +709,7 @@
   <script src="/static/js/libs/moment.js"></script>
   <script src="/static/js/libs/moment-timezone-with-data-2010-2020.js"></script>
   <script src="/static/js/libs/handlebars-1.1.2.js"></script>
-  <script src="/static/js/libs/ember.min.js"></script>
+  <script src="/static/js/libs/ember-1.6.1.js"></script>
   <script src="/static/js/libs/ember-data.js"></script>
   <script src="/static/js/libs/bootstrap.js"></script>
   <script src="/static/js/libs/jquery.datetimepicker.js"></script>

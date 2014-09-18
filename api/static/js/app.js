@@ -1057,6 +1057,7 @@ App.WeeksEditController = Ember.ObjectController.extend({
 	},
 
 	removeMatchup: function(arg) {
+	    arg.rollback();
 	    var m = this.get('matchups');
 	    m.removeObject(arg);
 	},
@@ -1145,15 +1146,6 @@ App.WeeksIndexController = Ember.ArrayController.extend({
 	editPicks: function(week) {
 	    this.transitionToRoute('picks.edit', week.get('id'));
 	}
-    }
-});
-
-App.MatchupEditor = Ember.View.extend({
-    templateName: 'matchup-editor',
-    tagName: 'tr',
-
-    didInsertElement: function() {
-
     }
 });
 
