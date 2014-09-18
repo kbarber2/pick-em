@@ -1075,16 +1075,20 @@ App.WeeksEditController = Ember.ObjectController.extend({
 
     actions: {
 	newMatchup: function() {
+	    debugger;
 	    var kickoff = this.get('startDate');
-	    if (!kickoff) kickoff = moment.tz('America/New_York');
+	    kickoff = kickoff ? kickoff.clone() : moment.tz('America/New_York');
+	    kickoff.day(6).hour(12).minute(0);
 
-	    kickoff.day(6);
-	    kickoff.hour(12);
-	    kickoff.minute(0);
+	    var matchups = this.get('matchups');
 
-	    var newM = this.store.createRecord('matchup', { kickoff: kickoff });
-	    var m = this.get('matchups');
-	    m.pushObject(newM);
+	    kickoff = matchups.reduce(function(prev, cur, idx, array) {
+		var k = cur.get('kickoff');
+		return k > prev ? k : prev;
+	    }, kickoff);
+
+	    var newM = this.store.createRecord('matchup', { kickoff: kickoff.clone() });
+	    matchups.pushObject(newM);
 	},
 
 	removeMatchup: function(arg) {
