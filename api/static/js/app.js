@@ -1026,6 +1026,11 @@ App.ToggleableUser = Ember.Object.extend({
     }.property(),
 });
 
+App.MatchupEditorController = Ember.ObjectController.extend({
+    needs: ['weeksEdit'],
+    schools: Ember.computed.alias('controllers.weeksEdit.schools')
+});
+
 App.WeeksEditController = Ember.ObjectController.extend({
     toggleableUsers: function() {
 	var active = this.get('users');
