@@ -804,13 +804,17 @@ class PicksHandler(BaseHandler):
             self.write_error(404, 'Invalid week id')
             return
 
+        # hack until the frontend is fixed to not send everything
+        if len(data['bets']) < 20:
+            self.log_picks(data['bets'])
+
         if not self.current_user.admin:
             if self.past_deadline(week):
                 self.write_error(403, 'Cannot submit picks past the deadline')
                 return
 
             if self.session['auth_type'] != AUTH_PASSWORD and long(self.session['week']) != long(week_id):
-                self.write_error(403, "The current login URL is not valid for week " + week.number)
+                self.write_error(403, "The current login URL is not valid for week %d" % (week.number))
                 return
 
         for bet in data['bets']:
@@ -857,6 +861,15 @@ class PicksHandler(BaseHandler):
 
     def requires_admin(self):
         return ['DELETE']
+
+    def log_picks(self, picks):
+        for bet in picks:
+            user = ndb.Key(User, long(bet['user']))
+            matchup = ndb.Key(Matchup, long(bet['matchup']))
+            winner = ndb.Key(School, long(bet['winner']))
+            points = int(bet['points'])
+
+            logging.info('Processing pick %i for %s for %s' % (points, user.get().name, winner.get().name))
 
 class LeaderboardHandler(BaseHandler):
     def get(self, **kwargs):
