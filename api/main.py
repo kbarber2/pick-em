@@ -84,6 +84,7 @@ class Matchup(ndb.Model):
 
     home_score = ndb.IntegerProperty()
     away_score = ndb.IntegerProperty()
+    final = ndb.BooleanProperty()
 
 class Week(ndb.Model):
     active_users = ndb.KeyProperty(kind=User, repeated=True)
@@ -105,6 +106,19 @@ class Picks(ndb.Model):
     user = ndb.KeyProperty(kind=User)
     matchup = ndb.KeyProperty(kind=Matchup)
     bets = ndb.StructuredProperty(Bet, repeated=True)
+
+class LeaderboardData(ndb.Model):
+    user = ndb.KeyProperty(kind=User)
+    points = ndb.IntegerProperty()
+    games = ndb.IntegerProperty()
+
+class Leaderboard(ndb.Model):
+    week = ndb.KeyProperty(kind=Week)
+    season = ndb.IntegerProperty()
+    number = ndb.IntegerProperty()
+    rankings = ndb.StructuredProperty(LeaderboardData, repeated=True)
+    total_games = ndb.IntegerProperty()
+    total_points = ndb.IntegerProperty()
 
 def serializeSchool(out, school):
     s = {}
@@ -358,7 +372,8 @@ class ReloadHandler(BaseHandler):
                               kickoff_time = parse_timestr(m['kickoff']),
                               line = m['line'],
                               away_score = m['awayScore'],
-                              home_score = m['homeScore'])
+                              home_score = m['homeScore'],
+                              final = True)
             matchup.put()
             matchups[m['id']] = matchup
             
@@ -444,7 +459,7 @@ class MatchupHandler(BaseHandler):
         line = float(matchup['line'])
         kickoff = parse_datetime(matchup['kickoff'])
         new = Matchup(home_team=home, away_team=away, line=line, kickoff_time=kickoff,
-                      home_score=0, away_score=0)
+                      home_score=0, away_score=0, final=False)
         key = new.put()
         self.response.write(json.dumps(serialize({}, new)))
 
@@ -883,54 +898,116 @@ class LeaderboardHandler(BaseHandler):
             self.response.status = 404
             return
 
-        users = {}
-        total_points = 0
-        total_games = 0
+        leaderboard = Leaderboard.query(Leaderboard.week == last_week.key).get()
+        if leaderboard is None:
+            leaderboard = LeaderboardHandler.update(last_week)
 
-        for number in range(1, last_week.number + 1):
-            week = Week.query(ndb.AND(Week.season == last_week.season,
-                                      Week.number == number)).get()
-            if week is None: continue
-            if week.deadline >= datetime.datetime.now(): continue
-
-            total_points += 100
-            total_games += len(week.matchups)
-
-            for user in week.active_users:
-                if user not in users:
-                    users[user] = { 'user': user.id(), 'points': 0, 'games': 0 }
-
-                for mkey in week.matchups:
-                    picks = Picks.query(ndb.AND(Picks.user == user,
-                                                Picks.matchup == mkey)).get()
-                    if picks is None or len(picks.bets) < 1: continue
-                    bet = picks.bets[-1]
-
-                    matchup = mkey.get()
-                    if matchup.home_score == 0 and matchup.away_score == 0:
-                        continue
-                    
-                    if betCovered(matchup, bet.winner):
-                        users[user]['points'] += bet.points
-                        users[user]['games'] += 1
-
+        users = []
+        out = { 'user': users }
         rankings = []
-        out = { 'user': [] }
-        for user in users:
-            rankings.append(users[user])
-            out['user'].append(serializeUser(out, user.get()))
+
+        for r in leaderboard.rankings:
+            rankings.append({'user': r.user.id(), 'points': r.points, 'games': r.games})
+            users.append(serializeUser(out, r.user.get()))
 
         out['leaderboard'] = { 'id': last_week.key.id(),
-                               'weekNumber': last_week.number,
-                               'weekSeason': last_week.season,
+                               'weekNumber': leaderboard.number,
+                               'weekSeason': leaderboard.season,
                                'weekStart': format_date(last_week.start_date),
                                'weekEnd': format_date(last_week.end_date),
-                               'totalGames': total_games,
-                               'totalPoints': total_points,
+                               'totalGames': leaderboard.total_games,
+                               'totalPoints': leaderboard.total_points,
                                'rankings': rankings
         }
             
         self.response.write(json.dumps(out))
+
+    @classmethod
+    def create(cls, week, previous):
+        logging.info('Creating %d leaderboard week %d' % (int(week.season), week.number))
+        users = {}
+        games = 0
+        points = 0
+
+        if previous and (int(week.season) != previous.season or
+                         previous.number != week.number - 1):
+            raise ValueError('leaderboard mismatch')
+
+        if previous is not None:
+            for rank in previous.rankings:
+                r = LeaderboardData(user=rank.user, points=rank.points, games=rank.games)
+                users[r.user] = r
+
+            games = previous.total_games + len(week.matchups)
+            points = previous.total_points + (100 * len(week.matchups))
+
+        for user in week.active_users:
+            if user not in users:
+                users[user] = LeaderboardData(user=user, points=0, games=0)
+            
+        picksQ = Picks.query(Picks.week == week.key)
+        for picks in picksQ.fetch():
+            r = users[picks.user]
+            b = picks.bets[-1]
+            if betCovered(picks.matchup.get(), b.winner):
+                r.points += b.points
+                r.games += 1
+
+        logging.info(str(users.values()))
+        leaderboard = Leaderboard(week=week.key, season=int(week.season),
+                                  number=week.number, rankings=users.values(),
+                                  total_games=games, total_points=points)
+        leaderboard.put()
+        return leaderboard
+
+    @classmethod
+    def update(cls, week):
+        logging.info('Updating %d leaderboard week %d' % (int(week.season), week.number))
+        rebuild = []
+
+        # first delete existing leaderboards after this week
+        previousQ = Leaderboard.query(Leaderboard.season == int(week.season))
+        previousQ = previousQ.order(-Leaderboard.number)
+
+        previous = None
+        for p in previousQ.fetch():
+            if p.number >= week.number:
+                logging.info('Deleting out of date leaderboard %d week %d' % (p.season, p.number))
+                rebuild.insert(0, p.week)
+                p.key.delete()
+            elif p.number == week.number - 1:
+                previous = p
+                break
+
+        if previous is None:
+            previous = LeaderboardHandler.backfill_to(int(week.season), week.number - 1)
+
+        current = LeaderboardHandler.create(week, previous)
+        previous = current
+
+        for key in rebuild:
+            previous = LeaderboardHandler.create(key.get(), previous)
+
+        return current
+
+    @classmethod
+    def backfill_to(cls, season, number):
+        if number == 0: return None
+
+        previousQ = Leaderboard.query(Leaderboard.season == season)
+        previousQ = previousQ.order(-Leaderboard.number)
+        previous = previousQ.get()
+
+        if previous is None:
+            logging.info('Backfilling %d leaderboard week %d' % (season, number))
+            
+            previous = cls.backfill_to(season, number - 1)
+            week = Week.query(ndb.AND(Week.season == str(season),
+                                      Week.number == number)).get()
+            if week is not None:
+                return cls.create(week, previous)
+
+        return previous
 
 class AuthHandler(BaseHandler):
     def get(self, **kwargs):
