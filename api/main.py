@@ -494,6 +494,9 @@ class MatchupHandler(BaseHandler):
 
         matchup.put()
 
+        week = Week.query(Week.matchups.IN([matchup.key])).get()
+        if week is not None and week.is_final(): LeaderboardHandler.update(week)
+
         self.response.write(json.dumps(serialize({}, matchup)))
 
     def requires_admin(self):
@@ -606,6 +609,7 @@ class WeeksHandler(BaseHandler):
         week.matchups = matchups
 
         week.put()
+        if week.is_final(): LeaderboardHandler.update(week)
 
         out = {}
         out['week'] = serializeEditableWeek(out, week)
@@ -999,7 +1003,7 @@ class LeaderboardHandler(BaseHandler):
 
         if previous and (int(week.season) != previous.season or
                          previous.number != week.number - 1):
-            raise ValueError('leaderboard mismatch')
+            raise ValueError('leaderboard mismatch: ' + str(previous))
 
         leaderboard = cls.new_leaderboard(week)
 
@@ -1022,7 +1026,7 @@ class LeaderboardHandler(BaseHandler):
         for p in previousQ.fetch():
             if p.number >= week.number:
                 logging.info('Deleting out of date leaderboard %d week %d' % (p.season, p.number))
-                rebuild.insert(0, p.week)
+                if p.number > week.number: rebuild.insert(0, p.week)
                 p.key.delete()
             elif p.number == week.number - 1:
                 previous = p
