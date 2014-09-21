@@ -232,6 +232,7 @@ App.Matchup = DS.Model.extend({
     kickoff: DS.attr('moment'),
     homeScore: DS.attr('number'),
     awayScore: DS.attr('number'),
+    finished: DS.attr('boolean'),
 
     kickoffString: momentProperty('kickoff', DEFAULT_DATETIME_FORMAT),
 

@@ -171,6 +171,7 @@ def serializeMatchup(out, matchup):
 
     m['homeScore'] = matchup.home_score
     m['awayScore'] = matchup.away_score
+    m['finished'] = matchup.final
 
     return m
 
@@ -486,6 +487,7 @@ class MatchupHandler(BaseHandler):
         matchup.kickoff_time = parse_datetime(data['kickoff'])
         matchup.away_team = ndb.Key(School, long(data['awayTeam']))
         matchup.home_team = ndb.Key(School, long(data['homeTeam']))
+        matchup.final = data['finished']
 
         if 'awayScore' in data: matchup.away_score = int(data['awayScore']) 
         if 'homeScore' in data: matchup.home_score = int(data['homeScore'])
