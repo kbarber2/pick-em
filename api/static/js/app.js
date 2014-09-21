@@ -158,10 +158,10 @@ App.PickSerializer = DS.RESTSerializer.extend({
 
     serialize: function(record, options) {
 	var bets = record.get('bets').map(function(bet) {
-	    return { matchup: bet.matchup.get('id'),
-		     user: bet.user.get('id'),
-		     points: bet.points,
-		     winner: bet.winner.get('id')
+	    return { matchup: bet.get('matchup.id'),
+		     user: bet.get('user.id'),
+		     points: bet.get('points'),
+		     winner: bet.get('winner.id')
 	    };
 	});
 
@@ -664,28 +664,20 @@ App.PicksViewRoute = Ember.Route.extend({
 });
 
 App.PicksEditRoute = App.PicksViewRoute.extend({
-    afterModel: function(model, transition) {
-	var user = this.controllerFor('application').get('user');
-
-	if (!model.get('bets.length')) {
-	    model.set('bets', model.get('matchups').map(function(matchup) {
-		return App.Bet.create({ matchup: matchup, points: 0,
-					winner: null, user: user });
-	    }));
-	}
-    },
-
     setupController: function(controller, model) {
-	controller.set('week', model);
+	controller.set('model', model);
 
-	var current = this.controllerFor('application').get('user');
-	controller.set('user', current);
-	controller.set('model', model.get('bets'));
+	var user = controller.get('currentUser');
+	if (!user) {
+	    user = this.controllerFor('application').get('user');
+	    controller.set('currentUser', user);
+	}
     }
 });
 
-App.PicksEditController = Ember.ArrayController.extend({
+App.PicksEditController = Ember.ObjectController.extend({
     needs: ['application'],
+    content: {},
 
     sortProperties: ['matchup.kickoff', 'matchup.line'],
     sortAscending: true,
@@ -697,63 +689,62 @@ App.PicksEditController = Ember.ArrayController.extend({
 
     isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
     isLoggedIn: Ember.computed.alias('controllers.application.isLoggedIn'),
-    user: null,
-    users: Ember.ArrayProxy.create({ content: [] }),
+    _currentUser: null,
 
     canEdit: function() {
-	var e = this.get('week').get('editable');
+	var e = this.get('editable');
 	var a = this.get('isAdmin');
-	var user = this.get('user');
-
-	if (a && this.get('users.length') === 0) {
-	    var self = this;
-	    this.store.find('user').then(function(users) {
-		self.get('users').set('content', users);
-
-		var select = Ember.$("#userOverride");
-		var emberId = select.closest('.ember-view').attr('id');
-		var view = Ember.View.views[emberId];
-		view.set('value', user);
-	    });
-	}
-	
 	return e || a;
     }.property('week.editable', 'isAdmin'),
     
     totalPoints: function() {
-	return this.get('model').reduce(function(prev, cur, idx, array) {
+	return this.get('bets').reduce(function(prev, cur, idx, array) {
 	    var points = cur.points;
 	    return prev + (isNumber(points) ? parseInt(points, 10) : 0);
 	}, 0);
-    }.property('@each.points'),
+    }.property('bets.@each.points'),
 
-    userChanged: function() {
-	var user = this.get('user');
+    currentUser: function(key, value, previous) {
+	if (value) {
+	    this._currentUser = value;
+	}
+	return this._currentUser;
+    }.property(),
 
-	var bets = this.get('week.bets').filter(function(bet, idx, enumerable) {
+    bets: function() {
+	var user = this.get('currentUser');
+	if (!user) {
+	    user = this.get('controllers.application.user');
+	}
+
+	var m = this.get('model');
+	var b = m.get('bets');
+
+	var bets = this.get('model.bets').filter(function(bet, idx, enumerable) {
 	    return bet.get('user') === user;
 	});
 
 	if (bets.length === 0) {
-	    bets = this.get('week.matchups').map(function(matchup) {
+	    bets = this.get('matchups').map(function(matchup) {
 		return App.Bet.create({
 		    user: user, matchup: matchup,
 		    winner: null, points: 0
 		});
 	    });
+	    this.get('model.bets').pushObjects(bets);
 	}
 
-	this.set('model', bets);
-    }.observes("user"),
-    
+	return bets;
+    }.property('currentUser', 'model.bets.[]'),
+
     actions: {
 	save: function() {
 	    var total = 0;
 	    var error = '';
-	    var max = 101 - this.get('model.length');
+	    var max = 101 - this.get('bets.length');
 	    var self = this;
 
-	    this.get('model').forEach(function(bet) {
+	    this.get('bets').forEach(function(bet) {
 		if (error.length != 0) return;
 
 		// we should be able to rely on setupController() for this, but
@@ -793,19 +784,19 @@ App.PicksEditController = Ember.ArrayController.extend({
 		return;
 	    }
 
-	    var model = this.get('week');
+	    var model = this.get('model');
 
 	    var self = this;
 	    var p = model.save();
 	    p.then(function(args) {
-		self.transitionToRoute('picks.view', self.get('week'));
+		self.transitionToRoute('picks.view', model);
 	    });
 	}
     }
 });
 
 App.PicksViewController = Ember.ObjectController.extend({
-    needs: ['application'],
+    needs: ['application', 'picksEdit'],
     isAdmin: Ember.computed.alias('controllers.application.isAdmin'),
     
     userBets: function() {
@@ -844,7 +835,6 @@ App.PicksViewController = Ember.ObjectController.extend({
 
     isPicksActive: function() {
 	var p = this.get('currentPath');
-	debugger;
 	return this.get('currentPath').indexOf('/view') > -1;
     }.property('currentPath'),
 
@@ -853,9 +843,10 @@ App.PicksViewController = Ember.ObjectController.extend({
     }.property('currentPath'),
 
     actions: {
-	editPicks: function(userBets) {
+	editPicks: function(user) {
 	    // TODO: need to make a more specific route like
 	    // /picks/:week_id/:user_id
+	    this.set('controllers.picksEdit.currentUser', user);
 	    this.transitionToRoute('picks.edit', this.get('model'));
 	}
     }

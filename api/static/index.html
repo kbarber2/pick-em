@@ -128,11 +128,11 @@
 	  {{#if isAdmin}}
 	  <tr>
 	    <td>As user:</td>
-	    <td colspan="3">{{view Ember.Select content=users value=user id="userOverride"
+	    <td colspan="3">{{view Ember.Select content=users value=currentUser id="userOverride"
 	      prompt="Select a user" optionLabelPath="content.name" class="form-control"}}</td>
 	  </tr>
 	  {{/if}}
-	  {{#each}}
+	  {{#each bets}}
 	  <tr>
 	    <td>{{matchup.awayTeam.name}} at {{matchup.homeTeam.name}}</td>
 	    <td align="right">{{matchup.lineSign}}{{matchup.line}}
@@ -195,7 +195,7 @@
 	  <tr {{bind-attr class="isCurrentUser"}}>
 	    <td>
 	    {{#if controller.isAdmin}}
-	    <a href="#" {{action 'editPicks' this}}>{{name}}</a>
+	    <a href="#" {{action 'editPicks' user}}>{{name}}</a>
 	    {{else}}
 	    {{name}}
 	    {{/if}}
