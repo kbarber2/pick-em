@@ -96,6 +96,21 @@ class Week(ndb.Model):
     deadline = ndb.DateTimeProperty()
     active = ndb.BooleanProperty()
 
+    def is_final(self):
+        final = True
+        for m in self.matchups:
+            final = final and m.get().final
+        return final
+
+    def get_previous(self):
+        number = self.number - 1
+        while number > 0:
+            q = Week.query(ndb.AND(Week.season == self.season, Week.number == number))
+            w = q.get()
+            if w is not None: return w
+            number -= 1
+        return None
+
 class Bet(ndb.Model):
     winner = ndb.KeyProperty(kind=School)
     points = ndb.IntegerProperty()
@@ -857,6 +872,10 @@ class PicksHandler(BaseHandler):
             picks.bets.append(betRecord)
             picks.put()
 
+        if week.is_final():
+            time.sleep(2)
+            LeaderboardHandler.update(week)
+
         self.response.status = 200
         self.response.write(json.dumps(self.serialize(week, data['bets'])))
 
@@ -898,9 +917,7 @@ class LeaderboardHandler(BaseHandler):
             self.response.status = 404
             return
 
-        leaderboard = Leaderboard.query(Leaderboard.week == last_week.key).get()
-        if leaderboard is None:
-            leaderboard = LeaderboardHandler.update(last_week)
+        leaderboard = self.get_leaderboard(last_week)
 
         users = []
         out = { 'user': users }
@@ -922,6 +939,55 @@ class LeaderboardHandler(BaseHandler):
             
         self.response.write(json.dumps(out))
 
+    def get_leaderboard(self, week):
+        if week.is_final():
+            leaderboard = Leaderboard.query(Leaderboard.week == week.key).get()
+            return leaderboard
+        else:
+            logging.info('Calculating %d leaderboard week %d' % (int(week.season), week.number))
+            prev_week = week.get_previous()
+
+            prev_board = None
+            if prev_week is not None:
+                prev_board = self.get_leaderboard(prev_week)
+
+            leaderboard = LeaderboardHandler.new_leaderboard(week)
+            if prev_board is not None:
+                LeaderboardHandler.update_leaderboard(leaderboard, prev_board)
+
+            return leaderboard
+
+    @classmethod
+    def new_leaderboard(cls, week):
+        games = len(week.matchups)
+        points = 100 * games
+        totals = dict((u, LeaderboardData(user=u, points=0, games=0)) for u in week.active_users)
+
+        picksQ = Picks.query(Picks.week == week.key)
+        for picks in picksQ.fetch():
+            r = totals[picks.user]
+            b = picks.bets[-1]
+            if betCovered(picks.matchup.get(), b.winner):
+                r.points += b.points
+                r.games += 1
+
+        return Leaderboard(week=week.key, season=int(week.season), number=week.number,
+                           rankings=totals.values(), total_games=games, total_points=points)
+
+    @classmethod
+    def update_leaderboard(cls, new, old):
+        new.total_games += old.total_games
+        new.total_points += old.total_points
+        
+        for ranking in old.rankings:
+            current = filter(lambda rank: rank.user == ranking.user, new.rankings)
+            if len(current) == 0:
+                current = [LeaderboardData(user=ranking.user, points=0, games=0)]
+
+            current = current[0]
+            current.games += ranking.games
+            current.points += ranking.points
+        
     @classmethod
     def create(cls, week, previous):
         logging.info('Creating %d leaderboard week %d' % (int(week.season), week.number))
@@ -933,31 +999,12 @@ class LeaderboardHandler(BaseHandler):
                          previous.number != week.number - 1):
             raise ValueError('leaderboard mismatch')
 
+        leaderboard = cls.new_leaderboard(week)
+
         if previous is not None:
-            for rank in previous.rankings:
-                r = LeaderboardData(user=rank.user, points=rank.points, games=rank.games)
-                users[r.user] = r
-
-            games = previous.total_games + len(week.matchups)
-            points = previous.total_points + (100 * len(week.matchups))
-
-        for user in week.active_users:
-            if user not in users:
-                users[user] = LeaderboardData(user=user, points=0, games=0)
-            
-        picksQ = Picks.query(Picks.week == week.key)
-        for picks in picksQ.fetch():
-            r = users[picks.user]
-            b = picks.bets[-1]
-            if betCovered(picks.matchup.get(), b.winner):
-                r.points += b.points
-                r.games += 1
-
-        logging.info(str(users.values()))
-        leaderboard = Leaderboard(week=week.key, season=int(week.season),
-                                  number=week.number, rankings=users.values(),
-                                  total_games=games, total_points=points)
+            cls.update_leaderboard(leaderboard, previous)
         leaderboard.put()
+        
         return leaderboard
 
     @classmethod
