@@ -1085,11 +1085,6 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	});
     }.property('users.[]'),
 
-    isNotNew: function() {
-	var n = this.get('isNew');
-	return !n;
-    }.property('isNew'),
-
     actions: {
 	newMatchup: function() {
 	    var kickoff = this.get('startDate');

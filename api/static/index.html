@@ -390,13 +390,13 @@
 	</tbody>
       </table>
 
-      {{#if isNotNew}}
+      {{#unless isNew}}
       <ul class="list-group user-list">
 	{{#each toggleableUsers}}
 	<li class="list-group-item">{{name}} {{input type="checkbox" checked=active}}</li>
 	{{/each}}
       </ul>
-      {{/if}}
+      {{/unless}}
       
       <div class="form-group">
 	<div class="col-sm-offset-2 col-sm-10">
