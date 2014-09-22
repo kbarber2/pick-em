@@ -71,11 +71,13 @@ class User(ndb.Model):
     name = ndb.StringProperty()
     email = ndb.StringProperty()
     active = ndb.BooleanProperty()
-    admin = ndb.BooleanProperty()
     order = ndb.IntegerProperty()
     password = ndb.StringProperty()
     roles = ndb.StringProperty(repeated=True)
 
+    def hasAdmin(self):
+        return Roles.ADMIN in self.roles
+    
 class School(ndb.Model):
     name = ndb.StringProperty()
     full_name = ndb.StringProperty()
@@ -163,7 +165,6 @@ def serializeUser(out, user):
     p['email'] = user.email
     p['active'] = user.active
     p['order'] = user.order
-    p['admin'] = user.admin
     p['roles'] = user.roles
     return p
 
@@ -258,14 +259,12 @@ def deserializeUser(user, serialized):
                     email = serialized['email'],
                     active = serialized['active'],
                     order = serialized['order'],
-                    admin = serialized['admin'],
                     password = '', roles = [])
     else:
         user.name = serialized['name']
         user.email = serialized['email']
         user.active = serialized['active']
         user.order = serialized['order']
-        user.admin = serialized['admin']
         user.roles = serialized['roles']
 
     return user
@@ -294,13 +293,7 @@ class BaseHandler(webapp2.RequestHandler):
     def dispatch(self):
         self.session_store = sessions.get_store(request=self.request)
 
-        perms = self.requires_user()
-        if len(perms) > 0 and self.current_user is None and self.request.method in perms:
-            self.resonse.status = 401
-            return
-
-        perms = self.requires_admin()
-        if len(perms) > 0 and (self.current_user is None or not self.current_user.admin) and self.request.method in perms:
+        if not self.authz_check():
             self.response.status = 401
             return
 
@@ -309,6 +302,17 @@ class BaseHandler(webapp2.RequestHandler):
             webapp2.RequestHandler.dispatch(self)
         finally:
             self.session_store.save_sessions(self.response)
+
+    def authz_check(self):
+        if self.requires_user(self.request.method) and self.current_user is None:
+            return False
+
+        perms = self.requires_roles(self.request.method)
+        if len(perms) == 0: return True
+        if len(perms) > 0 and self.current_user is None:
+            return False
+
+        return not set(self.current_user.roles).isdisjoint(perms)
 
     @webapp2.cached_property
     def session(self):
@@ -319,11 +323,11 @@ class BaseHandler(webapp2.RequestHandler):
         if 'user' not in self.session: return None
         return User.get_by_id(long(self.session['user']))
 
-    def requires_user(self):
-        return []
+    def requires_user(self, method):
+        return False
 
-    def requires_admin(self):
-        return []
+    def requires_roles(self, method):
+        return set()
         
     def write_error(self, code, msg):
         self.response.status = code
@@ -349,8 +353,9 @@ class UsersHandler(BaseHandler):
         user.put()
         self.response.write(json.dumps(serialize({}, user)))
 
-    def requires_admin(self):
-        return ['PUT', 'POST']
+    def requires_roles(self, method):
+        if method == 'GET': return set()
+        return set([Roles.ADMIN])
 
 class ReloadHandler(BaseHandler):
     def requires_admin(self):
@@ -460,8 +465,9 @@ class SchoolHandler(BaseHandler):
         deserializeSchool(school, d).put()
         self.response.write(json.dumps(serialize({}, school)))
 
-    def requires_admin(self):
-        return ['PUT', 'POST']
+    def requires_roles(self, method):
+        if method == 'GET': return set()
+        return set([Roles.ADMIN])
 
 class MatchupHandler(BaseHandler):
     def get(self, **kwargs):
@@ -510,8 +516,9 @@ class MatchupHandler(BaseHandler):
 
         self.response.write(json.dumps(serialize({}, matchup)))
 
-    def requires_admin(self):
-        return ['PUT', 'POST']
+    def requires_roles(self, method):
+        if method == 'GET': return set()
+        return set([Roles.ADMIN])
 
 class WeeksHandler(BaseHandler):
     def get(self, **kwargs):
@@ -533,7 +540,7 @@ class WeeksHandler(BaseHandler):
             out['week'] = serializeEditableWeek(out, week)
         else:
             query = None
-            if self.current_user is None or not self.current_user.admin:
+            if self.current_user is None or not self.current_user.hasAdmin():
                 query = Week.active == True
 
             if 'season' in self.request.GET:
@@ -546,7 +553,7 @@ class WeeksHandler(BaseHandler):
         self.response.write(json.dumps(out))
 
     def index(self):
-        admin = self.current_user.admin if self.current_user is not None else False
+        admin = self.current_user.hasAdmin() if self.current_user is not None else False
 
         search = { 'season': self.request.get('season'), 'admin': admin }
         for k in search.keys():
@@ -711,8 +718,9 @@ Hello %s,
             picks = Picks(week = week.key, user = toin_coss.key, matchup = mkey, bets = [bet])
             picks.put()
             
-    def requires_admin(self):
-        return ['PUT', 'POST']
+    def requires_roles(self, method):
+        if method == 'GET': return set()
+        return set([Roles.ADMIN])
 
 class PicksHandler(BaseHandler):
     def serialize(self, week, bets):
@@ -806,7 +814,7 @@ class PicksHandler(BaseHandler):
 
         try:
             for bet in bets:
-                if long(bet['user']) != self.current_user.key.id() and not self.current_user.admin:
+                if long(bet['user']) != self.current_user.key.id() and not self.current_user.hasAdmin():
                     logging.warn("Unauthorized attempt by %s to modify %s's scores" % \
                                  (self.current_user.name, bad.name))
                     self.write_error(403, "Forbidden")
@@ -855,7 +863,7 @@ class PicksHandler(BaseHandler):
         if len(data['bets']) < 20:
             self.log_picks(data['bets'])
 
-        if not self.current_user.admin:
+        if not self.current_user.hasAdmin():
             if self.past_deadline(week):
                 self.write_error(403, 'Cannot submit picks past the deadline')
                 return
@@ -907,11 +915,12 @@ class PicksHandler(BaseHandler):
     def past_deadline(self, week):
         return datetime.datetime.now() >= week.deadline
 
-    def requires_user(self):
-        return ['PUT']
+    def requires_user(self, method):
+        return method != 'GET'
 
-    def requires_admin(self):
-        return ['DELETE']
+    def requires_roles(self, method):
+        if method == 'DELETE' or method == 'POST': return set([Roles.ADMIN])
+        return set()
 
     def log_picks(self, picks):
         for bet in picks:
@@ -1146,7 +1155,7 @@ class AuthHandler(BaseHandler):
         password = base64.b64encode(hashed)
 
         try:
-            user = User.get_by_id(long(userId))
+            user = User.query(User.name == userId).get()
             if user is None:
                 self.write_error(401, "Invalid user ID or password")
                 return
@@ -1164,7 +1173,6 @@ class AuthHandler(BaseHandler):
         self.session.clear()
         self.session['user'] = user.key.id()
         self.session['week'] = week.key.id() if week is not None else None
-        self.session['admin'] = user.admin
         self.session['auth_type'] = method
         self.session['created'] = int(time.time())
 
@@ -1185,8 +1193,8 @@ class TokensHandler(BaseHandler):
 
         self.response.write(json.dumps(tokens))
 
-    def requires_admin(self):
-        return ['GET', 'PUT', 'POST']
+    def requires_roles(self, method):
+        return set([Roles.ADMIN])
         
 config = {}
 config['webapp2_extras.sessions'] = {

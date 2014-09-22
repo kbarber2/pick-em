@@ -239,9 +239,12 @@ App.User = DS.Model.extend({
     name: DS.attr('string'),
     email: DS.attr('string'),
     active: DS.attr('boolean'),
-    admin: DS.attr('boolean'),
     order: DS.attr('number'),
-    roles: DS.attr('raw')
+    roles: DS.attr('raw'),
+
+    hasAdmin: function() {
+	return this.get('roles').indexOf('ADMIN') > -1;
+    }.property('roles')
 });
 
 App.Matchup = DS.Model.extend({
@@ -485,7 +488,8 @@ App.ApplicationController = Ember.ObjectController.extend({
     
     isAdmin: function() {
 	if (!this.get('user')) return false;
-	return this.get('user.admin') && this.get('adminOn');
+	var roles = this.get('user.roles');
+	return roles && roles.indexOf('ADMIN') > -1 && this.get('adminOn');
     }.property('user', 'adminOn'),
     
     isLoggedIn: function() {
