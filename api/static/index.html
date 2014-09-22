@@ -64,6 +64,9 @@
 		</ul>
               </li>
 	      {{/if}}
+	      {{#if canEditWeek}}
+	      <li>{{#link-to 'weeks.edit' 'next'}}Week Editor{{/link-to}}</li>
+	      {{/if}}
 	      {{#if user.hasAdmin}}
 	      <li><label class="checkbox">{{input type="checkbox" checked=adminOn}} Admin enabled</label></li>
 	      {{/if}}
@@ -406,6 +409,12 @@
 	</div>
       </div>
     </form>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="weeks/unavailable">
+    <div class="container">
+      The next week is not yet available for editing.
     </div>
   </script>
 

@@ -27,6 +27,19 @@ function parseDate(date) {
     return moment.tz(date, 'MM/DD/YYYY hh:mm a', 'America/New_York');
 }
 
+// TODO: more interesting permission system:
+// http://livsey.org/blog/2012/10/16/writing-a-helper-to-check-permissions-in-ember-dot-js/
+/*
+Ember.Handlebars.registerHelper('if-has-role', function(role, property) {
+    debugger;
+    var user = this.get('user');
+    var ok = this.get('user.hasAdmin') || this.get('user.roles').indexOf(role) != -1;
+    
+    //property.contexts = null;
+    Ember.Handlebars.helpers.boundIf.call(ok, "if-has-role", property);
+});
+*/
+
 function betCovered(matchup, winner) {
     if (!matchup || !winner) return false;
 
@@ -419,6 +432,7 @@ App.Router.map(function() {
 
     this.resource('weeks', function() {
 	this.route('new', { path: 'new' });
+	this.route('unavailable');
 	this.route('edit', { path: ':week_id/edit' });
     });
 
@@ -495,7 +509,13 @@ App.ApplicationController = Ember.ObjectController.extend({
     isLoggedIn: function() {
 	var u = this.get('user');
 	return !Ember.isEmpty(this.get('user'));
-    }.property('user')
+    }.property('user'),
+
+    canEditWeek: function() {
+	var roles = this.get('user.roles');
+	if (!roles) return false;
+	return roles.indexOf('ADMIN') != -1 || roles.indexOf('WEEK_EDIT') != -1;
+    }.property('user', 'user.roles')
 });
 
 App.SchoolsRoute = Ember.Route.extend({
@@ -1375,7 +1395,7 @@ App.LoginController = Ember.ObjectController.extend({
     loginFailed: false,
     userId: null,
     password: null,
-    
+
     actions: {
 	login: function() {
 	    this.set('loginFailed', false);

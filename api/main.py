@@ -304,6 +304,9 @@ class BaseHandler(webapp2.RequestHandler):
             self.session_store.save_sessions(self.response)
 
     def authz_check(self):
+        if self.current_user is not None and Roles.ADMIN in self.current_user.roles:
+            return True
+
         if self.requires_user(self.request.method) and self.current_user is None:
             return False
 
@@ -524,6 +527,8 @@ class WeeksHandler(BaseHandler):
     def get(self, **kwargs):
         if '/index' in self.request.path_url:
             return self.index()
+        if '/next' in self.request.path_url:
+            return self.get_next_week()
 
         week = None
         out = {}
@@ -580,7 +585,22 @@ class WeeksHandler(BaseHandler):
             out.append(w)
 
         return out
-        
+
+    def get_next_week(self):
+        today = datetime.date.today()
+        q = Week.query().order(-Week.season, -Week.number)
+        nextWeek = None
+        for week in q.fetch(20):
+            if not week.active and week.end_date > today:
+                nextWeek = week
+            if week.end_date < today: break
+
+        out = { 'week': None }
+        if nextWeek is not None:
+            out['week'] = serializeEditableWeek(out, nextWeek)
+
+        self.response.write(json.dumps(out))
+
     def post(self):
         data = json.loads(self.request.body)
         data = data['week']
@@ -720,7 +740,7 @@ Hello %s,
             
     def requires_roles(self, method):
         if method == 'GET': return set()
-        return set([Roles.ADMIN])
+        return set([Roles.WEEK_EDIT])
 
 class PicksHandler(BaseHandler):
     def serialize(self, week, bets):
@@ -1217,6 +1237,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/leaderboards/<week_id:\d+>', LeaderboardHandler),
     webapp2.Route(r'/api/weeks', WeeksHandler),
     webapp2.Route(r'/api/weeks/index', WeeksHandler),
+    webapp2.Route(r'/api/weeks/next', WeeksHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>', WeeksHandler),
     webapp2.Route(r'/api/weeks/<week_id:\d+>/activate', WeeksHandler),
     webapp2.Route(r'/api/schools', SchoolHandler),
