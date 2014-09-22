@@ -44,6 +44,13 @@ function betCovered(matchup, winner) {
     return false;
 }
 
+function momentValidator(inner) {
+    return function(key, value) {
+	var m = this.get(inner);
+	return !m.isValid();
+    };
+}
+
 App.DatePickerView = Ember.TextField.extend({
     didInsertElement: function() {
 	this.$().datetimepicker({
@@ -1018,7 +1025,7 @@ App.ToggleableUser = Ember.Object.extend({
     }.property(),
 });
 
-App.MatchupEditorController = Ember.ObjectController.extend({
+App.MatchupEditorController = Ember.ObjectController.extend(Ember.Validations.Mixin, {
     needs: ['weeksEdit'],
     schools: Ember.computed.alias('controllers.weeksEdit.schools'),
 
@@ -1026,32 +1033,50 @@ App.MatchupEditorController = Ember.ObjectController.extend({
 	var kickoff = this.get('kickoff');
 
 	if (typeof(value) != 'undefined') {
-	    debugger;
-	    var m = moment(value, "h:mm a");
+	    var m = moment(value, "h:mm a", true);
 	    if (m.isValid()) {
-		kickoff.hour(m.hour()).minute(m.minute())
+		kickoff.hour(m.hour()).minute(m.minute());
 	    }
+
+	    return value;
 	}
 	
-	return kickoff.format('h:mm a');
+	return kickoff ? kickoff.format('h:mm a') : '';
     }.property('kickoff'),
 
     kickoffDate: function(key, value, previous) {
 	var kickoff = this.get('kickoff');
 
 	if (typeof(value) != 'undefined') {
-	    debugger;
-	    var m = moment(value, "MM/DD/YYYY");
+	    var m = moment(value, "MM/DD/YYYY", true);
 	    if (m.isValid()) {
 		kickoff.month(m.month()).date(m.date()).year(m.year());
 	    }
+
+	    return value;
 	}
 
-	return kickoff.format('MM/DD/YYYY');
-    }.property('kickoff')
+	return kickoff ? kickoff.format('MM/DD/YYYY') : '';
+    }.property('kickoff'),
+
+    awayTeamInvalid: Ember.computed.notEmpty('errors.awayTeam'),
+    homeTeamInvalid: Ember.computed.notEmpty('errors.homeTeam'),
+    lineInvalid: Ember.computed.notEmpty('errors.line'),
+    kickoffTimeInvalid: Ember.computed.notEmpty('errors.kickoffTime'),
+    kickoffDateInvalid: Ember.computed.notEmpty('errors.kickoffDate'),
+    
+    validations: {
+	awayTeam: { presence: true },
+	homeTeam: { presence: true },
+	line: { numericality: true },
+	kickoffTime: { format: { with: /^\d{1,2}:\d{2}\s+(am|pm)$/ } },
+	kickoffDate: { format: { with: /^\d{1,2}[/-]\d{1,2}[/-]\d{4}$/ } }
+    }
 });
 
-App.WeeksEditController = Ember.ObjectController.extend({
+App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin, {
+    needs: [ 'matchupEditor' ],
+    
     toggleableUsers: function() {
 	var active = this.get('users');
 
@@ -1067,7 +1092,6 @@ App.WeeksEditController = Ember.ObjectController.extend({
 
     actions: {
 	newMatchup: function() {
-	    debugger;
 	    var kickoff = this.get('startDate');
 	    kickoff = kickoff ? kickoff.clone() : moment.tz('America/New_York');
 	    kickoff.day(6).hour(12).minute(0);
@@ -1105,7 +1129,19 @@ App.WeeksEditController = Ember.ObjectController.extend({
 		    model.set('deadline', first);
 		}
 	    }
-	    
+
+	    var matchupsOk = true;
+	    model.get('matchups').forEach(function(matchup) {
+		var c = self.get('controllers.matchupEditor');
+		c.set('model', matchup);
+		matchupsOk = matchupsOk && c.get('isValid');
+	    });
+
+	    if (!matchupsOk || !this.get('isValid')) {
+		alert('Correct the highlighted errors before submitting');
+		return;
+	    }
+
 	    var promises = model.get('matchups').map(function(matchup) {
 		return matchup.save();
 	    });
@@ -1143,6 +1179,20 @@ App.WeeksEditController = Ember.ObjectController.extend({
 		    });
 	    }
 	}
+    },
+
+    seasonInvalid: Ember.computed.notEmpty('errors.season'),
+    numberInvalid: Ember.computed.notEmpty('errors.number'),
+    startDateInvalid: Ember.computed.notEmpty('errors.startDateString'),
+    endDateInvalid: Ember.computed.notEmpty('errors.endDateString'),
+    deadlineInvalid: Ember.computed.notEmpty('errors.deadlineString'),
+    
+    validations: {
+	season: { numericality: true },
+	number: { numericality: true },
+	startDateString: { format: { with: /^\d{1,2}[/-]\d{1,2}[/-]\d{4}$/ } },
+	endDateString: { format: { with: /^\d{1,2}[/-]\d{1,2}[/-]\d{4}$/ } },
+	deadlineString: { format: { with: /^\d{1,2}[/-]\d{1,2}[/-]\d{4}\s+\d{1,2}:\d{2}\s+(am|pm)$/, allowBlank: true } }
     }
 });
 

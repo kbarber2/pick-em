@@ -314,31 +314,31 @@
   <script type="text/x-handlebars" data-template-name="weeks/_form">
     <div class="container">
     <form class="form-horizontal" role="form" {{action save on="submit"}}>
-      <div class="form-group">
+      <div {{bind-attr class=":form-group seasonInvalid:has-error"}}>
 	<label for="season" class="col-sm-2 control-label">Season</label>
 	<div class="col-sm-2">
 	  {{input value=season id="season" class="form-control"}}
 	</div>
       </div>
-      <div class="form-group">
+      <div {{bind-attr class=":form-group numberInvalid:has-error"}}>
 	<label for="number" class="col-sm-2 control-label">Week Number</label>
 	<div class="col-sm-2">
 	  {{input value=number id="number" class="form-control"}}
 	</div>
       </div>
-      <div class="form-group">
+      <div {{bind-attr class=":form-group startDateInvalid:has-error"}}>
 	<label for="startDate" class="col-sm-2 control-label">Start Date</label>
 	<div class="col-sm-2">
 	  {{view "datePicker" value=startDateString id="startDate" class="form-control"}}
 	</div>
       </div>
-      <div class="form-group">
+      <div {{bind-attr class=":form-group endDateInvalid:has-error"}}>
 	<label for="endDate" class="col-sm-2 control-label">End Date</label>
 	<div class="col-sm-2">
 	  {{view "datePicker" value=endDateString id="endDate" class="form-control"}}
 	</div>
       </div>
-      <div class="form-group">
+      <div {{bind-attr class=":form-group deadlineInvalid:has-error"}}>
 	<label for="deadline" class="col-sm-2 control-label">Deadline</label>
 	<div class="col-sm-4">
 	  {{view "dateTimePicker" value=deadlineString id="deadline" class="form-control" placeholder="First kickoff time if unspecified"}}
@@ -356,11 +356,34 @@
 	    <th></th>
 	</thead>
 	<tbody>
-	  {{#each matchups}}
-	  {{render "matchupEditor" this}}
+	  {{#each matchups itemController="matchupEditor"}}
+	  <tr>
+	    <td {{bind-attr class="awayTeamInvalid:has-error"}}>
+	      {{view Ember.Select value=awayTeam content=schools
+	      optionValuePath="content" optionLabelPath="content.name"
+	      prompt="Choose away team" class="form-control"}}
+	    </td>
+	    <td {{bind-attr class="homeTeamInvalid:has-error"}}>
+	      {{view Ember.Select value=homeTeam content=schools
+	      optionValuePath="content" optionLabelPath="content.name"
+	      prompt="Choose home team" class="form-control"}}
+	    </td>
+	    <td {{bind-attr class="lineInvalid:has-error"}}>
+	      {{input value=line class="form-control"}}
+	    </td>
+	    <td {{bind-attr class="kickoffTimeInvalid:has-error"}}>
+	      {{input value=kickoffTime class="form-control"}}
+	    </td>
+	    <td {{bind-attr class="kickoffDateInvalid:has-error"}}>
+	      {{view "datePicker" value=kickoffDate class="form-control"}}
+	    </td>
+	    <td>
+	      <button class="btn btn-default" {{action "removeMatchup" this}}>-</button>
+	    </td>
+	  </tr>
 	  {{/each}}
 	  <tr>
-	    <td colspan="6">
+	    <td colspan="6">{{matchupsAreValid}}
 	      <button class="btn btn-default" {{action "newMatchup"}}>+</button>
 	    </td>
 	  </tr>
@@ -384,33 +407,6 @@
       </div>
     </form>
     </div>
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="matchupEditor">
-    <tr>
-      <td>
-	{{view Ember.Select value=awayTeam content=schools
-	optionValuePath="content" optionLabelPath="content.name"
-	prompt="Choose away team" class="form-control"}}
-      </td>
-      <td>
-	{{view Ember.Select value=homeTeam content=schools
-	optionValuePath="content" optionLabelPath="content.name"
-	prompt="Choose home team" class="form-control"}}
-      </td>
-      <td>
-	{{input value=line class="form-control"}}
-      </td>
-      <td>
-	{{input value=kickoffTime class="form-control"}}
-      </td>
-      <td>
-	{{view "datePicker" value=kickoffDate class="form-control"}}
-      </td>
-      <td>
-	<button class="btn btn-default" {{action "removeMatchup" this}}>-</button>
-      </td>
-    </tr>
   </script>
 
   <script type="text/x-handlebars" data-template-name="matchups">
@@ -709,6 +705,7 @@
   <script src="/static/js/libs/handlebars-1.1.2.js"></script>
   <script src="/static/js/libs/ember-1.6.1.js"></script>
   <script src="/static/js/libs/ember-data.js"></script>
+  <script src="/static/js/libs/ember-validations.min.js"></script>
   <script src="/static/js/libs/bootstrap.js"></script>
   <script src="/static/js/libs/jquery.datetimepicker.js"></script>
   <script src="/static/js/compat.js"></script>
