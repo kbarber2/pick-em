@@ -18,6 +18,14 @@ EPOCH_DATE = EPOCH_TS.date()
 WEEKDAYS = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
              'Friday', 'Saturday', 'Sunday' ]
 
+class Roles(object):
+    ADMIN = 'ADMIN'
+    WEEK_EDIT = 'WEEK_EDIT'
+
+    @classmethod
+    def all(cls):
+        return [c.ADMIN, c.WEEK_EDIT]
+
 def format_date(obj):
     if isinstance(obj, datetime.datetime):
         delta = obj - EPOCH_TS
@@ -66,6 +74,7 @@ class User(ndb.Model):
     admin = ndb.BooleanProperty()
     order = ndb.IntegerProperty()
     password = ndb.StringProperty()
+    roles = ndb.StringProperty(repeated=True)
 
 class School(ndb.Model):
     name = ndb.StringProperty()
@@ -155,6 +164,7 @@ def serializeUser(out, user):
     p['active'] = user.active
     p['order'] = user.order
     p['admin'] = user.admin
+    p['roles'] = user.roles
     return p
 
 def serializeMatchup(out, matchup):
@@ -249,13 +259,14 @@ def deserializeUser(user, serialized):
                     active = serialized['active'],
                     order = serialized['order'],
                     admin = serialized['admin'],
-                    password = '')
+                    password = '', roles = [])
     else:
         user.name = serialized['name']
         user.email = serialized['email']
         user.active = serialized['active']
         user.order = serialized['order']
         user.admin = serialized['admin']
+        user.roles = serialized['roles']
 
     return user
 

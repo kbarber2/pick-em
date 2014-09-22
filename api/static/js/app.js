@@ -17,6 +17,8 @@ var DEFAULT_DATETIME_FORMAT = 'MM/DD/YYYY hh:mm a';
 var CONFERENCES = [ 'Big Ten', 'Mid-American', 'USA', 'Pac-12', 'ACC', 'SEC',
 		    'Big East', 'American Athletic', 'Sun Belt' ];
 
+var USER_ROLES = { 'ADMIN': 'Admin', 'WEEK_EDIT': 'Week editor' };
+
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
@@ -108,6 +110,15 @@ App.MomentDateTransform = DS.Transform.extend({
 	}
 
 	return deserialized;
+    }
+});
+
+App.RawTransform = DS.Transform.extend({
+    deserialize: function(serialized) {
+        return serialized;
+    },
+    serialize: function(deserialized) {
+        return deserialized;
     }
 });
 
@@ -229,7 +240,8 @@ App.User = DS.Model.extend({
     email: DS.attr('string'),
     active: DS.attr('boolean'),
     admin: DS.attr('boolean'),
-    order: DS.attr('number')
+    order: DS.attr('number'),
+    roles: DS.attr('raw')
 });
 
 App.Matchup = DS.Model.extend({
@@ -416,7 +428,9 @@ App.Router.map(function() {
     this.route('scores.editCurrent', { path: 'scores/edit' });
     this.route('scores.edit', { path: 'scores/:week_id/edit' });    
 
-    this.resource('users', { path: 'users' });
+    this.resource('users', function() {
+	this.route('edit', { path: ':user_id/edit' });
+    });
 
     this.route('tokens', { path: 'tokens/:week_id' });
 
@@ -1227,46 +1241,71 @@ App.UsersRoute = Ember.Route.extend({
     }
 });
 
-App.UserController = Ember.ObjectController.extend({
-    _isEditing: true,
-    
-    isEditing: function() {
-	/*if (this.get('name').length === 0 ||
-	    this.get('order').toString().length === 0)
-	    this._isEditing = true;
-	*/
-	return this._isEditing;
-    }.property(),
+App.UsersController = Ember.ArrayController.extend({
+    itemController: 'user',
+    sortProperties: ['order'],
+    sortAscending: true,
 
     actions: {
-	editUser: function() {
-	    this.set('isEditing', true);
-	},
-
-	doneEditing: function() {
-	    //this.set('isEditing', false);
+	newUser: function() {
+	    var u = this.store.createRecord('user', {active: true});
+	    this.transitionToRoute('users.edit', u);
 	}
     }
 });
 
-App.UsersController = Ember.ArrayController.extend({
-    itemController: 'user',
-    //sortProperties: ['order'],
-    //sortAscending: true,
+App.UserController = Ember.ObjectController.extend({
+});
+
+App.UsersEditRoute = Ember.Route.extend({
+    model: function(params) {
+	return this.store.find('user', params.user_id);
+    }
+});
+
+App.UserRole = Ember.Object.extend({
+    user: null,
+    name: null,
+    role: null,
+
+    enabled: function(key, value, prev) {
+	var roles = this.get('user.roles');
+
+	if (typeof(value) == 'undefined') {
+	    var f = roles.indexOf(this.get('role')) > -1;
+	    return f;
+	} else {
+	    if (value) {
+		roles.pushObject(this.get('role'));
+		return true;
+	    } else {
+		roles.removeObject(this.get('role'));
+		return false;
+	    }
+	}
+    }.property()
+});
+
+App.UsersEditController = Ember.ObjectController.extend({
+    all_roles: function() {
+	var model = this.get('model');
+	var out = [];
+
+	for (role in USER_ROLES) {
+	    out.pushObject(App.UserRole.create({
+		user: model, role: role, name: USER_ROLES[role]
+	    }));
+	}
+
+	return out;
+    }.property(),
 
     actions: {
 	save: function() {
-	    var promises = this.get('model').map(function(user) {
-		return user.save();
+	    var self = this;
+	    this.get('model').save().then(function() {
+		self.transitionToRoute('users.index');
 	    });
-	    var after = Ember.RSVP.all(promises);
-	    after.then(function(results) {
-		
-	    });
-	},
-
-	newUser: function() {
-	    this.store.createRecord('user', {active: true});
 	}
     }
 });
