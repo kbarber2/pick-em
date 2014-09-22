@@ -1188,6 +1188,11 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	},
 
 	activate: function() {
+	    if (!confirm('Once the week is activated emails will be sent to all ' +
+			'members and the week will be locked. Are you sure you wish to continue?')) {
+		return;
+	    }
+
 	    var self = this;
 
 	    $.ajax({ url: API_URI + 'weeks/' + this.get('id') + '/activate',
