@@ -988,20 +988,23 @@ class LeaderboardHandler(BaseHandler):
     def get_leaderboard(self, week):
         if week.is_final():
             leaderboard = Leaderboard.query(Leaderboard.week == week.key).get()
-            return leaderboard
-        else:
-            logging.info('Calculating %d leaderboard week %d' % (int(week.season), week.number))
-            prev_week = week.get_previous()
+            if leaderboard is not None:
+                return leaderboard
+            else:
+                logging.info('Stored %d leaderboard week %d unavailable' % (int(week.season), week.number))
+            
+        logging.info('Calculating %d leaderboard week %d' % (int(week.season), week.number))
+        prev_week = week.get_previous()
 
-            prev_board = None
-            if prev_week is not None:
-                prev_board = self.get_leaderboard(prev_week)
+        prev_board = None
+        if prev_week is not None:
+            prev_board = self.get_leaderboard(prev_week)
 
-            leaderboard = LeaderboardHandler.new_leaderboard(week)
-            if prev_board is not None:
-                LeaderboardHandler.update_leaderboard(leaderboard, prev_board)
+        leaderboard = LeaderboardHandler.new_leaderboard(week)
+        if prev_board is not None:
+            LeaderboardHandler.update_leaderboard(leaderboard, prev_board)
 
-            return leaderboard
+        return leaderboard
 
     @classmethod
     def new_leaderboard(cls, week):
