@@ -1037,9 +1037,14 @@ App.WeeksController = Ember.Controller.extend({
 
 App.WeeksEditRoute = App.WeeksNewRoute.extend({
     model: function(params) {
-	return this.store.find('week', params.week_id);
+	var self = this;
+	return this.store.find('week', params.week_id).then(function(model) {
+	    return model;
+	}, function(error) {
+	    self.transitionTo('weeks.unavailable');
+	});
     },
-    
+
     renderTemplate: function() {
 	this.render('weeks._form', { controller: 'weeksEdit' });
     }
