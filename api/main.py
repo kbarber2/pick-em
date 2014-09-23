@@ -521,7 +521,7 @@ class MatchupHandler(BaseHandler):
 
     def requires_roles(self, method):
         if method == 'GET': return set()
-        return set([Roles.ADMIN])
+        return set([Roles.ADMIN, Roles.WEEK_EDIT])
 
 class WeeksHandler(BaseHandler):
     def get(self, **kwargs):
