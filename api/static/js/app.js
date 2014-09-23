@@ -1123,6 +1123,44 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	});
     }.property('users.[]'),
 
+    save: function() {
+	var self = this;
+	var model = this.get('model');
+
+	// default the deadline to the first kickoff time
+	if (!model.get('deadline')) {
+	    var first = model.get('matchups').reduce(function(prev, cur, idx, array) {
+		var kickoff = cur.get('kickoff');
+		if (!prev) return kickoff;
+		return kickoff.isBefore(prev) ? kickoff : prev;
+	    });
+
+	    if (first) {
+		model.set('deadline', first);
+	    }
+	}
+
+	var matchupsOk = true;
+	model.get('matchups').forEach(function(matchup) {
+	    var c = self.get('controllers.matchupEditor');
+	    c.set('model', matchup);
+	    matchupsOk = matchupsOk && c.get('isValid');
+	});
+
+	if (!matchupsOk || !this.get('isValid')) {
+	    alert('Correct the highlighted errors before submitting');
+	    return null;
+	}
+
+	var promises = model.get('matchups').map(function(matchup) {
+	    return matchup.save();
+	});
+
+	return Ember.RSVP.all(promises).then(function(results) {
+	    return model.save();
+	});
+    },
+
     actions: {
 	newMatchup: function() {
 	    var kickoff = this.get('startDate');
@@ -1146,62 +1184,36 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	    m.removeObject(arg);
 	},
 
-	save: function() {
+	submit: function() {
 	    var self = this;
-	    var model = this.get('model');
+	    var promise = this.save();
 
-	    // default the deadline to the first kickoff time
-	    if (!model.get('deadline')) {
-		var first = model.get('matchups').reduce(function(prev, cur, idx, array) {
-		    var kickoff = cur.get('kickoff');
-		    if (!prev) return kickoff;
-		    return kickoff.isBefore(prev) ? kickoff : prev;
-		});
+	    if (!promise) return;
 
-		if (first) {
-		    model.set('deadline', first);
-		}
-	    }
-
-	    var matchupsOk = true;
-	    model.get('matchups').forEach(function(matchup) {
-		var c = self.get('controllers.matchupEditor');
-		c.set('model', matchup);
-		matchupsOk = matchupsOk && c.get('isValid');
-	    });
-
-	    if (!matchupsOk || !this.get('isValid')) {
-		alert('Correct the highlighted errors before submitting');
-		return;
-	    }
-
-	    var promises = model.get('matchups').map(function(matchup) {
-		return matchup.save();
-	    });
-
-	    var after = Ember.RSVP.all(promises);
-	    after.then(function(results) {
-		model.save().then(function(result) {
-		    self.transitionToRoute('weeks.index');
-		});
+	    promise.then(function(result) {
+		self.transitionToRoute('weeks.index');
 	    });
 	},
-
+	
 	activate: function() {
 	    if (!confirm('Once the week is activated emails will be sent to all ' +
 			'members and the week will be locked. Are you sure you wish to continue?')) {
 		return;
 	    }
 
-	    var self = this;
+	    var promise = this.save();
+	    if (!promise) return;
 
-	    $.ajax({ url: API_URI + 'weeks/' + this.get('id') + '/activate',
-		     type: 'PUT' }).then(function(response) {
-			 alert('Emails sent to ' + response.recipients.length + ' users');
-			 self.transitionToRoute('picks');
-		     }, function(response) {
-			 alert('Error: ' + response.responseText);
-		     });
+	    var self = this;
+	    promise.then(function(week) {
+		$.ajax({ url: API_URI + 'weeks/' + self.get('id') + '/activate',
+			 type: 'PUT' }).then(function(response) {
+			     alert('Emails sent to ' + response.recipients.length + ' users');
+			     self.transitionToRoute('picks');
+			 }, function(response) {
+			     alert('Activation failed');
+			 });
+	    });
 	},
 
 	clearPicks: function() {
