@@ -17,7 +17,8 @@ var DEFAULT_DATETIME_FORMAT = 'MM/DD/YYYY hh:mm a';
 var CONFERENCES = [ 'Big Ten', 'Mid-American', 'USA', 'Pac-12', 'ACC', 'SEC',
 		    'Big East', 'American Athletic', 'Sun Belt' ];
 
-var USER_ROLES = { 'ADMIN': 'Admin', 'WEEK_EDIT': 'Week editor' };
+var USER_ROLES = { 'ADMIN': 'Admin', 'WEEK_EDIT': 'Week editor',
+		   'PICKS_SUMMARY': 'Picks summary' };
 
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -885,8 +886,16 @@ App.PicksViewController = Ember.ObjectController.extend({
     }.property('currentPath'),
 
     isLeaderboardActive: function() {
+	debugger;
 	return false;
     }.property('currentPath'),
+
+    canSeeSummary: function() {
+	debugger;
+	var roles = this.get('controllers.application.user.roles');
+	if (!roles) return false;
+	return roles.indexOf('PICKS_SUMMARY') > -1;
+    }.property('controllers.application.user'),
 
     actions: {
 	editPicks: function(user) {
@@ -1118,7 +1127,7 @@ App.MatchupEditorController = Ember.ObjectController.extend(Ember.Validations.Mi
 });
 
 App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin, {
-    needs: [ 'matchupEditor' ],
+    needs: [ 'application', 'matchupEditor' ],
     
     toggleableUsers: function() {
 	var active = this.get('users');
@@ -1127,6 +1136,10 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	    return App.ToggleableUser.create({ user: user, list: active });
 	});
     }.property('users.[]'),
+
+    canEditUsers: function() {
+	return this.get('controllers.application.isAdmin') && !this.get('model.isNew');
+    }.property('controllers.application.isAdmin', 'model.isNew'),
 
     save: function() {
 	var self = this;
