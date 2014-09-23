@@ -1158,7 +1158,12 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	}
 
 	var promises = model.get('matchups').map(function(matchup) {
-	    return matchup.save();
+	    var dirty = model.get('isDirty');
+	    return dirty ? matchup.save() : null;
+	});
+
+	promises = promises.filter(function(promise) {
+	    return promise != null;
 	});
 
 	return Ember.RSVP.all(promises).then(function(results) {
