@@ -1315,9 +1315,6 @@ App.UsersEditRoute = Ember.Route.extend({
 });
 
 App.UserRole = Ember.Object.extend({
-    user: null,
-    name: null,
-    role: null,
 
     enabled: function(key, value, prev) {
 	var roles = this.get('user.roles');
@@ -1334,7 +1331,7 @@ App.UserRole = Ember.Object.extend({
 		return false;
 	    }
 	}
-    }.property()
+    }.property('user.roles')
 });
 
 App.UsersEditController = Ember.ObjectController.extend({
@@ -1349,7 +1346,7 @@ App.UsersEditController = Ember.ObjectController.extend({
 	}
 
 	return out;
-    }.property(),
+    }.property('model'),
 
     actions: {
 	save: function() {
