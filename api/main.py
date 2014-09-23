@@ -1006,7 +1006,7 @@ class LeaderboardHandler(BaseHandler):
     @classmethod
     def new_leaderboard(cls, week):
         games = len(week.matchups)
-        points = 100 * games
+        points = 100
         totals = dict((u, LeaderboardData(user=u, points=0, games=0)) for u in week.active_users)
 
         picksQ = Picks.query(Picks.week == week.key)
