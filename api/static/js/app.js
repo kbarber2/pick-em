@@ -272,6 +272,38 @@ App.Matchup = DS.Model.extend({
 
     kickoffString: momentProperty('kickoff', DEFAULT_DATETIME_FORMAT),
 
+    kickoffTime: function(key, value, previous) {
+	var kickoff = this.get('kickoff');
+
+	if (typeof(value) != 'undefined') {
+	    var m = moment(value, "h:mm a");
+	    if (m.isValid()) {
+		kickoff.hour(m.hour()).minute(m.minute());
+		this.send('becomeDirty');
+	    }
+
+	    return value;
+	}
+	
+	return kickoff ? kickoff.format('h:mm a') : '';
+    }.property('kickoff'),
+
+    kickoffDate: function(key, value, previous) {
+	var kickoff = this.get('kickoff');
+
+	if (typeof(value) != 'undefined') {
+	    var m = moment(value, "MM/DD/YYYY");
+	    if (m.isValid()) {
+		kickoff.month(m.month()).date(m.date()).year(m.year());
+		this.send('becomeDirty');
+	    }
+
+	    return value;
+	}
+
+	return kickoff ? kickoff.format('MM/DD/YYYY') : '';
+    }.property('kickoff'),
+
     coveredColor: function() {
 	var away = this.get('awayScore');
 	var home = this.get('homeScore');
@@ -1081,36 +1113,6 @@ App.MatchupEditorController = Ember.ObjectController.extend(Ember.Validations.Mi
     needs: ['weeksEdit'],
     schools: Ember.computed.alias('controllers.weeksEdit.schools'),
 
-    kickoffTime: function(key, value, previous) {
-	var kickoff = this.get('kickoff');
-
-	if (typeof(value) != 'undefined') {
-	    var m = moment(value, "h:mm a", true);
-	    if (m.isValid()) {
-		kickoff.hour(m.hour()).minute(m.minute());
-	    }
-
-	    return value;
-	}
-	
-	return kickoff ? kickoff.format('h:mm a') : '';
-    }.property('kickoff'),
-
-    kickoffDate: function(key, value, previous) {
-	var kickoff = this.get('kickoff');
-
-	if (typeof(value) != 'undefined') {
-	    var m = moment(value, "MM/DD/YYYY", true);
-	    if (m.isValid()) {
-		kickoff.month(m.month()).date(m.date()).year(m.year());
-	    }
-
-	    return value;
-	}
-
-	return kickoff ? kickoff.format('MM/DD/YYYY') : '';
-    }.property('kickoff'),
-
     awayTeamInvalid: Ember.computed.notEmpty('errors.awayTeam'),
     homeTeamInvalid: Ember.computed.notEmpty('errors.homeTeam'),
     lineInvalid: Ember.computed.notEmpty('errors.line'),
@@ -1171,7 +1173,7 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	}
 
 	var promises = model.get('matchups').map(function(matchup) {
-	    var dirty = model.get('isDirty');
+	    var dirty = matchup.get('isDirty');
 	    return dirty ? matchup.save() : null;
 	});
 
