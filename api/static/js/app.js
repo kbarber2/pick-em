@@ -2,10 +2,7 @@
 // - Endpoint security, especially token
 // - Reload/server push for score updates
 // - Automatic score updates
-// - Importer
-// - Leaderboard
 // - Mobile testing
-// - Sort matchups by kickoff time
 
 App = Ember.Application.create();
 
@@ -88,7 +85,8 @@ App.DateTimePickerView = Ember.TextField.extend({
 App.MomentTransform = DS.Transform.extend({
     deserialize: function(serialized) {
 	if (serialized) {
-	    var m = moment(serialized);
+	    // this constructor asssumes that the input is in UTC
+	    var m = moment(parseInt(serialized, 10));
 	    m = m.tz('America/New_York');
 	    return m;
 	}
@@ -110,7 +108,8 @@ App.MomentTransform = DS.Transform.extend({
 App.MomentDateTransform = DS.Transform.extend({
     deserialize: function(serialized) {
 	if (serialized) {
-	    var m = moment(serialized).tz('UTC');
+	    // this constructor asssumes that the input is in UTC
+	    var m = moment(parseInt(serialized, 10)).tz('UTC');
 	    return m;
 	}
 	
@@ -913,7 +912,6 @@ App.PicksViewController = Ember.ObjectController.extend({
     },
 
     canSeeSummary: function() {
-	debugger;
 	var roles = this.get('controllers.application.user.roles');
 	if (!roles) return false;
 	return roles.indexOf('PICKS_SUMMARY') > -1;
