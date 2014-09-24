@@ -912,16 +912,6 @@ App.PicksViewController = Ember.ObjectController.extend({
 	});
     },
 
-    isPicksActive: function() {
-	var p = this.get('currentPath');
-	return this.get('currentPath').indexOf('/view') > -1;
-    }.property('currentPath'),
-
-    isLeaderboardActive: function() {
-	debugger;
-	return false;
-    }.property('currentPath'),
-
     canSeeSummary: function() {
 	debugger;
 	var roles = this.get('controllers.application.user.roles');
