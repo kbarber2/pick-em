@@ -378,13 +378,13 @@
 	      {{view "datePicker" value=kickoffDate class="form-control"}}
 	    </td>
 	    <td>
-	      <button class="btn btn-default" {{action "removeMatchup" this}}>-</button>
+	      <button type="button" class="btn btn-default" {{action "removeMatchup" this}}>-</button>
 	    </td>
 	  </tr>
 	  {{/each}}
 	  <tr>
 	    <td colspan="6">
-	      <button class="btn btn-default" {{action "newMatchup"}}>+</button>
+	      <button type="button" class="btn btn-default" {{action "newMatchup"}}>+</button>
 	    </td>
 	  </tr>
 	</tbody>
