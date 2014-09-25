@@ -924,6 +924,48 @@ class PicksHandler(BaseHandler):
         self.response.status = 200
         self.response.write(json.dumps(self.serialize(week, data['bets'])))
 
+    def post(self, **kwargs):
+        if 'week_id' not in kwargs:
+            self.response.status = 404
+            return
+
+        if self.request.path_url.endswith('/fix'):
+            self.fix_picks(long(kwargs['week_id']))
+            return
+
+        self.response.status = 400
+
+    def fix_picks(self, week_id):
+        def bet_sorter(a, b):
+            if a.time_placed == b.time_placed: return 0
+            return -1 if a.time_placed < b.time_placed else 1
+
+        week = Week.get_by_id(week_id)
+        deleted = 0
+
+        for user in week.active_users:
+            query = Picks.query(ndb.AND(Picks.week == week.key, Picks.user == user))
+            matchups = {}
+
+            for pick in query.fetch():
+                if pick.matchup not in matchups:
+                    matchups[pick.matchup] = pick
+                else:
+                    new = matchups[pick.matchup]
+                    old = pick
+                    new.bets.extend(pick.bets)
+                    new.bets.sort(bet_sorter)
+                    
+                    logging.warn('Duplicate pick: "%s" and "%s"' %
+                                 (str(matchups[pick.matchup]), str(pick)))
+                    logging.info('New pick: "%s"' % (str(new)))
+
+                    new.put()
+                    old.key.delete()
+                    deleted += 1
+
+        self.response.write('{"deleted": %d }' % (deleted))
+
     def delete(self, week_id):
         week = ndb.Key(Week, long(week_id))
 
@@ -1236,6 +1278,7 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/picks', PicksHandler),
     webapp2.Route(r'/api/picks/current', PicksHandler),
     webapp2.Route(r'/api/picks/<week_id:\d+>', PicksHandler),
+    webapp2.Route(r'/api/picks/<week_id:\d+>/fix', PicksHandler),
     webapp2.Route(r'/api/picks/<week_id:\d+>/summary', PicksHandler),
     webapp2.Route(r'/api/leaderboards/<week_id:\d+>', LeaderboardHandler),
     webapp2.Route(r'/api/weeks', WeeksHandler),
