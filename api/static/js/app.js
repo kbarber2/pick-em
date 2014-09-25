@@ -925,10 +925,11 @@ App.PicksViewController = Ember.ObjectController.extend({
     }.property('controllers.application.user'),
 
     actions: {
-	editPicks: function(user) {
+	editPicks: function() {
 	    // TODO: need to make a more specific route like
 	    // /picks/:week_id/:user_id
-	    this.set('controllers.picksEdit.currentUser', user);
+	    this.set('controllers.picksEdit.currentUser',
+		     this.get('controllers.application.user'));
 	    this.transitionToRoute('picks.edit', this.get('model'));
 	}
     }
