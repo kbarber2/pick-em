@@ -864,10 +864,17 @@ App.PicksEditController = Ember.ObjectController.extend({
 
 	    var model = this.get('model');
 
+	    var submit = Ember.$("#submit");
+	    submit.prop("disabled", true);
+
 	    var self = this;
 	    var p = model.save();
 	    p.then(function(args) {
+		submit.prop("disabled", false);
 		self.transitionToRoute('picks.view', model);
+	    }, function(error) {
+		submit.prop("disabled", false);
+		alert("Error: could not submit picks. Contact Keith.");
 	    });
 	}
     }
@@ -1203,8 +1210,15 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 
 	    if (!promise) return;
 
+	    var submit = Ember.$("#submit");
+	    submit.prop("disabled", true);
+
 	    promise.then(function(result) {
+		submit.prop("disabled", false);
 		self.transitionToRoute('weeks.index');
+	    }, function(error) {
+		submit.prop("disabled", false);
+		alert('Update failed');
 	    });
 	},
 	
@@ -1217,14 +1231,19 @@ App.WeeksEditController = Ember.ObjectController.extend(Ember.Validations.Mixin,
 	    var promise = this.save();
 	    if (!promise) return;
 
+	    var submit = Ember.$("#submit");
+	    submit.prop("disabled", true);
+
 	    var self = this;
 	    promise.then(function(week) {
 		$.ajax({ url: API_URI + 'weeks/' + self.get('id') + '/activate',
 			 type: 'PUT' }).then(function(response) {
 			     alert('Emails sent to ' + response.recipients.length + ' users');
+			     submit.prop("disabled", false);
 			     self.transitionToRoute('picks');
 			 }, function(response) {
 			     alert('Activation failed');
+			     submit.prop("disabled", false);
 			 });
 	    });
 	},
