@@ -1,0 +1,3 @@
+*.pyc
+/api/index.yaml
+/api/bsc_crypto.py
