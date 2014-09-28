@@ -354,7 +354,16 @@ App.Pick = DS.Model.extend({
     bets: DS.attr(),
 
     weekStartString: momentProperty('weekStart', DEFAULT_DATE_FORMAT),
-    weekEndString: momentProperty('weekEnd', DEFAULT_DATE_FORMAT)
+    weekEndString: momentProperty('weekEnd', DEFAULT_DATE_FORMAT),
+
+    finished: function() {
+	var isFinal = true;
+	this.get('matchups').forEach(function(matchup) {
+	    isFinal = isFinal && matchup.get('finished');
+	});
+
+	return isFinal;
+    }.property('matchups.@each.final')
 });
 
 App.Leaderboard = DS.Model.extend({
@@ -739,6 +748,13 @@ App.PicksViewRoute = Ember.Route.extend({
 		    return 0;
 		}
 	    }));
+
+	controller.schedule();
+    },
+
+    deactivate: function() {
+	var c = this.controllerFor('picksView');
+	c.stopPolling();
     }
 });
 
@@ -924,6 +940,32 @@ App.PicksViewController = Ember.ObjectController.extend({
 	if (!roles) return false;
 	return roles.indexOf('PICKS_SUMMARY') > -1;
     }.property('controllers.application.user'),
+
+    schedule: function() {
+	if (this.get('finished')) {
+	    this.set('timer', null);
+	    return;
+	}
+
+	var timer = Ember.run.later(this, function() {
+	    var self = this;
+
+	    Ember.$.get(API_URI + 'weeks/' + this.get('model.id')).then(function(response) {
+		self.store.pushMany('matchup', response.matchup);
+	    });
+	    this.schedule();
+	}, 120 * 1000);
+
+	this.set('timer', timer);
+    },
+
+    stopPolling: function() {
+	var timer = this.get('timer');
+	if (timer) {
+	    Ember.run.cancel(timer);
+	    this.set('timer', null);
+	}
+    },
 
     actions: {
 	editPicks: function() {
