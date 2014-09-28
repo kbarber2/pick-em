@@ -383,13 +383,14 @@ App.Bet = Ember.Object.extend({
     isGoodPick: function() {
 	var awayScore = this.get('matchup.awayScore');
 	var homeScore = this.get('matchup.homeScore');
-	if (awayScore || homeScore) {
-	    if (betCovered(this.get('matchup'), this.get('winner'))) {
-		return 'success';
-	    } else {
-		return 'danger';
-	    }
+	var covered = betCovered(this.get('matchup'), this.get('winner'));
+
+	if (this.get('matchup.finished')) {
+	    return covered ? 'success' : 'danger';
+	} else if (awayScore || homeScore) {
+	    return covered ? 'info' : 'warning';
 	}
+
 	return '';
     }.property('winner')
 });
