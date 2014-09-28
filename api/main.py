@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
-import json, datetime, logging, time, struct, base64, random, time, copy
-import bsc_crypto
+import json, datetime, logging, time, struct, base64, random, time, copy, sys
+sys.path.insert(0, 'libs')
+
+import bsc_crypto, score_updater
 from urlparse import urlparse
 import webapp2
 from webapp2_extras import sessions
-from google.appengine.ext import ndb
-from google.appengine.api import mail
+from google.appengine.ext import ndb, deferred
+from google.appengine.api import mail, taskqueue
 from Crypto.Cipher import AES
 from Crypto import Random
 from Crypto.Protocol.KDF import PBKDF2
@@ -108,10 +110,9 @@ class Week(ndb.Model):
     active = ndb.BooleanProperty()
 
     def is_final(self):
-        final = True
         for m in self.matchups:
-            final = final and m.get().final
-        return final
+            if not m.get().final: return False
+        return True
 
     def get_previous(self):
         number = self.number - 1
@@ -617,6 +618,9 @@ class WeeksHandler(BaseHandler):
                     active_users = users,
                     active = False)
         week.put()
+
+        logging.info('Enqueuing score update task')
+        deferred.defer(update_scores, _eta=week.deadline, week_id=week_id)
 
         out = {}
         out['week'] = serializeEditableWeek(out, week)
@@ -1260,6 +1264,26 @@ class TokensHandler(BaseHandler):
 
     def requires_roles(self, method):
         return set([Roles.ADMIN])
+
+def update_scores(week_id):
+    week = Week.get_by_id(week_id)
+    no_error = score_updater.update(week)
+
+    if not no_error:
+        logging.warn('Score update failed, not retrying')
+    elif week.is_final() and False:
+        logging.info('All week %d games are final' % (week.number))
+    else:
+        delay = random.randrange(4 * 60, 6 * 60)
+        logging.info('Scheduling next update in %.1f minutes' % (delay / 60.0))
+        deferred.defer(update_scores, _countdown=delay, week_id=week_id)
+        
+class ScoreUpdateHandler(BaseHandler):
+    def get(self, week_id):
+        deferred.defer(update_scores, _countdown=1, week_id=long(week_id))
+
+    def requires_roles(self, method):
+        return set([Roles.ADMIN])
         
 config = {}
 config['webapp2_extras.sessions'] = {
@@ -1291,4 +1315,5 @@ app = webapp2.WSGIApplication([
     webapp2.Route(r'/api/matchups', MatchupHandler),
     webapp2.Route(r'/api/matchups/<matchup_id:\d+>', MatchupHandler),
     webapp2.Route(r'/api/reload', ReloadHandler),
+    webapp2.Route(r'/api/scores/<week_id:\d+>/update', ScoreUpdateHandler),
 ], config=config, debug=True)
