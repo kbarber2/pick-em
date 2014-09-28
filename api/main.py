@@ -1239,6 +1239,7 @@ class AuthHandler(BaseHandler):
         self.begin_session(user, None, AUTH_PASSWORD)
 
     def begin_session(self, user, week, method):
+        logging.info('%s login' % (user.name))
         self.session.clear()
         self.session['user'] = user.key.id()
         self.session['week'] = week.key.id() if week is not None else None
