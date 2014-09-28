@@ -619,9 +619,6 @@ class WeeksHandler(BaseHandler):
                     active = False)
         week.put()
 
-        logging.info('Enqueuing score update task')
-        deferred.defer(update_scores, _eta=week.deadline, week_id=week_id)
-
         out = {}
         out['week'] = serializeEditableWeek(out, week)
         self.response.write(json.dumps(out))
@@ -667,7 +664,7 @@ class WeeksHandler(BaseHandler):
         deadlineTime = deadline.strftime('%I:%M %p')
         deadlineDate = deadline.strftime('%m/%d/%Y')
         deadlineDay  = WEEKDAYS[deadline.weekday()]
-            
+
         recipients = []
         for userKey in week.active_users:
             user = userKey.get()
@@ -708,6 +705,10 @@ Hello %s,
 
             msg.send()
             recipients.append({ 'name': user.name })
+
+        if not week.active:
+            logging.info('Enqueuing score update task')
+            deferred.defer(update_scores, _eta=week.deadline, week_id=week.key.id())
 
         week.active = True
         week.put()
@@ -1193,12 +1194,10 @@ class AuthHandler(BaseHandler):
             return
 
         if self.request.get('password') is not None and len(self.request.get('password')) > 0:
-            logging.info('password auth')
             userId = self.request.get('userId')
             password = self.request.get('password').encode('ascii')
             self.login_with_password(userId, password)
         else:
-            logging.info('token auth')
             token = self.request.get('token').encode('ascii')
             self.login_with_token(token)
 
@@ -1284,8 +1283,22 @@ def update_scores(week_id):
         
 class ScoreUpdateHandler(BaseHandler):
     def get(self, week_id):
-        deferred.defer(update_scores, _countdown=1, week_id=long(week_id))
+        week = Week.get_by_id(long(week_id))
+        if week is None:
+            self.response.status = 404
+            return
 
+        if week.is_final():
+            logging.info('Week %d is final, not enqueuing score updates' % (week.number))
+        elif not week.active:
+            logging.info('Week %d is not active, not enqueuing score updates' % (week.number))
+        elif datetime.datetime.now() >= week.deadline:
+            logging.info('Enqueuing immediate score update for week %d' % (week.number))
+            deferred.defer(update_scores, _countdown=1, week_id=week.key.id())
+        else:
+            logging.info('Enqueuing deferred score update for week %d' % (week.number))
+            deferred.defer(update_scores, _eta=week.deadline, week_id=week.key.id())
+        
     def requires_roles(self, method):
         return set([Roles.ADMIN])
         
