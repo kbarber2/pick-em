@@ -1274,7 +1274,7 @@ def update_scores(week_id):
     elif week.is_final() and False:
         logging.info('All week %d games are final' % (week.number))
     else:
-        delay = random.randrange(4 * 60, 6 * 60)
+        delay = random.randrange(3 * 60, 5 * 60)
         logging.info('Scheduling next update in %.1f minutes' % (delay / 60.0))
         deferred.defer(update_scores, _countdown=delay, week_id=week_id)
         
