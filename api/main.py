@@ -989,13 +989,16 @@ class PicksHandler(BaseHandler):
         return set()
 
     def log_picks(self, picks):
-        for bet in picks:
-            user = ndb.Key(User, long(bet['user']))
-            matchup = ndb.Key(Matchup, long(bet['matchup']))
-            winner = ndb.Key(School, long(bet['winner']))
-            points = int(bet['points'])
+        try:
+            for bet in picks:
+                user = ndb.Key(User, long(bet['user']))
+                matchup = ndb.Key(Matchup, long(bet['matchup']))
+                winner = ndb.Key(School, long(bet['winner']))
+                points = int(bet['points'])
 
-            logging.info('Processing pick %i for %s for %s' % (points, user.get().name, winner.get().name))
+                logging.info('Processing pick %i for %s for %s' % (points, user.get().name, winner.get().name))
+        except Exception:
+            logging.exception('Error logging picks: ' + str(picks))
 
 class LeaderboardHandler(BaseHandler):
     def get(self, **kwargs):
