@@ -401,7 +401,7 @@ App.Bet = Ember.Object.extend({
 	}
 
 	return '';
-    }.property('winner')
+    }.property('winner', 'matchup.awayScore', 'matchup.homeScore')
 });
 
 App.BetsForUser = Ember.Object.extend({
