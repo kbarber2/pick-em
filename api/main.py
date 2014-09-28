@@ -1275,7 +1275,7 @@ def update_scores(week_id):
 
     if not no_error:
         logging.warn('Score update failed, not retrying')
-    elif week.is_final() and False:
+    elif week.is_final():
         logging.info('All week %d games are final' % (week.number))
     else:
         delay = random.randrange(3 * 60, 5 * 60)
